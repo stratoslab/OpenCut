@@ -45,3 +45,17 @@ export interface CaptionChunk {
 	startTime: number;
 	duration: number;
 }
+
+export interface WordSegment {
+	text: string;
+	start: number;
+	end: number;
+	wordIndex: number;
+}
+
+export interface WordTranscript {
+	words: WordSegment[];
+	fullText: string;
+	language: string;
+	videoDuration: number;
+}

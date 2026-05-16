@@ -3,12 +3,17 @@ import type {
 	TranscriptionResult,
 	TranscriptionProgress,
 	TranscriptionModelId,
+	WordTranscript,
 } from "@/transcription/types";
 import {
 	DEFAULT_TRANSCRIPTION_MODEL,
 	TRANSCRIPTION_MODELS,
 } from "@/transcription/models";
 import type { WorkerMessage, WorkerResponse } from "./worker";
+import {
+	segmentsToWordSegments,
+	buildWordTranscript,
+} from "@/transcription/word-segments";
 
 type ProgressCallback = (progress: TranscriptionProgress) => void;
 
@@ -78,6 +83,36 @@ class TranscriptionService {
 				language,
 			} satisfies WorkerMessage);
 		});
+	}
+
+	async transcribeToWords({
+		audioData,
+		language = "auto",
+		modelId = DEFAULT_TRANSCRIPTION_MODEL,
+		videoDuration = 0,
+		onProgress,
+	}: {
+		audioData: Float32Array;
+		language?: TranscriptionLanguage;
+		modelId?: TranscriptionModelId;
+		videoDuration?: number;
+		onProgress?: ProgressCallback;
+	}): Promise<WordTranscript> {
+		const result = await this.transcribe({
+			audioData,
+			language,
+			modelId,
+			onProgress,
+		});
+
+		const words = segmentsToWordSegments(result.segments);
+
+		return buildWordTranscript(
+			words,
+			result.text,
+			result.language,
+			videoDuration,
+		);
 	}
 
 	cancel() {
