@@ -51,4 +51,5 @@ const nextConfig: NextConfig = {
 	},
 };
 
-export default withContentCollections(withBotId(nextConfig));
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default withContentCollections(withBotId(nextConfig as any));
