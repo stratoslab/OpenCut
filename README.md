@@ -34,6 +34,8 @@ Thanks to [Vercel](https://vercel.com?utm_source=github-opencut&utm_campaign=oss
 - `apps/desktop/`: Native desktop app built with GPUI (in progress)
 - `rust/`: Platform-agnostic core: GPU compositor, effects, masks, and WASM bindings. We're actively migrating business logic here from TypeScript.
 - `docs/`: Architecture and subsystem documentation
+  - [`docs/architecture-flows.html`](docs/architecture-flows.html) — **Interactive architecture diagram** — click any workflow (Import Media, Text-Based Editing, Export, CI Build, ToDesktop, etc.) to see highlighted data flow between packages/components with annotations
+  - [`docs/architecture-flows.json`](docs/architecture-flows.json) — JSON source for all documented flows (17 workflows, 35+ nodes)
 
 ## Getting Started
 
