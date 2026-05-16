@@ -10,6 +10,8 @@
   </tr>
 </table>
 
+> **This is the StratosLab fork of OpenCut.** We're extending the base editor with local-first AI capabilities — browser-based transcription, text-driven video editing, and an on-device LLM assistant. All processing runs on-device via WebGPU; no video ever leaves the user's machine.
+
 ## Sponsors
 
 Thanks to [Vercel](https://vercel.com?utm_source=github-opencut&utm_campaign=oss) and [fal.ai](https://fal.ai?utm_source=github-opencut&utm_campaign=oss) for their support of open-source software.
@@ -27,6 +29,53 @@ Thanks to [Vercel](https://vercel.com?utm_source=github-opencut&utm_campaign=oss
 - **Privacy**: Your videos stay on your device
 - **Free features**: Most basic CapCut features are now paywalled 
 - **Simple**: People want editors that are easy to use - CapCut proved that
+
+## StratosLab Fork — What We're Adding
+
+This fork extends OpenCut with **local-first AI video editing** capabilities. The core philosophy: every AI operation runs in the browser via WebGPU — no server-side processing, no cloud dependencies, no video uploads.
+
+### Text-Based Video Editing
+
+Edit video by editing its transcript. Delete words from the text → the corresponding video/audio is automatically cut from the timeline.
+
+- **Whisper transcription** — In-browser audio transcription using ONNX models via Web Workers, producing word-level timestamps
+- **Transcript editor** — Interactive text view with bidirectional sync to the timeline (hover a word → highlight on timeline, scrub playhead → highlight word)
+- **Deterministic edit mapping** — Text deletions are mapped to precise timeline cuts via word-level timestamp aggregation. No LLM involved in the edit execution — it's pure diff → timestamp → cut
+- **Edit preview** — Proposed cuts are shown with timeline highlights before confirmation
+- **Undo/redo** — Full undo/redo stack for text-based edits with configurable depth
+
+### AI Chat Assistant (Gemma LLM)
+
+A conversational assistant that runs locally on WebGPU (Gemma 4 E2B model).
+
+- **Content queries** — Ask questions about video content ("what does he say about pricing?")
+- **Edit suggestions** — Request edits in natural language ("cut the intro silence", "remove filler words")
+- **Context-aware** — Transcript is chunked at paragraph/sentence boundaries and sent with word-level timing data
+- **Zero direct timeline access** — The LLM only suggests; all edits require explicit user confirmation
+
+### Architecture Documentation
+
+- **Interactive flow diagram** — [`docs/architecture-flows.html`](docs/architecture-flows.html) documents 17 workflows across the entire app. Click any flow to see highlighted data paths between components with annotations
+
+### New Components Added
+
+| Component | Path | Purpose |
+|-----------|------|---------|
+| `TranscriptionService` (extended) | `src/transcription/` | Word-level segment output from Whisper |
+| `TranscriptEditor` | `src/transcript-editor/` | Interactive transcript UI with timeline sync |
+| `TextEditEngine` | `src/text-edit-engine/` | Deterministic text → timestamp → cut mapping |
+| `EditPreviewPanel` | `src/transcript-editor/` | Edit confirmation before timeline application |
+| `GemmaChatPanel` | `src/transcript-editor/` | Local LLM conversational assistant |
+| `TranscriptChunker` | `src/transcript-editor/` | Token-aware transcript splitting for LLM context |
+| `TimelineSync` | `src/transcript-editor/` | Controller for transcript ↔ timeline bidirectional sync |
+| `ripple-edit.ts` | `src/timeline/` | Ripple edit behavior for gap closing after cuts |
+
+### Deployment
+
+This fork is deployed to **Cloudflare Workers** at `opencut.stratoslab.xyz`. The build pipeline:
+- **CI**: GitHub Actions (WASM build → Bun install → Next.js build) across Ubuntu, Windows, macOS
+- **Production**: Cloudflare Workers via `@opennextjs/cloudflare`
+- **Database**: PostgreSQL (BetterAuth) + Redis (rate limiting) via Docker Compose
 
 ## Project Structure
 
