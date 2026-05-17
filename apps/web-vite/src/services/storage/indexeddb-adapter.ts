@@ -36,6 +36,10 @@ export class IndexedDBAdapter<T> implements StorageAdapter<T> {
 	}
 
 	async get(key: string): Promise<T | null> {
+		if (key === undefined || key === null || key === "") {
+			console.warn("[IndexedDB] get() called with invalid key:", key, new Error().stack);
+			return null;
+		}
 		const db = await this.getDB();
 		const transaction = db.transaction([this.storeName], "readonly");
 		const store = transaction.objectStore(this.storeName);

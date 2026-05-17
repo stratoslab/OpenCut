@@ -172,6 +172,10 @@ class StorageService {
 	}: {
 		id: string;
 	}): Promise<{ project: TProject } | null> {
+		if (!id) {
+			console.warn("[storage] loadProject called with empty id");
+			return null;
+		}
 		await this.ensureMigrations();
 		const serializedProject = await this.projectsAdapter.get(id);
 
@@ -340,6 +344,10 @@ class StorageService {
 		projectId: string;
 		id: string;
 	}): Promise<MediaAsset | null> {
+		if (!id) {
+			console.warn("[storage] loadMediaAsset called with empty id");
+			return null;
+		}
 		const { mediaMetadataAdapter, mediaAssetsAdapter } =
 			this.getProjectMediaAdapters({ projectId });
 
@@ -390,7 +398,7 @@ class StorageService {
 			projectId,
 		});
 
-		const mediaIds = await mediaMetadataAdapter.list();
+		const mediaIds = (await mediaMetadataAdapter.list()).filter(Boolean);
 		const mediaItems: MediaAsset[] = [];
 
 		for (const id of mediaIds) {
