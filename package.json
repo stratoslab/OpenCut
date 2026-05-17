@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "cd apps/web-vite && bunx vite build",
+    "build": "bun install && cd apps/web-vite && bunx vite build",
     "build:tools": "turbo run build --filter=@opencut/tools",
     "build:wasm": "wasm-pack build rust/wasm --target bundler --out-dir pkg",
     "build:web": "cd apps/web-vite && bunx vite build",
