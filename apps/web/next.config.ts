@@ -1,6 +1,5 @@
 import type { NextConfig } from "next";
 import { withBotId } from "botid/next/config";
-import { withContentCollections } from "@content-collections/next";
 
 const nextConfig: NextConfig = {
 	compiler: {
@@ -8,7 +7,6 @@ const nextConfig: NextConfig = {
 	},
 	reactStrictMode: true,
 	productionBrowserSourceMaps: true,
-	output: "standalone",
 	images: {
 		remotePatterns: [
 			{
@@ -52,4 +50,13 @@ const nextConfig: NextConfig = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default withContentCollections(withBotId(nextConfig as any));
+let config: NextConfig = withBotId(nextConfig as any);
+
+// Only apply content-collections when not building for Cloudflare Workers
+// (content-collections uses dynamic require which breaks opennext bundling)
+if (process.env.OPENNEXT !== "true") {
+	const { withContentCollections } = require("@content-collections/next");
+	config = withContentCollections(config);
+}
+
+export default config;

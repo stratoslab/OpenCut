@@ -3,7 +3,7 @@
 	"tasks": {
 		"build": {
 			"dependsOn": ["^build"],
-			"outputs": [".next/**", "!.next/cache/**"],
+			"outputs": [".open-next/**", ".next/**", "!.next/cache/**"],
 			"env": [
 				"NODE_ENV",
 				"NEXT_PUBLIC_SITE_URL",

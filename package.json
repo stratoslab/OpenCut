@@ -6,11 +6,11 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "turbo run build --filter=@opencut/web",
+    "build": "cd apps/web && OPENNEXT=true ./node_modules/.bin/opennextjs-cloudflare build",
     "build:tools": "turbo run build --filter=@opencut/tools",
     "build:wasm": "wasm-pack build rust/wasm --target bundler --out-dir pkg",
     "build:web": "turbo run build --filter=@opencut/web",
-    "deploy": "npx wrangler deploy",
+    "deploy": "cd apps/web && npx wrangler deploy",
     "deploy:web": "turbo run deploy --filter=@opencut/web",
     "dev:tools": "turbo run dev --filter=@opencut/tools",
     "dev:wasm": "cargo watch -w rust/crates -w rust/wasm/src -s 'wasm-pack build rust/wasm --target bundler --out-dir pkg'",
