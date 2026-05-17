@@ -204,10 +204,6 @@ export class AudioManager {
 		}
 		this.scheduleTimer = null;
 
-		for (const iterator of this.clipIterators.values()) {
-			void iterator.return();
-		}
-		this.clipIterators.clear();
 		this.activeClipIds.clear();
 
 		for (const source of this.queuedSources) {

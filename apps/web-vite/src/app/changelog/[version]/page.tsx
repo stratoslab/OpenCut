@@ -1,6 +1,4 @@
-import type { Metadata } from "next";
-import { Link } from "react-router-dom";
-import { Navigate } from "react-router-dom";
+import { Link, useParams, Navigate } from "react-router-dom";
 import { BasePage } from "@/app/base-page";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { getReleaseByVersion, getSortedReleases } from "@/changelog/utils";
@@ -13,24 +11,10 @@ import {
 } from "@/changelog/components/release";
 import { CopyMarkdownButton } from "@/changelog/components/copy-markdown-button";
 
-type Props = { params: Promise<{ version: string }> };
+export default function ReleaseDetailPage() {
+	const { version } = useParams<{ version: string }>();
+	if (!version) return <Navigate to="/404" replace />;
 
-export async function generateStaticParams() {
-	return getSortedReleases().map((release) => ({ version: release.version }));
-}
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-	const { version } = await params;
-	const release = getReleaseByVersion({ version });
-	if (!release) return {};
-	return {
-		title: `${release.title} (${release.version}) - OpenCut Changelog`,
-		description: release.description,
-	};
-}
-
-export default async function ReleaseDetailPage({ params }: Props) {
-	const { version } = await params;
 	const releases = getSortedReleases();
 	const index = releases.findIndex((entry) => entry.version === version);
 	if (index === -1) return <Navigate to="/404" replace />;
@@ -42,7 +26,7 @@ export default async function ReleaseDetailPage({ params }: Props) {
 		<BasePage>
 			<div className="mx-auto w-full max-w-3xl flex flex-col gap-12">
 				<Link
-					href="/changelog"
+					to="/changelog"
 					className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 w-fit"
 				>
 					<ChevronLeftIcon className="size-4" />
@@ -68,8 +52,7 @@ export default async function ReleaseDetailPage({ params }: Props) {
 
 				<nav className="flex items-center justify-between border-t pt-8">
 					{older ? (
-						<Link
-							href={`/changelog/${older.version}`}
+						<Link  to={`/changelog/${older.version}`}
 							className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground group"
 						>
 							<ChevronLeftIcon className="size-4" />
@@ -82,8 +65,7 @@ export default async function ReleaseDetailPage({ params }: Props) {
 						<div />
 					)}
 					{newer ? (
-						<Link
-							href={`/changelog/${newer.version}`}
+						<Link  to={`/changelog/${newer.version}`}
 							className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground group text-right"
 						>
 							<div className="flex flex-col">

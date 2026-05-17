@@ -37,8 +37,7 @@ export async function readVideoFile({
 		const height = video.videoHeight;
 
 		// check for audio tracks
-		const hasAudio =
-			Array.isArray(video.audioTracks) && video.audioTracks.length > 0;
+		const hasAudio = (video as HTMLVideoElement & { audioTracks?: { length: number } }).audioTracks?.length ? true : false;
 
 		// generate thumbnail from first frame
 		let thumbnailUrl: string | null = null;

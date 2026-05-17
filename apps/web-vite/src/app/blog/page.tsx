@@ -40,7 +40,7 @@ export default async function BlogPage() {
 
 function BlogPostItem({ post }: { post: Post }) {
 	return (
-		<Link href={`/blog/${post.slug}`}>
+		<Link to={`/blog/${post.slug}`}>
 			<div className="flex h-auto w-full items-center justify-between py-6 opacity-100 hover:opacity-75">
 				<div className="flex flex-col gap-2">
 					<h2 className="text-xl font-semibold">{post.title}</h2>

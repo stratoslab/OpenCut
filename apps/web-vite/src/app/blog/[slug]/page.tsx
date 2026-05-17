@@ -1,81 +1,34 @@
-import type { Metadata } from "next";
 import Image from "@/components/ui/image";
-import { Navigate } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { BasePage } from "@/app/base-page";
 import Prose from "@/components/ui/prose";
 import { Separator } from "@/components/ui/separator";
-import { getPosts, getSinglePost, processHtmlContent } from "@/blog/query";
-import type { Author, Post } from "@/blog/types";
+import { getSinglePost } from "@/blog/query";
+import type { Post } from "@/blog/types";
 
-type PageProps = {
-	params: Promise<{ slug: string }>;
-	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-};
+export default function BlogPostPage() {
+	const { slug } = useParams<{ slug: string }>();
+	if (!slug) return <Navigate to="/404" replace />;
 
-export async function generateMetadata({
-	params,
-}: PageProps): Promise<Metadata> {
-	const slug = (await params).slug;
+	const [post, setPost] = useState<Post | null>(null);
+	const [loading, setLoading] = useState(true);
 
-	const data = await getSinglePost({ slug });
+	useEffect(() => {
+		getSinglePost({ slug }).then((result) => {
+			if (result?.post) setPost(result.post);
+			setLoading(false);
+		});
+	}, [slug]);
 
-	if (!data || !data.post) return {};
-
-	return {
-		title: data.post.title,
-		description: data.post.description,
-		twitter: {
-			title: `${data.post.title}`,
-			description: `${data.post.description}`,
-			card: "summary_large_image",
-			images: [
-				{
-					url: data.post.coverImage,
-					width: "1200",
-					height: "630",
-					alt: data.post.title,
-				},
-			],
-		},
-		openGraph: {
-			type: "article",
-			images: [
-				{
-					url: data.post.coverImage,
-					width: "1200",
-					height: "630",
-					alt: data.post.title,
-				},
-			],
-			title: data.post.title,
-			description: data.post.description,
-			publishedTime: new Date(data.post.publishedAt).toISOString(),
-			authors: data.post.authors.map((author: Author) => author.name),
-		},
-	};
-}
-
-export async function generateStaticParams() {
-	const data = await getPosts();
-	if (!data || !data.posts.length) return [];
-
-	return data.posts.map((post) => ({
-		slug: post.slug,
-	}));
-}
-
-export default async function BlogPostPage({ params }: PageProps) {
-	const slug = (await params).slug;
-	const data = await getSinglePost({ slug });
-	if (!data || !data.post) return <Navigate to="/404" replace />;
-
-	const html = await processHtmlContent({ html: data.post.content });
+	if (loading) return <div>Loading...</div>;
+	if (!post) return <Navigate to="/404" replace />;
 
 	return (
 		<BasePage>
-			<PostHeader post={data.post} />
+			<PostHeader post={post} />
 			<Separator />
-			<PostContent html={html} />
+			<PostContent post={post} />
 		</BasePage>
 	);
 }
@@ -126,10 +79,10 @@ function PostTitle({ title }: { title: string }) {
 	);
 }
 
-function PostContent({ html }: { html: string }) {
+function PostContent({ post }: { post: Post }) {
 	return (
 		<section className="">
-			<Prose html={html} />
+			<Prose html={post.content} />
 		</section>
 	);
 }

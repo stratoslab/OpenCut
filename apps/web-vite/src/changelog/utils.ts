@@ -1,4 +1,37 @@
-import matter from "gray-matter";
+// Simple YAML frontmatter parser (browser-compatible, no gray-matter/Buffer dependency)
+function parseFrontmatter(content: string): { data: Record<string, unknown>; content: string } {
+	const match = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+	if (!match) return { data: {}, content };
+
+	const rawYaml = match[1];
+	const data: Record<string, unknown> = {};
+
+	for (const line of rawYaml.split("\n")) {
+		const colonIndex = line.indexOf(":");
+		if (colonIndex === -1) continue;
+		const key = line.slice(0, colonIndex).trim();
+		let value = line.slice(colonIndex + 1).trim();
+
+		// remove quotes
+		if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+			value = value.slice(1, -1);
+		}
+
+		// parse arrays like [new, fixed, improved]
+		if (value.startsWith("[") && value.endsWith("]")) {
+			const inner = value.slice(1, -1);
+			value = inner.split(",").map((s) => s.trim().replace(/^["']|["']$/g, "")) as unknown as string;
+		}
+
+		// parse booleans
+		if (value === "true") value = true as unknown as string;
+		if (value === "false") value = false as unknown as string;
+
+		data[key] = value;
+	}
+
+	return { data, content: match[2] };
+}
 
 const entries = import.meta.glob<true, string, string>("./entries/*.md", {
 	query: "?raw",
@@ -22,7 +55,7 @@ export type Release = ChangelogEntry;
 
 export const allChangelogs: ChangelogEntry[] = Object.entries(entries)
 	.map(([path, content]) => {
-		const { data } = matter(content);
+		const { data } = parseFrontmatter(content as string);
 		const slug = path.replace("./entries/", "").replace(".md", "");
 		return {
 			...(data as Omit<ChangelogEntry, "slug">),

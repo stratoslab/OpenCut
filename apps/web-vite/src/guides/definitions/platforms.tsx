@@ -17,7 +17,6 @@ function PlatformLogo({
 			height={18}
 			className={className}
 			draggable={false}
-			unoptimized
 		/>
 	);
 }

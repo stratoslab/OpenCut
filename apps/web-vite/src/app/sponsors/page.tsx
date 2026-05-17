@@ -49,8 +49,7 @@ function SponsorsGrid() {
 
 function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
 	return (
-		<Link
-			href={sponsor.url}
+		<Link  to={sponsor.url}
 			target="_blank"
 			rel="noopener noreferrer"
 			className="size-full"

@@ -67,7 +67,7 @@ export function ReleaseTitle({
 	return (
 		<As className={cn("font-bold tracking-tight", titleSizes[As])}>
 			{href ? (
-				<Link href={href} className="hover:underline underline-offset-4">
+				<Link to={href} className="hover:underline underline-offset-4">
 					{children}
 				</Link>
 			) : (

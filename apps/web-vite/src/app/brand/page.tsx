@@ -114,7 +114,7 @@ export default function BrandPage() {
 				<>
 					Download OpenCut brand assets for use in your projects.{" "}
 					<Link
-						href="#guidelines"
+						to="#guidelines"
 						className="underline underline-offset-4"
 						onClick={() =>
 							document
@@ -180,7 +180,7 @@ export default function BrandPage() {
 						we made or endorse your product, or use the marks commercially
 						without asking first. For anything unclear, reach out at{" "}
 						<Link
-							href="mailto:brand@opencut.app"
+							to="mailto:brand@opencut.app"
 							className="underline underline-offset-4"
 						>
 							brand@opencut.app
@@ -251,7 +251,6 @@ function AssetCard({ variant }: { variant: AssetVariant }) {
 					height={variant.height}
 					className="max-h-16 w-auto select-none object-contain"
 					draggable={false}
-					unoptimized
 				/>
 			</div>
 

@@ -77,7 +77,7 @@ export function ChangelogNotification() {
 
 			<div className="flex justify-end">
 				<Button asChild size="sm">
-					<Link href="/changelog" onClick={() => setRelease(null)}>
+					<Link to="/changelog" onClick={() => setRelease(null)}>
 						See full changelog
 					</Link>
 				</Button>

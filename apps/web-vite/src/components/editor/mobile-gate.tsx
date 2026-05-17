@@ -32,7 +32,7 @@ export function MobileGate({ children }: MobileGateProps) {
 	};
 
 	const handleGoBack = () => {
-		router.back();
+		navigate(-1);
 	};
 
 	return (
@@ -60,7 +60,7 @@ export function MobileGate({ children }: MobileGateProps) {
 				<div className="flex items-center gap-3">
 					<Button onClick={handleContinue}>Take a look anyway</Button>
 					<Button variant="ghost" asChild>
-						<Link href="/roadmap" className="flex items-center gap-1">
+						<Link to="/roadmap" className="flex items-center gap-1">
 							Roadmap
 							<HugeiconsIcon icon={ArrowRight01Icon} size={14} />
 						</Link>

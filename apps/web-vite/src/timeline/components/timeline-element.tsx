@@ -947,7 +947,6 @@ function StickerElementContent({
 				className="size-4 shrink-0"
 				width={20}
 				height={20}
-				unoptimized
 			/>
 			<span className="truncate text-xs text-white">{element.name}</span>
 		</div>
@@ -971,7 +970,6 @@ function GraphicElementContent({
 				className="size-4 shrink-0"
 				width={20}
 				height={20}
-				unoptimized
 			/>
 			<span className="truncate text-xs text-white">{element.name}</span>
 		</div>

@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { BasePage } from "@/app/base-page";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -13,61 +12,32 @@ import {
 	ReleaseChanges,
 } from "@/changelog/components/release";
 
-export const metadata: Metadata = {
-	title: "Changelog - OpenCut",
-	description: "What's new in OpenCut",
-	openGraph: {
-		title: "Changelog - OpenCut",
-		description: "Every update, improvement, and fix to OpenCut — documented.",
-		type: "website",
-		images: [
-			{
-				url: "/open-graph/changlog.jpg",
-				width: 1200,
-				height: 630,
-				alt: "OpenCut Changelog",
-			},
-		],
-	},
-	twitter: {
-		card: "summary_large_image",
-		title: "Changelog - OpenCut",
-		description: "What's new in OpenCut",
-		images: ["/open-graph/changlog.jpg"],
-	},
-};
-
 export default function ChangelogPage() {
 	const releases = getSortedReleases();
 
 	return (
-		<BasePage title="Changelog" description="See what's new in OpenCut">
-			<div className="mx-auto w-full max-w-3xl">
-				<div className="relative">
-					<div
-						aria-hidden
-						className="absolute top-2 bottom-0 left-[5px] w-px bg-border hidden sm:block"
-					/>
-
-					<div className="flex flex-col">
-						{releases.map((release, releaseIndex) => (
-							<div key={release.version} className="flex flex-col">
-								<ReleaseEntry release={release} />
-								{releaseIndex < releases.length - 1 && (
-									<Separator className="my-10 sm:ml-1.5" />
-								)}
-							</div>
-						))}
-					</div>
+		<BasePage>
+			<div className="mx-auto w-full max-w-3xl flex flex-col gap-12">
+				<header className="flex flex-col gap-4">
+					<h1 className="text-4xl font-bold tracking-tight">Changelog</h1>
+					<p className="text-muted-foreground">
+						Every update, improvement, and fix to OpenCut — documented.
+					</p>
+				</header>
+				<Separator />
+				<div className="flex flex-col gap-8">
+					{releases.map((release, index) => (
+						<ReleaseEntry key={release.version} release={release} isLatest={index === 0} />
+					))}
 				</div>
 			</div>
 		</BasePage>
 	);
 }
 
-function ReleaseEntry({ release }: { release: ReleaseType }) {
+function ReleaseEntry({ release, isLatest }: { release: ReleaseType; isLatest: boolean }) {
 	return (
-		<ReleaseArticle variant="list" isLatest={release.isLatest}>
+		<ReleaseArticle variant="list" isLatest={isLatest}>
 			<ReleaseMeta release={release} />
 			<div className="flex flex-col gap-4">
 				<ReleaseTitle as="h2" href={`/changelog/${release.version}`}>

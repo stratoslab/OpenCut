@@ -140,13 +140,13 @@ function ProjectDropdown() {
 					<DropdownMenuSeparator />
 
 					<DropdownMenuItem asChild icon={<FaDiscord className="size-4!" />}>
-						<Link
+						<a
 							href={SOCIAL_LINKS.discord}
 							target="_blank"
 							rel="noopener noreferrer"
 						>
 							Discord
-						</Link>
+						</a>
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>

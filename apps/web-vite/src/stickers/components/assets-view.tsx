@@ -409,7 +409,6 @@ function StickerItem({
 					}
 					onError={() => setHasImageError(true)}
 					loading="lazy"
-					unoptimized
 				/>
 			)}
 		</div>

@@ -64,8 +64,7 @@ export default function PrivacyPage() {
 						</ol>
 						<p className="mt-4">
 							Questions? Email us at{" "}
-							<a
-								href="mailto:oss@opencut.app"
+							<a  href="mailto:oss@opencut.app"
 								className="text-primary hover:underline"
 							>
 								oss@opencut.app
@@ -109,8 +108,7 @@ export default function PrivacyPage() {
 				<h2 className="text-2xl font-semibold">Analytics</h2>
 				<p>
 					We use{" "}
-					<a
-						href="https://www.databuddy.cc"
+					<a  href="https://www.databuddy.cc"
 						target="_blank"
 						rel="noopener noreferrer"
 						className="text-primary hover:underline"
@@ -198,8 +196,7 @@ export default function PrivacyPage() {
 						GitHub repository
 					</a>
 					, email us at{" "}
-					<a
-						href="mailto:oss@opencut.app"
+					<a  href="mailto:oss@opencut.app"
 						className="text-primary hover:underline"
 					>
 						oss@opencut.app

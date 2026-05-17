@@ -164,7 +164,7 @@ function ProjectsHeader() {
 						<BreadcrumbList>
 							<BreadcrumbItem>
 								<BreadcrumbLink asChild>
-									<Link href="/" className="text-sm sm:text-base">
+									<Link to="/" className="text-sm sm:text-base">
 										Home
 									</Link>
 								</BreadcrumbLink>
@@ -680,7 +680,7 @@ function ProjectItem({
 				className="size-5 shrink-0"
 			/>
 
-			<Link href={`/editor/${project.id}`} className="flex-1 min-w-0">
+			<Link to={`/editor/${project.id}`} className="flex-1 min-w-0">
 				{listRowContent}
 			</Link>
 
@@ -705,7 +705,7 @@ function ProjectItem({
 					<div className="group relative">
 						{isGridView ? (
 							<>
-								<Link href={`/editor/${project.id}`} className="block">
+								<Link to={`/editor/${project.id}`} className="block">
 									{gridContent}
 								</Link>
 

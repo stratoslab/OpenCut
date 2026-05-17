@@ -54,7 +54,7 @@ export function Header() {
 				<div className="relative z-10 flex items-center gap-6">
 					<ContextMenu>
 						<ContextMenuTrigger asChild>
-							<Link href="/" className="flex items-center gap-3">
+							<Link to="/" className="flex items-center gap-3">
 								<Image
 									src={DEFAULT_LOGO_URL}
 									alt="OpenCut Logo"
@@ -86,7 +86,7 @@ export function Header() {
 								<HugeiconsIcon icon={Download01Icon} />
 								Download SVG
 							</ContextMenuItem>
-							<Link href="/brand">
+							<Link to="/brand">
 								<ContextMenuItem>
 									<HugeiconsIcon icon={LinkSquare02Icon} />
 									Brand assets
@@ -97,7 +97,7 @@ export function Header() {
 
 					<nav className="hidden items-center gap-4 md:flex">
 						{links.map((link) => (
-							<Link key={link.href} href={link.href}>
+							<Link key={link.href} to={link.href}>
 								<Button variant="text" className="p-0 text-sm">
 									{link.label}
 								</Button>
@@ -118,13 +118,13 @@ export function Header() {
 						</Button>
 					</div>
 					<div className="hidden items-center gap-3 md:flex">
-						<Link href={SOCIAL_LINKS.github}>
+						<Link to={SOCIAL_LINKS.github}>
 							<Button className="bg-background text-sm" variant="outline">
 								<HugeiconsIcon icon={GithubIcon} className="size-4" />
 								40k+
 							</Button>
 						</Link>
-						<Link href="/projects">
+						<Link to="/projects">
 							<Button className="text-sm">
 								Projects
 								<ArrowRight className="size-4" />
@@ -173,7 +173,7 @@ export function Header() {
 									}}
 								>
 									<Link
-										href={link.href}
+										to={link.href}
 										className="text-2xl font-semibold"
 										onClick={() => setIsMenuOpen(false)}
 									>

@@ -4,6 +4,7 @@ import type {
 	AudioTrack,
 	GraphicElement,
 	GraphicTrack,
+	MediaTime,
 	OverlayTrack,
 	SceneTracks,
 	TextElement,
@@ -648,7 +649,7 @@ describe("resolveTrackPlacement", () => {
 			trackId: "video-main",
 			trackIndex: 0,
 			trackType: "video",
-			adjustedStartTime: 0,
+			adjustedStartTime: 0 as unknown as MediaTime,
 		});
 	});
 

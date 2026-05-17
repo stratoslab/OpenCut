@@ -69,8 +69,7 @@ export default function TermsPage() {
 						</ol>
 						<p className="mt-4">
 							Questions? Email us at{" "}
-							<a
-								href="mailto:oss@opencut.app"
+							<a  href="mailto:oss@opencut.app"
 								className="text-primary hover:underline"
 							>
 								oss@opencut.app
@@ -213,8 +212,7 @@ export default function TermsPage() {
 						GitHub repository
 					</a>
 					, email us at{" "}
-					<a
-						href="mailto:oss@opencut.app"
+					<a  href="mailto:oss@opencut.app"
 						className="text-primary hover:underline"
 					>
 						oss@opencut.app

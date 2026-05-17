@@ -59,7 +59,7 @@ export function EditorProvider({ projectId, children }: EditorProviderProps) {
 						const newProjectId = await editor.project.createNewProject({
 							name: "Untitled Project",
 						});
-						router.replace(`/editor/${newProjectId}`);
+						navigate(`/editor/${newProjectId}`, { replace: true });
 					} catch (_createErr) {
 						setError("Failed to create project");
 						setIsLoading(false);
@@ -85,7 +85,7 @@ export function EditorProvider({ projectId, children }: EditorProviderProps) {
 		return () => {
 			cancelled = true;
 		};
-	}, [projectId, router]);
+	}, [projectId, navigate]);
 
 	if (error) {
 		return (

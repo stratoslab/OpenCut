@@ -144,7 +144,7 @@ export class SceneExporter extends EventEmitter<SceneExporterEvents> {
 					await this.renderer.render({ node: rootNode, time: timeTicks });
 
 					// request a frame from the canvas stream
-					stream.getVideoTracks()[0]?.requestFrame();
+					(stream.getVideoTracks()[0] as MediaStreamTrack & { requestFrame?: () => void })?.requestFrame?.();
 
 					this.emit("progress", i / frameCount);
 

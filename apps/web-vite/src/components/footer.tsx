@@ -52,30 +52,30 @@ export function Footer() {
 							The privacy-first video editor that feels simple to use.
 						</p>
 						<div className="flex justify-start gap-3">
-							<Link
+							<a
 								href={SOCIAL_LINKS.github}
 								className="text-muted-foreground hover:text-foreground transition-colors"
 								target="_blank"
 								rel="noopener noreferrer"
 							>
 								<FaGithub className="size-5" />
-							</Link>
-							<Link
+							</a>
+							<a
 								href={SOCIAL_LINKS.x}
 								className="text-muted-foreground hover:text-foreground transition-colors"
 								target="_blank"
 								rel="noopener noreferrer"
 							>
 								<RiTwitterXLine className="size-5" />
-							</Link>
-							<Link
+							</a>
+							<a
 								href={SOCIAL_LINKS.discord}
 								className="text-muted-foreground hover:text-foreground transition-colors"
 								target="_blank"
 								rel="noopener noreferrer"
 							>
 								<RiDiscordFill className="size-5" />
-							</Link>
+							</a>
 						</div>
 					</div>
 
@@ -88,20 +88,23 @@ export function Footer() {
 								<ul className="space-y-2 text-sm">
 									{links[category].map((link) => (
 										<li key={link.href}>
-											<Link
-												href={link.href}
-												className="text-muted-foreground hover:text-foreground transition-colors"
-												target={
-													link.href.startsWith("http") ? "_blank" : undefined
-												}
-												rel={
-													link.href.startsWith("http")
-														? "noopener noreferrer"
-														: undefined
-												}
-											>
-												{link.label}
-											</Link>
+											{link.href.startsWith("http") ? (
+												<a
+													href={link.href}
+													className="text-muted-foreground hover:text-foreground transition-colors"
+													target="_blank"
+													rel="noopener noreferrer"
+												>
+													{link.label}
+												</a>
+											) : (
+												<Link
+													to={link.href}
+													className="text-muted-foreground hover:text-foreground transition-colors"
+												>
+													{link.label}
+												</Link>
+											)}
 										</li>
 									))}
 								</ul>

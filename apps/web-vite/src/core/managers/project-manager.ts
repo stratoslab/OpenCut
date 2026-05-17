@@ -691,7 +691,7 @@ export class ProjectManager {
 		);
 
 		if (index !== -1) {
-			this.savedProjects = this.savedProjects.with(index, project.metadata);
+			this.savedProjects[index] = project.metadata;
 		} else {
 			this.savedProjects = [project.metadata, ...this.savedProjects];
 		}

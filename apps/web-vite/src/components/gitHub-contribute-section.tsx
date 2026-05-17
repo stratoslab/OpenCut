@@ -1,5 +1,4 @@
 import { Button } from "./ui/button";
-import { Link } from "react-router-dom";
 import { SOCIAL_LINKS } from "@/site/social";
 import { GithubIcon, Link04Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -18,7 +17,7 @@ export function GitHubContributeSection({
 				<p className="text-muted-foreground">{description}</p>
 			</div>
 			<div className="flex flex-col justify-center gap-4 sm:flex-row">
-				<Link
+				<a
 					href={`${SOCIAL_LINKS.github}/blob/main/.github/CONTRIBUTING.md`}
 					target="_blank"
 					rel="noopener noreferrer"
@@ -27,8 +26,8 @@ export function GitHubContributeSection({
 						<HugeiconsIcon icon={GithubIcon} />
 						Start contributing
 					</Button>
-				</Link>
-				<Link
+				</a>
+				<a
 					href={`${SOCIAL_LINKS.github}/issues`}
 					target="_blank"
 					rel="noopener noreferrer"
@@ -37,7 +36,7 @@ export function GitHubContributeSection({
 						<HugeiconsIcon icon={Link04Icon} />
 						Report issues
 					</Button>
-				</Link>
+				</a>
 			</div>
 		</div>
 	);

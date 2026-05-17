@@ -11,6 +11,8 @@ export * from "./zoom-utils";
 export * from "./ruler-utils";
 export * from "./pixel-utils";
 
+export type { MediaTime } from "@/wasm";
+
 export function calculateTotalDuration({
 	tracks,
 }: {

@@ -129,8 +129,7 @@ function TopContributorsSection({
 
 function TopContributorCard({ contributor }: { contributor: Contributor }) {
 	return (
-		<Link
-			href={contributor.html_url}
+		<Link  to={contributor.html_url}
 			target="_blank"
 			rel="noopener noreferrer"
 			className="w-full"
@@ -175,9 +174,8 @@ function AllContributorsSection({
 
 			<div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
 				{contributors.map((contributor) => (
-					<Link
-						key={contributor.id}
-						href={contributor.html_url}
+					<Link key={contributor.id}
+						 to={contributor.html_url}
 						target="_blank"
 						rel="noopener noreferrer"
 						className="opacity-100 hover:opacity-70"
@@ -216,9 +214,8 @@ function ExternalToolsSection() {
 
 			<div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 sm:grid-cols-2">
 				{EXTERNAL_TOOLS.map((tool, index) => (
-					<Link
-						key={tool.url}
-						href={tool.url}
+					<Link key={tool.url}
+						 to={tool.url}
 						target="_blank"
 						className="block"
 						style={{ animationDelay: `${index * 100}ms` }}

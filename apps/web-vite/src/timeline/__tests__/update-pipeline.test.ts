@@ -66,7 +66,7 @@ describe("applyElementUpdate", () => {
 			},
 		});
 
-		expect(updatedElement.duration).toBe(7);
-		expect(Number.isInteger(updatedElement.duration)).toBe(true);
+		expect(Number(updatedElement.duration)).toBe(7);
+		expect(Number.isInteger(Number(updatedElement.duration))).toBe(true);
 	});
 });

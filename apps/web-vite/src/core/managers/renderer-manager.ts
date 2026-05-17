@@ -220,12 +220,12 @@ export class RendererManager {
 				}
 
 				if (!buffer) {
-					return { success: false, error: "Export failed to produce buffer" };
+					return { success: false, error: "Export failed to produce blob" };
 				}
 
 				return {
 					success: true,
-					buffer,
+					blob: buffer,
 				};
 			} finally {
 				clearInterval(cancelInterval);

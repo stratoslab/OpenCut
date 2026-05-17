@@ -17,8 +17,8 @@ import { cn } from "@/utils/ui";
 import {
 	getExportMimeType,
 	getExportFileExtension,
-	downloadBuffer,
 } from "@/export";
+import { downloadBlob } from "@/utils/browser";
 import { Check, Copy, Download, RotateCcw } from "lucide-react";
 import {
 	EXPORT_FORMAT_VALUES,
@@ -128,11 +128,10 @@ function ExportPopover({
 			return;
 		}
 
-		if (result.success && result.buffer) {
-			downloadBuffer({
-				buffer: result.buffer,
+		if (result.success && result.blob) {
+			downloadBlob({
+				blob: result.blob,
 				filename: `${activeProject.metadata.name}${getExportFileExtension({ format })}`,
-				mimeType: getExportMimeType({ format }),
 			});
 
 			editor.project.clearExportState();

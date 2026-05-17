@@ -28,7 +28,7 @@ export function Hero() {
 				</p>
 
 				<div className="mt-8 flex justify-center gap-8">
-					<Link href="/projects">
+					<Link to="/projects">
 						<Button type="submit" size="lg" className="h-11 text-base">
 							Try early beta
 							<ArrowRight className="ml-0.5" />
