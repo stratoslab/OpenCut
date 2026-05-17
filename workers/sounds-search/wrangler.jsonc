@@ -1,0 +1,10 @@
+{
+	"name": "opencut-sounds",
+	"main": "src/index.ts",
+	"compatibility_date": "2025-04-01",
+	"compatibility_flags": ["nodejs_compat"],
+	"vars": {
+		"FREESOUND_CLIENT_ID": "",
+		"FREESOUND_API_KEY": ""
+	}
+}

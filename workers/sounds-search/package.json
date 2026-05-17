@@ -1,0 +1,12 @@
+{
+	"name": "@opencut/sounds-search-worker",
+	"private": true,
+	"version": "0.1.0",
+	"scripts": {
+		"dev": "wrangler dev",
+		"deploy": "wrangler deploy"
+	},
+	"devDependencies": {
+		"wrangler": "^4.77.0"
+	}
+}
