@@ -19,7 +19,6 @@ import { canElementHaveAudio, hasMediaId } from "@/timeline/element-utils";
 import { canTrackHaveAudio } from "@/timeline";
 import { mediaSupportsAudio } from "@/media/media-utils";
 import { getSourceTimeAtClipTime, renderRetimedBuffer } from "@/retime";
-import { Input, ALL_FORMATS, BlobSource, AudioBufferSink } from "mediabunny";
 import { TICKS_PER_SECOND } from "@/wasm";
 import {
 	computeRmsBuckets,
@@ -252,89 +251,12 @@ async function resolveAudioBufferForAsset({
 	asset: MediaAsset;
 	audioContext: AudioContext;
 }): Promise<AudioBuffer | null> {
-	if (asset.type === "audio") {
-		try {
-			const arrayBuffer = await asset.file.arrayBuffer();
-			return await audioContext.decodeAudioData(arrayBuffer.slice(0));
-		} catch (error) {
-			console.warn("Failed to decode audio asset:", error);
-			return null;
-		}
-	}
-
-	const input = new Input({
-		source: new BlobSource(asset.file),
-		formats: ALL_FORMATS,
-	});
-
 	try {
-		const audioTrack = await input.getPrimaryAudioTrack();
-		if (!audioTrack) return null;
-
-		const sink = new AudioBufferSink(audioTrack);
-		const targetSampleRate = audioContext.sampleRate;
-
-		const chunks: AudioBuffer[] = [];
-		let totalSamples = 0;
-
-		for await (const { buffer } of sink.buffers(0)) {
-			chunks.push(buffer);
-			totalSamples += buffer.length;
-		}
-
-		if (chunks.length === 0) return null;
-
-		const nativeSampleRate = chunks[0].sampleRate;
-		const numChannels = Math.min(
-			MAX_AUDIO_CHANNELS,
-			chunks[0].numberOfChannels,
-		);
-
-		const nativeChannels = Array.from(
-			{ length: numChannels },
-			() => new Float32Array(totalSamples),
-		);
-		let offset = 0;
-		for (const chunk of chunks) {
-			for (let channel = 0; channel < numChannels; channel++) {
-				const sourceData = chunk.getChannelData(
-					Math.min(channel, chunk.numberOfChannels - 1),
-				);
-				nativeChannels[channel].set(sourceData, offset);
-			}
-			offset += chunk.length;
-		}
-
-		// use OfflineAudioContext for high-quality resampling to target rate
-		const outputSamples = Math.ceil(
-			totalSamples * (targetSampleRate / nativeSampleRate),
-		);
-		const offlineContext = new OfflineAudioContext(
-			numChannels,
-			outputSamples,
-			targetSampleRate,
-		);
-
-		const nativeBuffer = audioContext.createBuffer(
-			numChannels,
-			totalSamples,
-			nativeSampleRate,
-		);
-		for (let ch = 0; ch < numChannels; ch++) {
-			nativeBuffer.copyToChannel(nativeChannels[ch], ch);
-		}
-
-		const sourceNode = offlineContext.createBufferSource();
-		sourceNode.buffer = nativeBuffer;
-		sourceNode.connect(offlineContext.destination);
-		sourceNode.start(0);
-
-		return await offlineContext.startRendering();
+		const arrayBuffer = await asset.file.arrayBuffer();
+		return await audioContext.decodeAudioData(arrayBuffer.slice(0));
 	} catch (error) {
 		console.warn("Failed to decode asset audio:", error);
 		return null;
-	} finally {
-		input.dispose();
 	}
 }
 

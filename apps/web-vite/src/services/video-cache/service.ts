@@ -1,27 +1,15 @@
-import {
-	Input,
-	ALL_FORMATS,
-	BlobSource,
-	CanvasSink,
-	type WrappedCanvas,
-} from "mediabunny";
-
 interface VideoSinkData {
-	input: Input;
-	sink: CanvasSink;
-	iterator: AsyncGenerator<WrappedCanvas, void, unknown> | null;
-	currentFrame: WrappedCanvas | null;
-	nextFrame: WrappedCanvas | null;
+	video: HTMLVideoElement;
+	url: string;
+	width: number;
+	height: number;
+	duration: number;
 	lastTime: number;
-	prefetching: boolean;
-	prefetchPromise: Promise<void> | null;
 }
 
 export class VideoCache {
 	private sinks = new Map<string, VideoSinkData>();
 	private initPromises = new Map<string, Promise<void>>();
-	private frameChain = new Map<string, Promise<unknown>>();
-	private seekGenerations = new Map<string, number>();
 
 	async getFrameAt({
 		mediaId,
@@ -31,207 +19,54 @@ export class VideoCache {
 		mediaId: string;
 		file: File;
 		time: number;
-	}): Promise<WrappedCanvas | null> {
+	}): Promise<HTMLCanvasElement | null> {
 		await this.ensureSink({ mediaId, file });
 
 		const sinkData = this.sinks.get(mediaId);
 		if (!sinkData) return null;
 
-		const generation = (this.seekGenerations.get(mediaId) ?? 0) + 1;
-		this.seekGenerations.set(mediaId, generation);
-
-		const previous = this.frameChain.get(mediaId) ?? Promise.resolve();
-		const current = previous.then(() => {
-			if (this.seekGenerations.get(mediaId) !== generation) {
-				return sinkData.currentFrame ?? null;
-			}
-			return this.resolveFrame({ sinkData, time });
-		});
-		this.frameChain.set(
-			mediaId,
-			current.catch(() => {}),
-		);
-		return current;
+		return this.seekToTime({ sinkData, time });
 	}
 
-	private async resolveFrame({
-		sinkData,
-		time,
-	}: {
-		sinkData: VideoSinkData;
-		time: number;
-	}): Promise<WrappedCanvas | null> {
-		if (sinkData.nextFrame && sinkData.nextFrame.timestamp <= time) {
-			sinkData.currentFrame = sinkData.nextFrame;
-			sinkData.nextFrame = null;
-			this.startPrefetch({ sinkData });
-		}
-
-		if (
-			sinkData.currentFrame &&
-			this.isFrameValid({ frame: sinkData.currentFrame, time })
-		) {
-			if (!sinkData.nextFrame && !sinkData.prefetching) {
-				this.startPrefetch({ sinkData });
-			}
-			return sinkData.currentFrame;
-		}
-
-		if (
-			sinkData.iterator &&
-			sinkData.currentFrame &&
-			time >= sinkData.lastTime &&
-			time < sinkData.lastTime + 2.0
-		) {
-			const frame = await this.iterateToTime({ sinkData, targetTime: time });
-			if (frame) {
-				if (!sinkData.nextFrame && !sinkData.prefetching) {
-					this.startPrefetch({ sinkData });
-				}
-				return frame;
-			}
-		}
-
-		const frame = await this.seekToTime({ sinkData, time });
-		if (frame && !sinkData.nextFrame && !sinkData.prefetching) {
-			this.startPrefetch({ sinkData });
-		}
-		return frame;
-	}
-
-	private isFrameValid({
-		frame,
-		time,
-	}: {
-		frame: WrappedCanvas;
-		time: number;
-	}): boolean {
-		return time >= frame.timestamp && time < frame.timestamp + frame.duration;
-	}
-	private async iterateToTime({
-		sinkData,
-		targetTime,
-	}: {
-		sinkData: VideoSinkData;
-		targetTime: number;
-	}): Promise<WrappedCanvas | null> {
-		if (!sinkData.iterator) return null;
-
-		try {
-			while (true) {
-				// Wait for any pending prefetch to finish before touching iterator
-				if (sinkData.prefetching && sinkData.prefetchPromise) {
-					await sinkData.prefetchPromise;
-				}
-
-				// Check if the nextFrame (which might have just arrived) is what we need
-				if (
-					sinkData.nextFrame &&
-					sinkData.nextFrame.timestamp <= targetTime + 0.05 // Tolerance
-				) {
-					sinkData.currentFrame = sinkData.nextFrame;
-					sinkData.nextFrame = null;
-				} else {
-					const { value: frame, done } = await sinkData.iterator.next();
-
-					if (done || !frame) break;
-
-					sinkData.currentFrame = frame;
-				}
-
-				const frame = sinkData.currentFrame;
-				if (!frame) break;
-
-				sinkData.lastTime = frame.timestamp;
-
-				if (this.isFrameValid({ frame, time: targetTime })) {
-					return frame;
-				}
-
-				if (frame.timestamp > targetTime + 1.0) break;
-			}
-		} catch (error) {
-			console.warn("Iterator failed, will restart:", error);
-			sinkData.iterator = null;
-		}
-
-		return null;
-	}
 	private async seekToTime({
 		sinkData,
 		time,
 	}: {
 		sinkData: VideoSinkData;
 		time: number;
-	}): Promise<WrappedCanvas | null> {
+	}): Promise<HTMLCanvasElement | null> {
 		try {
-			if (sinkData.prefetching && sinkData.prefetchPromise) {
-				await sinkData.prefetchPromise;
+			const video = sinkData.video;
+			video.currentTime = Math.max(0, Math.min(time, sinkData.duration));
+
+			await new Promise<void>((resolve, reject) => {
+				const timeout = setTimeout(() => reject(new Error("Seek timeout")), 5000);
+				video.onseeked = () => {
+					clearTimeout(timeout);
+					resolve();
+				};
+				video.onerror = () => {
+					clearTimeout(timeout);
+					reject(new Error("Video error during seek"));
+				};
+			});
+
+			const canvas = document.createElement("canvas");
+			canvas.width = sinkData.width;
+			canvas.height = sinkData.height;
+			const ctx = canvas.getContext("2d");
+			if (ctx) {
+				ctx.drawImage(video, 0, 0, sinkData.width, sinkData.height);
 			}
 
-			if (sinkData.iterator) {
-				await sinkData.iterator.return();
-				sinkData.iterator = null;
-			}
-
-			sinkData.nextFrame = null;
-			sinkData.iterator = sinkData.sink.canvases(time);
 			sinkData.lastTime = time;
-
-			// Fetch current frame
-			const { value: frame } = await sinkData.iterator.next();
-
-			if (frame) {
-				sinkData.currentFrame = frame;
-				this.startPrefetch({ sinkData });
-				return frame;
-			}
+			return canvas;
 		} catch (error) {
 			console.warn("Failed to seek video:", error);
-		}
-
-		return null;
-	}
-
-	private startPrefetch({ sinkData }: { sinkData: VideoSinkData }): void {
-		if (sinkData.prefetching || !sinkData.iterator || sinkData.nextFrame) {
-			return;
-		}
-
-		sinkData.prefetching = true;
-		sinkData.prefetchPromise = this.prefetchNextFrame({ sinkData });
-	}
-
-	private async prefetchNextFrame({
-		sinkData,
-	}: {
-		sinkData: VideoSinkData;
-	}): Promise<void> {
-		if (!sinkData.iterator) {
-			sinkData.prefetching = false;
-			sinkData.prefetchPromise = null;
-			return;
-		}
-
-		try {
-			const { value: frame, done } = await sinkData.iterator.next();
-
-			if (done || !frame) {
-				sinkData.prefetching = false;
-				sinkData.prefetchPromise = null;
-				return;
-			}
-
-			sinkData.nextFrame = frame;
-			sinkData.prefetching = false;
-			sinkData.prefetchPromise = null;
-		} catch (error) {
-			console.warn("Prefetch failed:", error);
-			sinkData.prefetching = false;
-			sinkData.prefetchPromise = null;
-			sinkData.iterator = null;
+			return null;
 		}
 	}
+
 	private async ensureSink({
 		mediaId,
 		file,
@@ -255,6 +90,7 @@ export class VideoCache {
 			this.initPromises.delete(mediaId);
 		}
 	}
+
 	private async initializeSink({
 		mediaId,
 		file,
@@ -262,58 +98,37 @@ export class VideoCache {
 		mediaId: string;
 		file: File;
 	}): Promise<void> {
-		const input = new Input({
-			source: new BlobSource(file),
-			formats: ALL_FORMATS,
+		const url = URL.createObjectURL(file);
+		const video = document.createElement("video");
+		video.preload = "auto";
+		video.muted = true;
+		video.src = url;
+
+		await new Promise<void>((resolve, reject) => {
+			video.onloadedmetadata = () => resolve();
+			video.onerror = () => reject(new Error("Failed to load video"));
 		});
 
-		try {
-			const videoTrack = await input.getPrimaryVideoTrack();
-			if (!videoTrack) {
-				throw new Error("No video track found");
-			}
-
-			const canDecode = await videoTrack.canDecode();
-			if (!canDecode) {
-				throw new Error("Video codec not supported for decoding");
-			}
-
-			const sink = new CanvasSink(videoTrack, {
-				poolSize: 3,
-				fit: "contain",
-			});
-
-			this.sinks.set(mediaId, {
-				input,
-				sink,
-				iterator: null,
-				currentFrame: null,
-				nextFrame: null,
-				lastTime: -1,
-				prefetching: false,
-				prefetchPromise: null,
-			});
-		} catch (error) {
-			input.dispose();
-			console.error(`Failed to initialize video sink for ${mediaId}:`, error);
-			throw error;
-		}
+		this.sinks.set(mediaId, {
+			video,
+			url,
+			width: video.videoWidth,
+			height: video.videoHeight,
+			duration: video.duration,
+			lastTime: -1,
+		});
 	}
 
 	clearVideo({ mediaId }: { mediaId: string }): void {
 		const sinkData = this.sinks.get(mediaId);
 		if (sinkData) {
-			if (sinkData.iterator) {
-				void sinkData.iterator.return();
-			}
-
-			sinkData.input.dispose();
+			sinkData.video.pause();
+			sinkData.video.src = "";
+			URL.revokeObjectURL(sinkData.url);
 			this.sinks.delete(mediaId);
 		}
 
 		this.initPromises.delete(mediaId);
-		this.frameChain.delete(mediaId);
-		this.seekGenerations.delete(mediaId);
 	}
 
 	clearAll(): void {
@@ -325,11 +140,6 @@ export class VideoCache {
 	getStats() {
 		return {
 			totalSinks: this.sinks.size,
-			activeSinks: Array.from(this.sinks.values()).filter((s) => s.iterator)
-				.length,
-			cachedFrames: Array.from(this.sinks.values()).filter(
-				(s) => s.currentFrame,
-			).length,
 		};
 	}
 }

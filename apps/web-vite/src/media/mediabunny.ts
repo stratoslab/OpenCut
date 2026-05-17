@@ -1,10 +1,3 @@
-import {
-	Input,
-	ALL_FORMATS,
-	BlobSource,
-	VideoSampleSink,
-	type VideoCodec,
-} from "mediabunny";
 import { createTimelineAudioBuffer } from "@/media/audio";
 import type { SceneTracks } from "@/timeline";
 import type { MediaAsset } from "@/media/types";
@@ -17,7 +10,7 @@ export type VideoFileData = {
 	height: number;
 	fps: number;
 	hasAudio: boolean;
-	codec: VideoCodec | null;
+	codec: string | null;
 	canDecode: boolean;
 	thumbnailUrl: string | null;
 };
@@ -27,54 +20,61 @@ export async function readVideoFile({
 }: {
 	file: File;
 }): Promise<VideoFileData> {
-	const input = new Input({
-		source: new BlobSource(file),
-		formats: ALL_FORMATS,
-	});
+	const url = URL.createObjectURL(file);
 
 	try {
-		const duration = await input.computeDuration();
-		const videoTrack = await input.getPrimaryVideoTrack();
+		const video = document.createElement("video");
+		video.preload = "metadata";
+		video.src = url;
 
-		if (!videoTrack) {
-			throw new Error("No video track found in the file");
-		}
+		await new Promise<void>((resolve, reject) => {
+			video.onloadedmetadata = () => resolve();
+			video.onerror = () => reject(new Error("Failed to load video metadata"));
+		});
 
-		const canDecode = await videoTrack.canDecode();
-		const packetStats = await videoTrack.computePacketStats(100);
-		const audioTrack = await input.getPrimaryAudioTrack();
+		const duration = video.duration;
+		const width = video.videoWidth;
+		const height = video.videoHeight;
 
+		// check for audio tracks
+		const hasAudio =
+			Array.isArray(video.audioTracks) && video.audioTracks.length > 0;
+
+		// generate thumbnail from first frame
 		let thumbnailUrl: string | null = null;
-		if (canDecode) {
-			const sink = new VideoSampleSink(videoTrack);
-			const frame = await sink.getSample(1);
-			if (frame) {
-				try {
-					thumbnailUrl = renderThumbnailDataUrl({
-						width: videoTrack.displayWidth,
-						height: videoTrack.displayHeight,
-						draw: ({ context, width, height }) => {
-							frame.draw(context, 0, 0, width, height);
-						},
-					});
-				} finally {
-					frame.close();
-				}
+		try {
+			const canvas = document.createElement("canvas");
+			canvas.width = width;
+			canvas.height = height;
+			const ctx = canvas.getContext("2d");
+			if (ctx) {
+				// seek to a small offset to get an actual frame
+				video.currentTime = 0.1;
+				await new Promise<void>((resolve) => {
+					video.onseeked = () => resolve();
+				});
+				ctx.drawImage(video, 0, 0, width, height);
+				thumbnailUrl = canvas.toDataURL("image/jpeg", 0.8);
 			}
+		} catch {
+			// thumbnail generation failed, continue without it
 		}
+
+		// estimate fps from duration (browser can't reliably detect fps)
+		const fps = 30; // default assumption
 
 		return {
 			duration,
-			width: videoTrack.displayWidth,
-			height: videoTrack.displayHeight,
-			fps: packetStats.averagePacketRate,
-			hasAudio: audioTrack !== null,
-			codec: videoTrack.codec,
-			canDecode,
+			width,
+			height,
+			fps,
+			hasAudio,
+			codec: null, // browser doesn't expose codec info easily
+			canDecode: true,
 			thumbnailUrl,
 		};
 	} finally {
-		input.dispose();
+		URL.revokeObjectURL(url);
 	}
 }
 

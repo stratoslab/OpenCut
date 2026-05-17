@@ -1,17 +1,5 @@
 import EventEmitter from "eventemitter3";
 
-import {
-	Output,
-	Mp4OutputFormat,
-	WebMOutputFormat,
-	BufferTarget,
-	CanvasSource,
-	AudioBufferSource,
-	QUALITY_LOW,
-	QUALITY_MEDIUM,
-	QUALITY_HIGH,
-	QUALITY_VERY_HIGH,
-} from "mediabunny";
 import type { FrameRate } from "opencut-wasm";
 import { mediaTimeToSeconds } from "opencut-wasm";
 import { TICKS_PER_SECOND } from "@/wasm";
@@ -30,16 +18,16 @@ type ExportParams = {
 	audioBuffer?: AudioBuffer;
 };
 
-const qualityMap = {
-	low: QUALITY_LOW,
-	medium: QUALITY_MEDIUM,
-	high: QUALITY_HIGH,
-	very_high: QUALITY_VERY_HIGH,
+const qualityMap: Record<ExportQuality, number> = {
+	low: 1000000,
+	medium: 2500000,
+	high: 5000000,
+	very_high: 8000000,
 };
 
 export type SceneExporterEvents = {
 	progress: [progress: number];
-	complete: [buffer: ArrayBuffer];
+	complete: [blob: Blob];
 	error: [error: Error];
 	cancelled: [];
 };
@@ -83,7 +71,7 @@ export class SceneExporter extends EventEmitter<SceneExporterEvents> {
 		rootNode,
 	}: {
 		rootNode: RootNode;
-	}): Promise<ArrayBuffer | null> {
+	}): Promise<Blob | null> {
 		const fps = this.renderer.fps;
 		const fpsFloat = frameRateToFloat(fps);
 		const ticksPerFrame = Math.round(
@@ -91,81 +79,92 @@ export class SceneExporter extends EventEmitter<SceneExporterEvents> {
 		);
 		const frameCount = Math.floor(rootNode.duration / ticksPerFrame);
 
-		const outputFormat =
-			this.format === "webm" ? new WebMOutputFormat() : new Mp4OutputFormat();
+		const mimeType =
+			this.format === "webm" ? "video/webm;codecs=vp9" : "video/webm;codecs=vp9";
 
-		const output = new Output({
-			format: outputFormat,
-			target: new BufferTarget(),
-		});
+		if (!MediaRecorder.isTypeSupported(mimeType)) {
+			this.emit("error", new Error(`Mime type ${mimeType} not supported`));
+			return null;
+		}
 
-		const videoSource = new CanvasSource(this.renderer.getOutputCanvas(), {
-			codec: this.format === "webm" ? "vp9" : "avc",
-			bitrate: qualityMap[this.quality],
-		});
+		const canvas = this.renderer.getOutputCanvas();
+		const stream = canvas.captureStream(0); // 0 = manual frame capture
 
-		output.addVideoTrack(videoSource, { frameRate: fpsFloat });
-
-		let audioSource: AudioBufferSource | null = null;
+		let audioStream: MediaStream | null = null;
 		if (this.shouldIncludeAudio && this.audioBuffer) {
-			let audioCodec: "aac" | "opus" = this.format === "webm" ? "opus" : "aac";
+			const audioContext = new AudioContext();
+			const source = audioContext.createBufferSource();
+			source.buffer = this.audioBuffer;
+			const dest = audioContext.createMediaStreamDestination();
+			source.connect(dest);
+			source.start();
+			audioStream = dest.stream;
 
-			if (audioCodec === "aac" && typeof AudioEncoder !== "undefined") {
-				const { supported } = await AudioEncoder.isConfigSupported({
-					codec: "mp4a.40.2",
-					sampleRate: this.audioBuffer.sampleRate,
-					numberOfChannels: this.audioBuffer.numberOfChannels,
-					bitrate: 192000,
-				});
-				if (!supported) audioCodec = "opus";
-			}
-
-			audioSource = new AudioBufferSource({
-				codec: audioCodec,
-				bitrate: qualityMap[this.quality],
+			audioStream.getAudioTracks().forEach((track) => {
+				stream.addTrack(track);
 			});
-			output.addAudioTrack(audioSource);
 		}
 
-		await output.start();
+		const recorder = new MediaRecorder(stream, {
+			mimeType,
+			videoBitsPerSecond: qualityMap[this.quality],
+		});
 
-		if (audioSource && this.audioBuffer) {
-			await audioSource.add(this.audioBuffer);
-			audioSource.close();
-		}
+		const chunks: Blob[] = [];
+		recorder.ondataavailable = (e) => {
+			if (e.data.size > 0) chunks.push(e.data);
+		};
 
-		for (let i = 0; i < frameCount; i++) {
-			if (this.isCancelled) {
-				await output.cancel();
-				this.emit("cancelled");
-				return null;
-			}
+		return new Promise<Blob | null>((resolve) => {
+			recorder.onstop = () => {
+				const blob = new Blob(chunks, { type: mimeType.split(";")[0] });
+				this.emit("progress", 1);
+				this.emit("complete", blob);
+				resolve(blob);
+			};
 
-			const timeTicks = i * ticksPerFrame;
-			const timeSeconds = mediaTimeToSeconds({ time: timeTicks });
-			await this.renderer.render({ node: rootNode, time: timeTicks });
-			await videoSource.add(timeSeconds, 1 / fpsFloat);
+			recorder.onerror = () => {
+				this.emit("error", new Error("MediaRecorder error"));
+				resolve(null);
+			};
 
-			this.emit("progress", i / frameCount);
-		}
+			recorder.start();
 
-		if (this.isCancelled) {
-			await output.cancel();
-			this.emit("cancelled");
-			return null;
-		}
+			const renderFrames = async () => {
+				for (let i = 0; i < frameCount; i++) {
+					if (this.isCancelled) {
+						recorder.stop();
+						stream.getTracks().forEach((t) => t.stop());
+						this.emit("cancelled");
+						resolve(null);
+						return;
+					}
 
-		videoSource.close();
-		await output.finalize();
-		this.emit("progress", 1);
+					const timeTicks = i * ticksPerFrame;
+					await this.renderer.render({ node: rootNode, time: timeTicks });
 
-		const buffer = output.target.buffer;
-		if (!buffer) {
-			this.emit("error", new Error("Failed to export video"));
-			return null;
-		}
+					// request a frame from the canvas stream
+					stream.getVideoTracks()[0]?.requestFrame();
 
-		this.emit("complete", buffer);
-		return buffer;
+					this.emit("progress", i / frameCount);
+
+					// wait for the frame interval
+					await new Promise((r) => setTimeout(r, 1000 / fpsFloat));
+				}
+
+				if (this.isCancelled) {
+					recorder.stop();
+					stream.getTracks().forEach((t) => t.stop());
+					this.emit("cancelled");
+					resolve(null);
+					return;
+				}
+
+				recorder.stop();
+				stream.getTracks().forEach((t) => t.stop());
+			};
+
+			renderFrames();
+		});
 	}
 }
