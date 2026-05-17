@@ -12,6 +12,7 @@
     "build:web": "turbo run build --filter=@opencut/web",
     "deploy": "cd apps/web && bunx wrangler deploy",
     "deploy:web": "turbo run deploy --filter=@opencut/web",
+    "postinstall": "node scripts/patch-fdir.mjs",
     "dev:tools": "turbo run dev --filter=@opencut/tools",
     "dev:wasm": "cargo watch -w rust/crates -w rust/wasm/src -s 'wasm-pack build rust/wasm --target bundler --out-dir pkg'",
     "dev:web": "turbo run dev --filter=@opencut/web",
