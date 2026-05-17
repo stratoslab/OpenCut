@@ -32,6 +32,11 @@ export function EditorProvider({ projectId, children }: EditorProviderProps) {
 	}, [isLoading, setLoadingProject]);
 
 	useEffect(() => {
+		if (!projectId) {
+			setIsLoading(false);
+			return;
+		}
+
 		let cancelled = false;
 		const editor = EditorCore.getInstance();
 
