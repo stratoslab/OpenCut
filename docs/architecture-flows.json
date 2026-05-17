@@ -1,6 +1,6 @@
 {
-  "version": "2.0",
-  "description": "OpenCut (StratosLab fork) architecture workflows — Vite + React SPA, fully client-side",
+  "version": "3.0",
+  "description": "OpenCut (StratosLab fork) architecture workflows — Vite + React SPA, fully client-side with AI features suite",
   "nodes": {
     "user": {
       "id": "user",
@@ -292,6 +292,69 @@
       "type": "runtime",
       "icon": "⏺️",
       "description": "Browser-native video encoding for export (replaces mediabunny)"
+    },
+    "ai-agent": {
+      "id": "ai-agent",
+      "label": "AI Agent",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "🤖",
+      "description": "AI Co-Pilot — plan generation, validation, sequential step execution"
+    },
+    "ai-worker": {
+      "id": "ai-worker",
+      "label": "AI Web Worker",
+      "type": "runtime",
+      "icon": "👷",
+      "description": "Web Worker for Gemma 4 model download, loading, and inference (WebGPU)"
+    },
+    "ai-model-store": {
+      "id": "ai-model-store",
+      "label": "AI Model Store",
+      "type": "state",
+      "package": "@opencut/web-vite",
+      "icon": "📦",
+      "description": "Zustand store for AI model lifecycle state (checking, downloading, ready, error)"
+    },
+    "scene-detector": {
+      "id": "scene-detector",
+      "label": "Scene Detector",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "🔍",
+      "description": "Histogram-based scene boundary detection with chi-squared distance"
+    },
+    "frame-extractor": {
+      "id": "frame-extractor",
+      "label": "Frame Extractor",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "🖼️",
+      "description": "Shared video frame extraction service with pooled HTMLVideoElement"
+    },
+    "histogram-calculator": {
+      "id": "histogram-calculator",
+      "label": "Histogram Calculator",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "📊",
+      "description": "24-bin RGB color histogram computation for scene analysis"
+    },
+    "chapter-exporter": {
+      "id": "chapter-exporter",
+      "label": "Chapter Exporter",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "📑",
+      "description": "YouTube chapter formatting and description generation"
+    },
+    "transcription-model-store": {
+      "id": "transcription-model-store",
+      "label": "Transcription Model Store",
+      "type": "state",
+      "package": "@opencut/web-vite",
+      "icon": "📦",
+      "description": "Zustand store for Whisper model lifecycle (idle, downloading, ready, error)"
     }
   },
   "flows": [
@@ -1164,6 +1227,292 @@
           "to": "renderer-manager",
           "action": "Re-render preview",
           "data": "Pasted elements visible"
+        }
+      ]
+    },
+    {
+      "id": "user-loads-ai-model",
+      "label": "Load AI Model (Gemma 4)",
+      "category": "ai",
+      "description": "User initiates download and loading of Gemma 4 model for AI features",
+      "steps": [
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Click 'Load Gemma 4 Model' in AI Co-Pilot panel",
+          "data": "Load signal"
+        },
+        {
+          "from": "react-ui",
+          "to": "ai-model-store",
+          "action": "loadModel()",
+          "data": "Sets stage = 'downloading', progress = 0"
+        },
+        {
+          "from": "ai-model-store",
+          "to": "ai-worker",
+          "action": "Post message: { type: 'load' }",
+          "data": "Load request"
+        },
+        {
+          "from": "ai-worker",
+          "to": "ai-worker",
+          "action": "Import Transformers.js from CDN",
+          "data": "Dynamic import with retry-wrapped fetch (5 retries, exponential backoff)"
+        },
+        {
+          "from": "ai-worker",
+          "to": "ai-worker",
+          "action": "Gemma4ForConditionalGeneration.from_pretrained()",
+          "data": "Model download from HuggingFace (q4f16, WebGPU), progress_callback tracks %"
+        },
+        {
+          "from": "ai-worker",
+          "to": "ai-model-store",
+          "action": "Post progress messages",
+          "data": "{ status: 'progress', progress: N } → updates UI progress bar + ETA"
+        },
+        {
+          "from": "ai-worker",
+          "to": "ai-model-store",
+          "action": "Post { status: 'ready' }",
+          "data": "Model loaded, stage = 'ready'"
+        },
+        {
+          "from": "ai-model-store",
+          "to": "react-ui",
+          "action": "UI transitions to ready state",
+          "data": "Green dot + t/s display, goal input enabled"
+        }
+      ]
+    },
+    {
+      "id": "user-ai-copilot-plan",
+      "label": "AI Co-Pilot — Generate & Execute Plan",
+      "category": "ai",
+      "description": "User describes editing goal, AI generates a plan, user reviews and executes",
+      "steps": [
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Type goal or select quick preset",
+          "data": "Natural language editing goal"
+        },
+        {
+          "from": "react-ui",
+          "to": "ai-agent",
+          "action": "generatePlan(goal, projectContext)",
+          "data": "{ goal, duration, tracks, clips, transcript }"
+        },
+        {
+          "from": "ai-agent",
+          "to": "ai-worker",
+          "action": "Post { type: 'generate', messages }",
+          "data": "Structured prompt with project context + 19 action types"
+        },
+        {
+          "from": "ai-worker",
+          "to": "ai-worker",
+          "action": "session.model.generate()",
+          "data": "WebGPU inference → JSON plan response"
+        },
+        {
+          "from": "ai-worker",
+          "to": "ai-agent",
+          "action": "Stream response tokens",
+          "data": "{ status: 'update', output: text }"
+        },
+        {
+          "from": "ai-agent",
+          "to": "ai-agent",
+          "action": "parsePlanResponse() + validatePlan()",
+          "data": "Parse JSON, verify all 19 action types are valid"
+        },
+        {
+          "from": "ai-agent",
+          "to": "react-ui",
+          "action": "Display plan for review",
+          "data": "Step list with descriptions and action types"
+        },
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Click 'Execute'",
+          "data": "Confirmation"
+        },
+        {
+          "from": "react-ui",
+          "to": "ai-agent",
+          "action": "executePlan(plan, callbacks)",
+          "data": "Sequential step execution"
+        },
+        {
+          "from": "ai-agent",
+          "to": "ai-agent",
+          "action": "Execute each step via CommandManager",
+          "data": "Each step mapped to existing commands (single undo group)"
+        },
+        {
+          "from": "ai-agent",
+          "to": "react-ui",
+          "action": "Progress updates per step",
+          "data": "Step N of M, progress bar"
+        }
+      ]
+    },
+    {
+      "id": "user-detect-scenes",
+      "label": "Scene Detection",
+      "category": "ai",
+      "description": "User runs scene detection on a video clip to find scene boundaries",
+      "steps": [
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Select video, configure interval/threshold, click 'Detect Scenes'",
+          "data": "{ videoFile, intervalSec, threshold }"
+        },
+        {
+          "from": "react-ui",
+          "to": "scene-detector",
+          "action": "detectScenes(file, options)",
+          "data": "Video file + detection parameters"
+        },
+        {
+          "from": "scene-detector",
+          "to": "frame-extractor",
+          "action": "extractFrame(file, time) at each interval",
+          "data": "HTMLVideoElement pool (max 2) seeks and captures frames"
+        },
+        {
+          "from": "frame-extractor",
+          "to": "scene-detector",
+          "action": "Return ImageData at timestamp",
+          "data": "Pixel data from OffscreenCanvas"
+        },
+        {
+          "from": "scene-detector",
+          "to": "histogram-calculator",
+          "action": "computeHistogram(imageData)",
+          "data": "24-bin RGB histogram (8 bins per channel)"
+        },
+        {
+          "from": "histogram-calculator",
+          "to": "scene-detector",
+          "action": "Return Float64Array histogram",
+          "data": "24-element frequency array"
+        },
+        {
+          "from": "scene-detector",
+          "to": "scene-detector",
+          "action": "chiSquaredDistance(prevHistogram, histogram)",
+          "data": "Compare consecutive histograms, flag peaks above threshold"
+        },
+        {
+          "from": "scene-detector",
+          "to": "react-ui",
+          "action": "Return SceneChange[] with thumbnails",
+          "data": "[{ timestamp, chiSquaredDistance, beforeThumbnail, afterThumbnail, type }]"
+        },
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Click 'Add markers'",
+          "data": "Create timeline bookmarks at detected boundaries"
+        },
+        {
+          "from": "react-ui",
+          "to": "scenes-manager",
+          "action": "Add bookmarks to active scene",
+          "data": "Bookmark[] with timestamps and labels"
+        }
+      ]
+    },
+    {
+      "id": "user-export-youtube-chapters",
+      "label": "Export YouTube Chapters",
+      "category": "ai",
+      "description": "User formats and exports chapter markers for YouTube video descriptions",
+      "steps": [
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Open YouTube Export panel, edit chapters",
+          "data": "Chapter list with timestamps and titles"
+        },
+        {
+          "from": "react-ui",
+          "to": "chapter-exporter",
+          "action": "formatChapters(chapters)",
+          "data": "Validate: first chapter at 0:00, monotonic timestamps"
+        },
+        {
+          "from": "chapter-exporter",
+          "to": "react-ui",
+          "action": "Return formatted text",
+          "data": "'0:00 Intro\\n1:05 Main Content\\n3:00 Conclusion'"
+        },
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Click 'Copy to Clipboard'",
+          "data": "Copy signal"
+        },
+        {
+          "from": "react-ui",
+          "to": "browser",
+          "action": "navigator.clipboard.writeText()",
+          "data": "Formatted chapter text"
+        }
+      ]
+    },
+    {
+      "id": "user-load-transcription-model",
+      "label": "Load Transcription Model (Whisper)",
+      "category": "ai",
+      "description": "User explicitly loads Whisper model before transcription with visible progress",
+      "steps": [
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Select model (Tiny/Small/Medium/Large v3 Turbo), click 'Load Model'",
+          "data": "TranscriptionModelId"
+        },
+        {
+          "from": "react-ui",
+          "to": "transcription-model-store",
+          "action": "loadModel()",
+          "data": "Sets stage = 'downloading', progress = 0"
+        },
+        {
+          "from": "transcription-model-store",
+          "to": "web-worker",
+          "action": "Post message: { type: 'init', modelId }",
+          "data": "HuggingFace model ID (e.g., 'onnx-community/whisper-small')"
+        },
+        {
+          "from": "web-worker",
+          "to": "web-worker",
+          "action": "pipeline('automatic-speech-recognition', modelId)",
+          "data": "Transformers.js downloads model (q4 quantization, device: 'auto')"
+        },
+        {
+          "from": "web-worker",
+          "to": "transcription-model-store",
+          "action": "Post init-progress messages",
+          "data": "{ type: 'init-progress', progress: N } → updates UI progress bar + ETA"
+        },
+        {
+          "from": "web-worker",
+          "to": "transcription-model-store",
+          "action": "Post { type: 'init-complete' }",
+          "data": "Model loaded, stage = 'ready'"
+        },
+        {
+          "from": "transcription-model-store",
+          "to": "react-ui",
+          "action": "UI transitions to ready state",
+          "data": "Language selector unlocked, 'Generate transcript' button enabled"
         }
       ]
     }
