@@ -62,7 +62,7 @@ export const allChangelogs: ChangelogEntry[] = Object.entries(entries)
 			slug,
 		};
 	})
-	.filter((entry) => entry.published !== false)
+	.filter((entry): entry is ChangelogEntry => entry.published !== false && entry.version != null)
 	.sort((a, b) => b.version.localeCompare(a.version, undefined, { numeric: true }));
 
 type ChangeSectionConfig = {
