@@ -19,11 +19,6 @@
     "lint:web": "eslint apps/web-vite/src --ext .ts,.tsx",
     "lint:web:fix": "eslint apps/web-vite/src --ext .ts,.tsx --fix",
     "preview:web": "cd apps/web-vite && bunx vite preview",
-    "format:web": "prettier apps/web/src/services/renderer --write",
-    "generate:fonts": "npx tsx apps/web/scripts/generate-font-sprites.ts",
-    "lint:web": "eslint apps/web/src --ext .ts,.tsx",
-    "lint:web:fix": "eslint apps/web/src --ext .ts,.tsx --fix",
-    "preview:web": "turbo run preview --filter=@opencut/web",
     "publish:wasm": "bun run build:wasm && npm publish rust/wasm/pkg --access public",
     "start:tools": "turbo run start --filter=@opencut/tools",
     "test": "bun test"
