@@ -36,8 +36,24 @@ export async function readVideoFile({
 		const width = video.videoWidth;
 		const height = video.videoHeight;
 
-		// check for audio tracks
-		const hasAudio = (video as HTMLVideoElement & { audioTracks?: { length: number } }).audioTracks?.length ? true : false;
+		// Check for audio tracks using multiple methods for cross-browser support.
+		// We default to true because false negatives (losing user audio) are worse
+		// than false positives (attempting to decode silent audio).
+		let hasAudio = true;
+
+		// Method 1: audioTracks API (Safari, some Chromium versions)
+		const audioTracks = (video as HTMLVideoElement & { audioTracks?: { length: number } }).audioTracks;
+		if (audioTracks && audioTracks.length === 0) {
+			hasAudio = false;
+		}
+
+		// Method 2: mozHasAudio (Firefox)
+		if (hasAudio && 'mozHasAudio' in video) {
+			const mozVideo = video as HTMLVideoElement & { mozHasAudio?: boolean };
+			if (mozVideo.mozHasAudio === false) {
+				hasAudio = false;
+			}
+		}
 
 		// generate thumbnail from first frame
 		let thumbnailUrl: string | null = null;
