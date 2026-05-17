@@ -1,6 +1,6 @@
 {
-  "version": "1.0",
-  "description": "OpenCut architecture workflows — interactive flow documentation",
+  "version": "2.0",
+  "description": "OpenCut (StratosLab fork) architecture workflows — Vite + React SPA, fully client-side",
   "nodes": {
     "user": {
       "id": "user",
@@ -20,23 +20,23 @@
       "id": "react-ui",
       "label": "React UI",
       "type": "component",
-      "package": "@opencut/web",
+      "package": "@opencut/web-vite",
       "icon": "⚛️",
-      "description": "React components: panels, timeline, preview, editor"
+      "description": "React components: panels, timeline, preview, editor (Vite SPA)"
     },
     "action-registry": {
       "id": "action-registry",
       "label": "Action Registry",
       "type": "component",
-      "package": "@opencut/web",
+      "package": "@opencut/web-vite",
       "icon": "⌨️",
-      "description": "Keyboard shortcuts → action invocation (22 actions)"
+      "description": "Keyboard shortcuts → action invocation (22+ actions)"
     },
     "editor-core": {
       "id": "editor-core",
       "label": "EditorCore",
       "type": "singleton",
-      "package": "@opencut/web",
+      "package": "@opencut/web-vite",
       "icon": "🎯",
       "description": "Central orchestrator — all managers instantiated here"
     },
@@ -44,7 +44,7 @@
       "id": "command-manager",
       "label": "CommandManager",
       "type": "manager",
-      "package": "@opencut/web",
+      "package": "@opencut/web-vite",
       "icon": "📋",
       "description": "Undo/redo history, command execution, ripple adjustments"
     },
@@ -52,15 +52,15 @@
       "id": "timeline-manager",
       "label": "TimelineManager",
       "type": "manager",
-      "package": "@opencut/web",
+      "package": "@opencut/web-vite",
       "icon": "🎬",
-      "description": "Track/element CRUD, keyframes, effects, masks"
+      "description": "Track/element CRUD, keyframes, effects, masks, transitions"
     },
     "playback-manager": {
       "id": "playback-manager",
       "label": "PlaybackManager",
       "type": "manager",
-      "package": "@opencut/web",
+      "package": "@opencut/web-vite",
       "icon": "▶️",
       "description": "Play/pause/seek, rAF loop, time updates"
     },
@@ -68,7 +68,7 @@
       "id": "audio-manager",
       "label": "AudioManager",
       "type": "manager",
-      "package": "@opencut/web",
+      "package": "@opencut/web-vite",
       "icon": "🔊",
       "description": "Web Audio API playback, clip scheduling, retime"
     },
@@ -76,7 +76,7 @@
       "id": "renderer-manager",
       "label": "RendererManager",
       "type": "manager",
-      "package": "@opencut/web",
+      "package": "@opencut/web-vite",
       "icon": "🖼️",
       "description": "Canvas rendering, snapshots, export pipeline"
     },
@@ -84,7 +84,7 @@
       "id": "save-manager",
       "label": "SaveManager",
       "type": "manager",
-      "package": "@opencut/web",
+      "package": "@opencut/web-vite",
       "icon": "💾",
       "description": "Debounced auto-save (800ms)"
     },
@@ -92,7 +92,7 @@
       "id": "media-manager",
       "label": "MediaManager",
       "type": "manager",
-      "package": "@opencut/web",
+      "package": "@opencut/web-vite",
       "icon": "📁",
       "description": "Media asset add/remove, cache management"
     },
@@ -100,7 +100,7 @@
       "id": "scenes-manager",
       "label": "ScenesManager",
       "type": "manager",
-      "package": "@opencut/web",
+      "package": "@opencut/web-vite",
       "icon": "🎞️",
       "description": "Scene CRUD, bookmarks, track updates"
     },
@@ -108,7 +108,7 @@
       "id": "selection-manager",
       "label": "SelectionManager",
       "type": "manager",
-      "package": "@opencut/web",
+      "package": "@opencut/web-vite",
       "icon": "🖱️",
       "description": "Element/keyframe/mask-point selection state"
     },
@@ -116,7 +116,7 @@
       "id": "clipboard-manager",
       "label": "ClipboardManager",
       "type": "manager",
-      "package": "@opencut/web",
+      "package": "@opencut/web-vite",
       "icon": "📎",
       "description": "Copy/paste timeline elements"
     },
@@ -144,11 +144,19 @@
       "icon": "🎭",
       "description": "Mask feathering via Gaussian blur"
     },
+    "transitions-pipeline": {
+      "id": "transitions-pipeline",
+      "label": "Transitions Pipeline",
+      "type": "component",
+      "package": "@opencut/web-vite",
+      "icon": "🔄",
+      "description": "Canvas 2D transition rendering (crossfade, slide, wipe, zoom)"
+    },
     "storage-service": {
       "id": "storage-service",
       "label": "StorageService",
       "type": "service",
-      "package": "@opencut/web",
+      "package": "@opencut/web-vite",
       "icon": "🗄️",
       "description": "IndexedDB (metadata) + OPFS (media binaries)"
     },
@@ -156,7 +164,7 @@
       "id": "transcription-service",
       "label": "TranscriptionService",
       "type": "service",
-      "package": "@opencut/web",
+      "package": "@opencut/web-vite",
       "icon": "🎙️",
       "description": "Whisper ONNX transcription via Web Worker"
     },
@@ -164,7 +172,7 @@
       "id": "transcript-editor",
       "label": "TranscriptEditor",
       "type": "component",
-      "package": "@opencut/web",
+      "package": "@opencut/web-vite",
       "icon": "📝",
       "description": "Word-level transcript UI with timeline sync"
     },
@@ -172,7 +180,7 @@
       "id": "text-edit-engine",
       "label": "TextEditEngine",
       "type": "engine",
-      "package": "@opencut/web",
+      "package": "@opencut/web-vite",
       "icon": "✂️",
       "description": "Deterministic text → timestamp → timeline cuts"
     },
@@ -180,7 +188,7 @@
       "id": "gemma-chat",
       "label": "Gemma Chat",
       "type": "component",
-      "package": "@opencut/web",
+      "package": "@opencut/web-vite",
       "icon": "🤖",
       "description": "Local Gemma LLM conversational assistant (WebGPU)"
     },
@@ -188,47 +196,25 @@
       "id": "export-pipeline",
       "label": "Export Pipeline",
       "type": "service",
-      "package": "@opencut/web",
+      "package": "@opencut/web-vite",
       "icon": "📤",
-      "description": "mediabunny MP4/WebM export with frame-by-frame render"
+      "description": "Browser-native MP4/WebM export (MediaRecorder + Canvas capture)"
     },
     "scene-graph": {
       "id": "scene-graph",
       "label": "Scene Graph",
       "type": "service",
-      "package": "@opencut/web",
+      "package": "@opencut/web-vite",
       "icon": "🌳",
       "description": "RootNode → VideoNode/TextNode/ImageNode tree"
     },
-    "nextjs-server": {
-      "id": "nextjs-server",
-      "label": "Next.js Server",
+    "sounds-proxy-worker": {
+      "id": "sounds-proxy-worker",
+      "label": "Sounds Proxy Worker",
       "type": "server",
-      "package": "@opencut/web",
-      "icon": "🖥️",
-      "description": "Next.js 16 API routes, server actions, SSR"
-    },
-    "better-auth": {
-      "id": "better-auth",
-      "label": "BetterAuth",
-      "type": "service",
-      "package": "@opencut/web",
-      "icon": "🔐",
-      "description": "Email/password auth with Drizzle ORM + PostgreSQL"
-    },
-    "postgresql": {
-      "id": "postgresql",
-      "label": "PostgreSQL",
-      "type": "external",
-      "icon": "🐘",
-      "description": "Users, sessions, accounts, verifications, feedback"
-    },
-    "redis": {
-      "id": "redis",
-      "label": "Redis",
-      "type": "external",
-      "icon": "🔴",
-      "description": "Rate limiting (Upstash compatible)"
+      "package": "Cloudflare Worker",
+      "icon": "🔌",
+      "description": "Stateless Worker proxying Freesound API (hides API key)"
     },
     "freesound-api": {
       "id": "freesound-api",
@@ -237,19 +223,19 @@
       "icon": "🎵",
       "description": "Audio asset search and download"
     },
-    "cloudflare": {
-      "id": "cloudflare",
-      "label": "Cloudflare Workers",
+    "cloudflare-pages": {
+      "id": "cloudflare-pages",
+      "label": "Cloudflare Pages",
       "type": "deploy",
       "icon": "☁️",
-      "description": "Production deployment via @opennextjs/cloudflare"
+      "description": "Production deployment — static files, unlimited size"
     },
     "github-actions": {
       "id": "github-actions",
       "label": "GitHub Actions",
       "type": "deploy",
       "icon": "🔄",
-      "description": "CI: WASM build → Bun install → Next.js build"
+      "description": "CI: WASM build → Bun install → Vite build"
     },
     "todesktop": {
       "id": "todesktop",
@@ -292,6 +278,20 @@
       "type": "runtime",
       "icon": "🔈",
       "description": "Browser audio API for playback scheduling"
+    },
+    "video-element": {
+      "id": "video-element",
+      "label": "HTMLVideoElement",
+      "type": "runtime",
+      "icon": "🎬",
+      "description": "Native video playback for frame extraction (replaces mediabunny)"
+    },
+    "media-recorder": {
+      "id": "media-recorder",
+      "label": "MediaRecorder API",
+      "type": "runtime",
+      "icon": "⏺️",
+      "description": "Browser-native video encoding for export (replaces mediabunny)"
     }
   },
   "flows": [
@@ -705,15 +705,21 @@
         },
         {
           "from": "export-pipeline",
-          "to": "export-pipeline",
-          "action": "mediabunny encode",
-          "data": "VP9 (WebM) or AVC (MP4) + AAC/Opus audio"
+          "to": "video-element",
+          "action": "captureStream() from canvas",
+          "data": "Canvas video stream + audio track"
+        },
+        {
+          "from": "export-pipeline",
+          "to": "media-recorder",
+          "action": "MediaRecorder.encode()",
+          "data": "VP9 (WebM) or H.264 (MP4) + Opus/AAC audio"
         },
         {
           "from": "export-pipeline",
           "to": "user",
           "action": "Download file",
-          "data": "ArrayBuffer → browser download"
+          "data": "Blob → browser download"
         }
       ]
     },
@@ -774,60 +780,10 @@
       ]
     },
     {
-      "id": "user-signs-in",
-      "label": "Sign In / Sign Up",
-      "category": "auth",
-      "description": "User authenticates with email/password",
-      "steps": [
-        {
-          "from": "user",
-          "to": "react-ui",
-          "action": "Enter email/password on auth form",
-          "data": "{ email, password }"
-        },
-        {
-          "from": "react-ui",
-          "to": "better-auth",
-          "action": "signIn() / signUp()",
-          "data": "Credentials via better-auth/react client"
-        },
-        {
-          "from": "better-auth",
-          "to": "nextjs-server",
-          "action": "POST /api/auth/[...all]",
-          "data": "Auth request routed to BetterAuth handler"
-        },
-        {
-          "from": "nextjs-server",
-          "to": "postgresql",
-          "action": "Query users/sessions table",
-          "data": "Drizzle ORM: verify credentials, create session"
-        },
-        {
-          "from": "nextjs-server",
-          "to": "redis",
-          "action": "Check rate limit",
-          "data": "Upstash Redis: increment counter, check threshold"
-        },
-        {
-          "from": "nextjs-server",
-          "to": "better-auth",
-          "action": "Return session token",
-          "data": "Set-cookie: session token"
-        },
-        {
-          "from": "better-auth",
-          "to": "react-ui",
-          "action": "Session established",
-          "data": "useSession() returns user data"
-        }
-      ]
-    },
-    {
       "id": "user-searches-sounds",
       "label": "Search Audio Assets",
       "category": "assets",
-      "description": "User searches for audio assets via Freesound API",
+      "description": "User searches for audio assets via Freesound API (proxied through stateless Worker)",
       "steps": [
         {
           "from": "user",
@@ -837,30 +793,24 @@
         },
         {
           "from": "react-ui",
-          "to": "nextjs-server",
+          "to": "sounds-proxy-worker",
           "action": "GET /api/sounds/search",
           "data": "{ query, filters }"
         },
         {
-          "from": "nextjs-server",
-          "to": "redis",
-          "action": "Check rate limit",
-          "data": "Upstash Redis: prevent API abuse"
-        },
-        {
-          "from": "nextjs-server",
+          "from": "sounds-proxy-worker",
           "to": "freesound-api",
-          "action": "Proxy request",
+          "action": "Proxy request with API key",
           "data": "Freesound API key + search params"
         },
         {
           "from": "freesound-api",
-          "to": "nextjs-server",
+          "to": "sounds-proxy-worker",
           "action": "Return search results",
           "data": "Audio metadata + preview URLs"
         },
         {
-          "from": "nextjs-server",
+          "from": "sounds-proxy-worker",
           "to": "react-ui",
           "action": "Return transformed results",
           "data": "Standardized sound objects for UI display"
@@ -918,8 +868,8 @@
         {
           "from": "github-actions",
           "to": "github-actions",
-          "action": "bun run build",
-          "data": "Next.js build → .next/"
+          "action": "cd apps/web-vite && bun run build",
+          "data": "Vite build → dist/ (static files)"
         },
         {
           "from": "github-actions",
@@ -931,9 +881,9 @@
     },
     {
       "id": "deploy-cloudflare",
-      "label": "Deploy to Cloudflare",
+      "label": "Deploy to Cloudflare Pages",
       "category": "deployment",
-      "description": "Deploy Next.js app to Cloudflare Workers",
+      "description": "Deploy Vite SPA to Cloudflare Pages (static files)",
       "steps": [
         {
           "from": "user",
@@ -944,32 +894,20 @@
         {
           "from": "github-actions",
           "to": "github-actions",
-          "action": "Build WASM + Next.js",
-          "data": "Full build pipeline"
+          "action": "Build WASM + Vite SPA",
+          "data": "Full build pipeline → apps/web-vite/dist/"
         },
         {
           "from": "github-actions",
-          "to": "cloudflare",
-          "action": "wrangler deploy",
-          "data": ".open-next/worker.js + .open-next/assets"
+          "to": "cloudflare-pages",
+          "action": "Deploy static files",
+          "data": "dist/ → Cloudflare Pages CDN"
         },
         {
-          "from": "cloudflare",
-          "to": "cloudflare",
-          "action": "Next.js on Workers via @opennextjs/cloudflare",
-          "data": "nodejs_compat compatibility flag"
-        },
-        {
-          "from": "cloudflare",
-          "to": "postgresql",
-          "action": "Connect to database",
-          "data": "DATABASE_URL env var"
-        },
-        {
-          "from": "cloudflare",
-          "to": "redis",
-          "action": "Connect to Redis",
-          "data": "UPSTASH_REDIS_REST_URL env var"
+          "from": "cloudflare-pages",
+          "to": "cloudflare-pages",
+          "action": "Serve via global CDN",
+          "data": "index.html + JS/CSS chunks + WASM binaries"
         }
       ]
     },
@@ -994,7 +932,7 @@
         {
           "from": "github-actions",
           "to": "github-actions",
-          "action": "Build WASM + Next.js",
+          "action": "Build WASM + Vite SPA",
           "data": "Full build pipeline"
         },
         {
