@@ -1,7 +1,7 @@
-import type { NextConfig } from "next";
 import { withBotId } from "botid/next/config";
 
-const nextConfig: NextConfig = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const nextConfig: any = {
 	compiler: {
 		removeConsole: process.env.NODE_ENV === "production",
 	},
@@ -50,7 +50,7 @@ const nextConfig: NextConfig = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-let config: NextConfig = withBotId(nextConfig as any);
+let config: any = withBotId(nextConfig as any);
 
 // Only apply content-collections when not building for Cloudflare Workers
 // (content-collections uses dynamic require which breaks opennext bundling)
