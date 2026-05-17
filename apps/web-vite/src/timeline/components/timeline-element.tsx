@@ -553,6 +553,7 @@ function ElementInner({
 	isDropTarget?: boolean;
 	elementWidth: number;
 }) {
+	const editor = useEditor();
 	const visibleElement = displayElement ?? element;
 	const isReducedOpacity =
 		(canElementBeHidden(visibleElement) && visibleElement.hidden) ||
@@ -566,7 +567,6 @@ function ElementInner({
 
 	const handleTransitionChange = (transition: Transition | undefined) => {
 		if (!videoImageElement) return;
-		const editor = useEditor();
 		editor.command.execute({
 			command: new UpdateElementsCommand({
 				updates: [

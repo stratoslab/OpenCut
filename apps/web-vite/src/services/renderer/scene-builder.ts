@@ -121,6 +121,8 @@ function buildTrackNodes({
 								duration: nextElement.duration,
 								trimStart: nextElement.trimStart,
 								trimEnd: nextElement.trimEnd,
+								file: nextMedia.file,
+								mediaId: nextMedia.id,
 							};
 						}
 					}

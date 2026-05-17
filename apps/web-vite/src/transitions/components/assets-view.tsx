@@ -20,14 +20,16 @@ const DURATIONS = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0];
 
 export function TransitionsView() {
 	const editor = useEditor();
+	const selectedElements = useEditor((e) => e.selection.getSelectedElements());
+	const scene = editor.scenes.getActiveScene();
+	useEditor((e) => e.scenes.getActiveScene());
+
 	const [selectedDuration, setSelectedDuration] = useState(0.5);
 	const [hoveredType, setHoveredType] = useState<TransitionType | null>(null);
 
-	const selectedElements = editor.selection.getSelectedElements();
 	const hasSelection = selectedElements.length === 1;
 	const selectedElement = hasSelection ? selectedElements[0] : null;
 
-	const scene = editor.scenes.getActiveScene();
 	const track = selectedElement
 		? scene.tracks.overlay.find((t) => t.id === selectedElement.trackId) ??
 		  (scene.tracks.main.id === selectedElement.trackId ? scene.tracks.main : null)

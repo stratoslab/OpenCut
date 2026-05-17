@@ -55,7 +55,7 @@ function renderCrossfade(
 	drawIncoming: () => void,
 ) {
 	ctx.save();
-	ctx.globalAlpha = 1;
+	ctx.globalAlpha = 1 - t;
 	drawOutgoing();
 	ctx.globalAlpha = t;
 	drawIncoming();
@@ -83,25 +83,25 @@ function renderSlide(
 
 	switch (direction) {
 		case "left":
-			offsetX = width * (1 - easeT);
+			offsetX = -width * (1 - easeT);
 			ctx.beginPath();
 			ctx.rect(0, 0, width * easeT, height);
 			ctx.clip();
 			break;
 		case "right":
-			offsetX = -width * (1 - easeT);
+			offsetX = width * (1 - easeT);
 			ctx.beginPath();
 			ctx.rect(width * (1 - easeT), 0, width * easeT, height);
 			ctx.clip();
 			break;
 		case "up":
-			offsetY = height * (1 - easeT);
+			offsetY = -height * (1 - easeT);
 			ctx.beginPath();
 			ctx.rect(0, 0, width, height * easeT);
 			ctx.clip();
 			break;
 		case "down":
-			offsetY = -height * (1 - easeT);
+			offsetY = height * (1 - easeT);
 			ctx.beginPath();
 			ctx.rect(0, height * (1 - easeT), width, height * easeT);
 			ctx.clip();
@@ -132,11 +132,11 @@ function renderWipe(
 	ctx.save();
 	if (direction === "left") {
 		ctx.beginPath();
-		ctx.rect(width * (1 - easeT), 0, width * easeT, height);
+		ctx.rect(0, 0, width * easeT, height);
 		ctx.clip();
 	} else {
 		ctx.beginPath();
-		ctx.rect(0, 0, width * easeT, height);
+		ctx.rect(width * (1 - easeT), 0, width * easeT, height);
 		ctx.clip();
 	}
 

@@ -11,6 +11,8 @@ export interface NextClipInfo {
 	duration: number;
 	trimStart: number;
 	trimEnd: number;
+	file?: File;
+	mediaId?: string;
 }
 
 export interface ImageNodeParams extends VisualNodeParams {

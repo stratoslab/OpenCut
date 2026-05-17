@@ -314,15 +314,39 @@ async function resolveImageNode({
 			const nextClipTime = context.time - transitionStart;
 
 			try {
-				const nextSource = await loadImageSource({
-					url: nextClip.url,
-					maxSourceSize: node.params.maxSourceSize,
-				});
+				if (nextClip.file && nextClip.mediaId) {
+					const nextSourceTimeTicks =
+						nextClip.trimStart +
+						getSourceTimeAtClipTime({
+							clipTime: Math.max(0, nextClipTime),
+							retime: undefined,
+						});
 
-				result.transitionFrame = nextSource.source;
-				result.transitionProgress = Math.max(0, Math.min(1, progress));
-				result.transitionWidth = nextSource.width;
-				result.transitionHeight = nextSource.height;
+					const nextFrame = await videoCache.getFrameAt({
+						mediaId: nextClip.mediaId,
+						file: nextClip.file,
+						time: mediaTimeToSeconds({
+							time: roundMediaTime({ time: nextSourceTimeTicks }),
+						}),
+					});
+
+					if (nextFrame) {
+						result.transitionFrame = nextFrame;
+						result.transitionProgress = Math.max(0, Math.min(1, progress));
+						result.transitionWidth = nextFrame.width;
+						result.transitionHeight = nextFrame.height;
+					}
+				} else {
+					const nextSource = await loadImageSource({
+						url: nextClip.url,
+						maxSourceSize: node.params.maxSourceSize,
+					});
+
+					result.transitionFrame = nextSource.source;
+					result.transitionProgress = Math.max(0, Math.min(1, progress));
+					result.transitionWidth = nextSource.width;
+					result.transitionHeight = nextSource.height;
+				}
 			} catch {
 				// If next clip fails to load, continue without transition
 			}
