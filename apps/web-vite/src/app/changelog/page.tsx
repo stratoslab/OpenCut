@@ -21,7 +21,7 @@ export default function ChangelogPage() {
 				<header className="flex flex-col gap-4">
 					<h1 className="text-4xl font-bold tracking-tight">Changelog</h1>
 					<p className="text-muted-foreground">
-						Every update, improvement, and fix to OpenCut — documented.
+						Every update, improvement, and fix to StratosCut — documented.
 					</p>
 				</header>
 				<Separator />

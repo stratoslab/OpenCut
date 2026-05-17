@@ -17,7 +17,6 @@ type CategoryLinks = Record<Category, FooterLink[]>;
 
 const links: CategoryLinks = {
 	resources: [
-		{ label: "Roadmap", href: "/roadmap" },
 		{ label: "Changelog", href: "/changelog" },
 		{ label: "Blog", href: "/blog" },
 		{ label: "Privacy", href: "/privacy" },
@@ -25,7 +24,6 @@ const links: CategoryLinks = {
 	],
 	company: [
 		{ label: "Contributors", href: "/contributors" },
-		{ label: "Sponsors", href: "/sponsors" },
 		{ label: "Brand", href: "/brand" },
 		{ label: "About", href: `${SOCIAL_LINKS.github}/blob/main/README.md` },
 	],
@@ -41,12 +39,12 @@ export function Footer() {
 						<div className="mb-4 flex items-center justify-start gap-2">
 							<Image
 								src={DEFAULT_LOGO_URL}
-								alt="OpenCut"
+								alt="StratosCut"
 								width={24}
 								height={24}
 								className="invert dark:invert-0"
 							/>
-							<span className="text-lg font-bold">OpenCut</span>
+							<span className="text-lg font-bold">StratosCut</span>
 						</div>
 						<p className="text-muted-foreground mb-5 text-sm md:text-left">
 							The privacy-first video editor that feels simple to use.
@@ -117,7 +115,7 @@ export function Footer() {
 				<div className="flex flex-col items-start justify-between gap-4 pt-2 md:flex-row">
 					<div className="text-muted-foreground flex items-center gap-4 text-sm">
 						<span>
-							© {new Date().getFullYear()} OpenCut, All Rights Reserved
+							© {new Date().getFullYear()} StratosCut, All Rights Reserved
 						</span>
 					</div>
 				</div>

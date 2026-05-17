@@ -1,7 +1,7 @@
-export const SITE_URL = "https://opencut.app";
+export const SITE_URL = "https://stratoscut.com";
 
 export const SITE_INFO = {
-	title: "OpenCut",
+	title: "StratosCut",
 	description:
 		"A simple but powerful video editor that gets the job done. In your browser.",
 	url: SITE_URL,
@@ -10,4 +10,4 @@ export const SITE_INFO = {
 	favicon: "/favicon.ico",
 };
 
-export const DEFAULT_LOGO_URL = "/logos/opencut/svg/logo.svg";
+export const DEFAULT_LOGO_URL = "/logos/stratoscut/svg/logo.svg";

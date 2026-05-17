@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1809 400" fill="none">
+  <!-- Symbol -->
+  <path d="M60 180C60 140 100 100 160 100C220 100 260 140 260 180" stroke="white" stroke-width="24" stroke-linecap="round"/>
+  <path d="M90 220C90 190 120 160 160 160C200 160 230 190 230 220" stroke="white" stroke-width="20" stroke-linecap="round"/>
+  <circle cx="120" cy="260" r="20" stroke="white" stroke-width="12" fill="none"/>
+  <circle cx="200" cy="260" r="20" stroke="white" stroke-width="12" fill="none"/>
+  <path d="M135 245L160 220L185 245" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Wordmark: StratosCut -->
+  <text x="320" y="250" font-family="system-ui, -apple-system, sans-serif" font-size="180" font-weight="700" fill="white">Stratos<tspan font-weight="300">Cut</tspan></text>
+</svg>

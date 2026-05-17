@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none">
+  <!-- Light version - dark on transparent -->
+  <path d="M100 180C100 140 140 100 200 100C260 100 300 140 300 180" stroke="black" stroke-width="24" stroke-linecap="round"/>
+  <path d="M130 220C130 190 160 160 200 160C240 160 270 190 270 220" stroke="black" stroke-width="20" stroke-linecap="round"/>
+  <circle cx="160" cy="260" r="20" stroke="black" stroke-width="12" fill="none"/>
+  <circle cx="240" cy="260" r="20" stroke="black" stroke-width="12" fill="none"/>
+  <path d="M175 245L200 220L225 245" stroke="black" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -10,13 +10,13 @@ import { Separator } from "@/components/ui/separator";
 import { SOCIAL_LINKS } from "@/site/social";
 
 export const metadata: Metadata = {
-	title: "Privacy Policy - OpenCut",
+	title: "Privacy Policy - StratosCut",
 	description:
-		"Learn how OpenCut handles your data and privacy. Our commitment to protecting your information while you edit videos.",
+		"Learn how StratosCut handles your data and privacy. Our commitment to protecting your information while you edit videos.",
 	openGraph: {
-		title: "Privacy Policy - OpenCut",
+		title: "Privacy Policy - StratosCut",
 		description:
-			"Learn how OpenCut handles your data and privacy. Our commitment to protecting your information while you edit videos.",
+			"Learn how StratosCut handles your data and privacy. Our commitment to protecting your information while you edit videos.",
 		type: "website",
 	},
 };
@@ -49,7 +49,7 @@ export default function PrivacyPage() {
 								too - nothing is uploaded
 							</li>
 							<li>
-								OpenCut does not currently require an account or login
+								StratosCut does not currently require an account or login
 							</li>
 							<li>Project data stays on your device, not our servers</li>
 							<li>
@@ -64,10 +64,10 @@ export default function PrivacyPage() {
 						</ol>
 						<p className="mt-4">
 							Questions? Email us at{" "}
-							<a  href="mailto:oss@opencut.app"
+							<a  href="mailto:oss@stratoscut.com"
 								className="text-primary hover:underline"
 							>
-								oss@opencut.app
+								oss@stratoscut.com
 							</a>
 						</p>
 					</AccordionContent>
@@ -90,7 +90,7 @@ export default function PrivacyPage() {
 			<section className="flex flex-col gap-3">
 				<h2 className="text-2xl font-semibold">Accounts & Authentication</h2>
 				<p>
-					OpenCut does not currently offer user accounts, login, or Google
+					StratosCut does not currently offer user accounts, login, or Google
 					sign-in.
 				</p>
 				<p>
@@ -140,10 +140,10 @@ export default function PrivacyPage() {
 
 			<section className="flex flex-col gap-3">
 				<h2 className="text-2xl font-semibold">Third-Party Services</h2>
-				<p>OpenCut integrates with these services:</p>
+				<p>StratosCut integrates with these services:</p>
 				<ul className="list-disc space-y-2 pl-6">
 					<li>
-						<strong>Vercel:</strong> For hosting and content delivery
+						<strong>Cloudflare:</strong> For hosting and content delivery
 					</li>
 					<li>
 						<strong>Databuddy:</strong> For anonymized analytics
@@ -155,7 +155,7 @@ export default function PrivacyPage() {
 				<h2 className="text-2xl font-semibold">Your Rights</h2>
 				<p>You have complete control over your data:</p>
 				<ul className="list-disc space-y-2 pl-6">
-					<li>No account is required to use OpenCut today</li>
+					<li>No account is required to use StratosCut today</li>
 					<li>Clear local storage to remove all saved projects</li>
 					<li>Contact us with any privacy concerns</li>
 				</ul>
@@ -164,7 +164,7 @@ export default function PrivacyPage() {
 			<section className="flex flex-col gap-3">
 				<h2 className="text-2xl font-semibold">Open Source Transparency</h2>
 				<p>
-					OpenCut is completely open source. You can review our code, see
+					StratosCut is completely open source. You can review our code, see
 					exactly how we handle data, and even self-host the application if you
 					prefer.
 				</p>
@@ -196,10 +196,10 @@ export default function PrivacyPage() {
 						GitHub repository
 					</a>
 					, email us at{" "}
-					<a  href="mailto:oss@opencut.app"
+					<a  href="mailto:oss@stratoscut.com"
 						className="text-primary hover:underline"
 					>
-						oss@opencut.app
+						oss@stratoscut.com
 					</a>
 					, or reach out on{" "}
 					<a
