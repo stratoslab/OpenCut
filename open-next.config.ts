@@ -2,6 +2,7 @@ import type { OpenNextConfig } from "@opennextjs/cloudflare";
 
 const config: OpenNextConfig = {
 	default: {
+		minify: true,
 		override: {
 			wrapper: "cloudflare-node",
 			converter: "edge",
@@ -22,7 +23,7 @@ const config: OpenNextConfig = {
 			queue: "dummy",
 		},
 	},
-	edgeExternals: ["node:crypto"],
+	edgeExternals: ["node:crypto", "opencut-wasm"],
 	cloudflare: {
 		useWorkerdCondition: false,
 	},
