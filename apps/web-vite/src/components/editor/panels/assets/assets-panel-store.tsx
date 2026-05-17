@@ -12,6 +12,8 @@ import {
 	Settings01Icon,
 	SlidersHorizontalIcon,
 	ColorsIcon,
+	Film02Icon,
+	BotIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 
@@ -23,6 +25,8 @@ export const TAB_KEYS = [
 	"effects",
 	"transitions",
 	"captions",
+	"scene-detection",
+	"ai-copilot",
 	"adjustment",
 	"settings",
 ] as const;
@@ -63,6 +67,14 @@ export const tabs = {
 	captions: {
 		icon: createHugeiconsIcon({ icon: ClosedCaptionIcon }),
 		label: "Captions",
+	},
+	"scene-detection": {
+		icon: createHugeiconsIcon({ icon: Film02Icon }),
+		label: "Scenes",
+	},
+	"ai-copilot": {
+		icon: createHugeiconsIcon({ icon: BotIcon }),
+		label: "AI",
 	},
 	adjustment: {
 		icon: createHugeiconsIcon({ icon: SlidersHorizontalIcon }),

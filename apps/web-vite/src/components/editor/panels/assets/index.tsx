@@ -11,6 +11,8 @@ import { StickersView } from "@/stickers/components/assets-view";
 import { TextView } from "@/text/components/assets-view";
 import { EffectsView } from "@/effects/components/assets-view";
 import { TransitionsView } from "@/transitions/components/assets-view";
+import { SceneDetectPanel } from "@/scene-detection/components/SceneDetectPanel";
+import { AiAgentPanel } from "@/ai/components/AiAgentPanel";
 
 export function AssetsPanel() {
 	const { activeTab } = useAssetsPanelStore();
@@ -23,6 +25,8 @@ export function AssetsPanel() {
 		effects: <EffectsView />,
 		transitions: <TransitionsView />,
 		captions: <Captions />,
+		"scene-detection": <SceneDetectPanel />,
+		"ai-copilot": <AiAgentPanel />,
 		adjustment: (
 			<div className="text-muted-foreground p-4">
 				Adjustment view coming soon...

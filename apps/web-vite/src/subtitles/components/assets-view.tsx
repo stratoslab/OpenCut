@@ -7,16 +7,18 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { useReducer, useRef, useState } from "react";
+import { useReducer, useRef, useState, useEffect } from "react";
 import { extractTimelineAudio } from "@/media/mediabunny";
 import { useEditor } from "@/editor/use-editor";
 import { TRANSCRIPTION_DIAGNOSTICS_SCOPE } from "@/transcription/diagnostics";
 import { DEFAULT_TRANSCRIPTION_SAMPLE_RATE } from "@/transcription/audio";
 import { TRANSCRIPTION_LANGUAGES } from "@/transcription/supported-languages";
+import { TRANSCRIPTION_MODELS } from "@/transcription/models";
 import type {
 	CaptionChunk,
 	TranscriptionLanguage,
 	TranscriptionProgress,
+	TranscriptionModelId,
 } from "@/transcription/types";
 import { transcriptionService } from "@/services/transcription/service";
 import { decodeAudioToFloat32 } from "@/media/audio";
@@ -39,6 +41,8 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { DiagnosticSeverity } from "@/diagnostics/types";
+import { useTranscriptionModelStore } from "@/transcription/transcription-model-store";
+import { cn } from "@/utils/ui";
 
 const DIAGNOSTIC_BUTTON_VARIANT: Record<
 	DiagnosticSeverity,
@@ -91,7 +95,28 @@ export function Captions() {
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const editor = useEditor();
 
+	const {
+		stage: modelStage,
+		progress: modelProgress,
+		currentFile: modelCurrentFile,
+		estimatedTimeRemaining: modelETA,
+		error: modelError,
+		selectedModel,
+		isInitialized: modelReady,
+		initWorker,
+		terminateWorker,
+		loadModel,
+		selectModel,
+		clearError: clearModelError,
+	} = useTranscriptionModelStore();
+
+	useEffect(() => {
+		initWorker();
+		return () => terminateWorker();
+	}, []);
+
 	const isProcessing = processing.status === "processing";
+	const isModelLoading = modelStage === "downloading" || modelStage === "loading";
 
 	const activeDiagnostics = useEditor((e) =>
 		e.diagnostics.getActive({ scope: TRANSCRIPTION_DIAGNOSTICS_SCOPE }),
@@ -118,6 +143,11 @@ export function Captions() {
 	};
 
 	const handleGenerateTranscript = async () => {
+		if (!modelReady) {
+			loadModel();
+			return;
+		}
+
 		dispatch({ type: "start", step: "Extracting audio..." });
 		try {
 			const audioBlob = await extractTimelineAudio({
@@ -289,10 +319,30 @@ export function Captions() {
 			>
 				<SectionContent className="flex flex-col gap-4 h-full pt-1">
 					<SectionFields>
+						<SectionField label="Model">
+							<Select
+								value={selectedModel}
+								onValueChange={(value) => selectModel(value as TranscriptionModelId)}
+								disabled={isModelLoading || modelReady}
+							>
+								<SelectTrigger>
+									<SelectValue placeholder="Select a model" />
+								</SelectTrigger>
+								<SelectContent>
+									{TRANSCRIPTION_MODELS.map((model) => (
+										<SelectItem key={model.id} value={model.id}>
+											{model.name} — {model.description}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</SectionField>
+
 						<SectionField label="Language">
 							<Select
 								value={selectedLanguage}
 								onValueChange={(value) => handleLanguageChange({ value })}
+								disabled={!modelReady}
 							>
 								<SelectTrigger>
 									<SelectValue placeholder="Select a language" />
@@ -309,15 +359,84 @@ export function Captions() {
 						</SectionField>
 					</SectionFields>
 
-					<Button
-						type="button"
-						className="mt-auto w-full"
-						onClick={handleGenerateTranscript}
-						disabled={isProcessing || activeDiagnostics.length > 0}
-					>
-						{isProcessing && <Spinner className="mr-1" />}
-						{isProcessing ? processing.step : "Generate transcript"}
-					</Button>
+					{modelStage === "idle" && (
+						<Button
+							type="button"
+							className="mt-auto w-full"
+							onClick={loadModel}
+						>
+							Load {TRANSCRIPTION_MODELS.find((m) => m.id === selectedModel)?.name ?? "Model"}
+						</Button>
+					)}
+
+					{isModelLoading && (
+						<div className="mt-auto space-y-3">
+							<div className="space-y-1">
+								<div className="flex justify-between text-[10px] text-muted-foreground">
+									<span>{modelCurrentFile || "Loading..."}</span>
+									<span>{Math.round(modelProgress)}%</span>
+								</div>
+								<div className="h-2 bg-muted rounded overflow-hidden">
+									<div
+										className="h-full bg-primary transition-all duration-300"
+										style={{ width: `${modelProgress}%` }}
+									/>
+								</div>
+								{modelETA && (
+									<p className="text-[10px] text-muted-foreground text-center">
+										~{modelETA} remaining
+									</p>
+								)}
+							</div>
+							<div className="flex items-center gap-2">
+								<Spinner className="w-3 h-3" />
+								<span className="text-xs text-muted-foreground">
+									Downloading model...
+								</span>
+							</div>
+						</div>
+					)}
+
+					{modelStage === "error" && (
+						<div className="mt-auto space-y-2">
+							<div className="p-3 bg-destructive/10 border border-destructive/20 rounded">
+								<p className="text-xs text-destructive">{modelError}</p>
+							</div>
+							<div className="flex gap-2">
+								<Button
+									type="button"
+									variant="destructive"
+									className="flex-1"
+									onClick={() => {
+										clearModelError();
+										loadModel();
+									}}
+								>
+									Retry
+								</Button>
+								<Button
+									type="button"
+									variant="outline"
+									onClick={clearModelError}
+								>
+									Dismiss
+								</Button>
+							</div>
+						</div>
+					)}
+
+					{modelReady && (
+						<Button
+							type="button"
+							className="mt-auto w-full"
+							onClick={handleGenerateTranscript}
+							disabled={isProcessing || activeDiagnostics.length > 0}
+						>
+							{isProcessing && <Spinner className="mr-1" />}
+							{isProcessing ? processing.step : "Generate transcript"}
+						</Button>
+					)}
+
 					{error && (
 						<div className="bg-destructive/10 border-destructive/20 rounded-md border p-3">
 							<p className="text-destructive text-sm">{error}</p>
