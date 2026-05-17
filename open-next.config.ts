@@ -23,7 +23,7 @@ const config: OpenNextConfig = {
 			queue: "dummy",
 		},
 	},
-	edgeExternals: ["node:crypto", "opencut-wasm"],
+	edgeExternals: ["node:crypto"],
 	cloudflare: {
 		useWorkerdCondition: false,
 	},

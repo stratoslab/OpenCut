@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { KeyboardEvent, MouseEvent } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import type { EditorCore } from "@/core";
 import { MigrationDialog } from "@/project/components/migration-dialog";
@@ -21,7 +21,6 @@ import type {
 	TProjectSortKey,
 	TProjectSortOption,
 } from "@/project/types";
-import { formatTimecode, mediaTimeToSeconds } from "opencut-wasm";
 import { formatDate } from "@/utils/date";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -67,12 +66,25 @@ import { ProjectInfoDialog } from "@/project/components/project-info-dialog";
 import { RenameProjectDialog } from "@/project/components/rename-project-dialog";
 import { cn } from "@/utils/ui";
 import { ChangelogNotification } from "@/changelog/components/changelog-notification";
+
+// WASM functions loaded dynamically to avoid build-time WASM loading
+let formatTimecode: typeof import("opencut-wasm").formatTimecode | null = null;
+let mediaTimeToSeconds: typeof import("opencut-wasm").mediaTimeToSeconds | null = null;
+
+async function loadWasmFunctions() {
+	if (!formatTimecode || !mediaTimeToSeconds) {
+		const wasm = await import("opencut-wasm");
+		formatTimecode = wasm.formatTimecode;
+		mediaTimeToSeconds = wasm.mediaTimeToSeconds;
+	}
+}
+
 const formatProjectDuration = ({
 	duration,
 }: {
 	duration: number | undefined;
 }): string | null => {
-	if (duration === undefined) {
+	if (duration === undefined || !formatTimecode || !mediaTimeToSeconds) {
 		return null;
 	}
 
@@ -96,6 +108,10 @@ export default function ProjectsPage() {
 	const projectsToDisplay = useEditor((e) =>
 		e.project.getFilteredAndSortedProjects({ searchQuery, sortOption }),
 	);
+
+	useEffect(() => {
+		loadWasmFunctions();
+	}, []);
 
 	useEffect(() => {
 		if (!editor.project.getIsInitialized()) {

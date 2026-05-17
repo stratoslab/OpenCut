@@ -7,9 +7,6 @@ const nextConfig: any = {
 	},
 	reactStrictMode: true,
 	productionBrowserSourceMaps: true,
-	experimental: {
-		serverComponentsExternalPackages: ["opencut-wasm"],
-	},
 	images: {
 		remotePatterns: [
 			{
