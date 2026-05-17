@@ -24,6 +24,26 @@ export type TActionWithOptionalArgs =
 
 export type TActionWithNoArgs = Exclude<TAction, TActionWithArgs>;
 
+export function isActionWithOptionalArgs(
+	value: unknown,
+): value is TActionWithOptionalArgs {
+	if (typeof value !== "string") return false;
+	const hasArgs: ReadonlySet<string> = new Set([
+		"seek-forward", "seek-backward", "jump-forward", "jump-backward",
+		"remove-media-asset", "remove-media-assets",
+	]);
+	const noArgs: ReadonlySet<string> = new Set([
+		"toggle-play", "stop-playback", "frame-step-forward", "frame-step-backward",
+		"goto-start", "goto-end", "split", "split-left", "split-right",
+		"delete-selected", "copy-selected", "paste-copied", "toggle-snapping",
+		"toggle-ripple-editing", "toggle-source-audio", "select-all",
+		"cancel-interaction", "deselect-all", "duplicate-selected",
+		"toggle-elements-muted-selected", "toggle-elements-visibility-selected",
+		"toggle-bookmark", "undo", "redo",
+	]);
+	return hasArgs.has(value) || noArgs.has(value);
+}
+
 export type TArgOfAction<A extends TAction> = A extends TActionWithArgs
 	? TActionArgsMap[A]
 	: undefined;
