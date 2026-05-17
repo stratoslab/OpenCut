@@ -1,7 +1,7 @@
 <table width="100%">
   <tr>
     <td align="left" width="120">
-      <img src="apps/web/public/logos/opencut/icon.svg" alt="OpenCut Logo" width="100" />
+      <img src="apps/web-vite/public/logos/opencut/icon.svg" alt="OpenCut Logo" width="100" />
     </td>
     <td align="right">
       <h1>OpenCut</h1>
@@ -72,14 +72,42 @@ A conversational assistant that runs locally on WebGPU (Gemma 4 E2B model).
 
 ### Deployment
 
-This fork is deployed to **Cloudflare Workers** at `opencut.stratoslab.xyz`. The build pipeline:
-- **CI**: GitHub Actions (WASM build → Bun install → Next.js build) across Ubuntu, Windows, macOS
-- **Production**: Cloudflare Workers via `@opennextjs/cloudflare`
-- **Database**: PostgreSQL (BetterAuth) + Redis (rate limiting) via Docker Compose
+This fork is deployed to **Cloudflare Pages** at `opencut.stratoslab.xyz`. The build pipeline:
+- **CI**: GitHub Actions (WASM build → Bun install → Vite build) across Ubuntu, Windows, macOS
+- **Production**: Cloudflare Pages — unlimited static file size, zero server infrastructure
+- **Storage**: IndexedDB (browser-local) — no database, no auth, fully client-side
+
+### Why Vite + React SPA Instead of Next.js
+
+The original OpenCut used Next.js with server-side infrastructure (PostgreSQL, BetterAuth, Redis, API routes). For a video editor that is **95% client-side**, this was overkill. Here's why we migrated to Vite + React SPA:
+
+| Concern | Next.js | Vite + React SPA |
+|---------|---------|------------------|
+| **Architecture** | Server + client hybrid | Pure client-side SPA |
+| **Deployment** | Node.js runtime required (Cloudflare Workers via `@opennextjs`) | Static files on Cloudflare Pages (unlimited size) |
+| **Dependencies** | `gray-matter`, `mediabunny` (Node.js `Buffer` APIs) | Browser-native APIs only (`<video>`, `AudioContext`, `MediaRecorder`) |
+| **Runtime crashes** | `Buffer is not defined` errors in browser | Zero Node.js API references |
+| **Database** | PostgreSQL + BetterAuth required | IndexedDB — fully local, no server |
+| **Auth** | Session management, API routes | Not needed — app is local-first |
+| **Build output** | Server bundles + client chunks | `index.html` + JS/CSS (~2 MB gzipped) + WASM (~6 MB gzipped) |
+| **Cold starts** | Worker spin-up latency | Instant — static CDN |
+| **Cost** | Worker invocations + database | Free tier on Cloudflare Pages |
+| **Dev experience** | `next dev` with server restarts | `vite` — instant HMR, no server |
+
+**Key decisions:**
+
+- **Replaced `mediabunny`** (Node.js FFmpeg wrapper) with browser-native `<video>` element, `AudioContext`, and `MediaRecorder` for video/audio processing
+- **Replaced `gray-matter`** with a simple browser-compatible frontmatter parser
+- **Dropped server-side dependencies** — Better Auth, Kysely, PostgreSQL, Redis — since the app is fully client-side
+- **Cloudflare Pages** handles unlimited static file size natively, so the ~8 MB WASM binaries deploy without workarounds
+- **Sounds API** proxied via a tiny stateless Worker to hide the Freesound API key — zero server logic
+
+The `apps/web-vite/` directory contains the new Vite + React SPA. The original `apps/web/` Next.js app is preserved for reference.
 
 ## Project Structure
 
-- `apps/web/`: Next.js web application
+- `apps/web/`: Original Next.js web application (preserved for reference)
+- `apps/web-vite/`: Vite + React SPA — the active web application
 - `apps/desktop/`: Native desktop app built with GPUI (in progress)
 - `rust/`: Platform-agnostic core: GPU compositor, effects, masks, and WASM bindings. We're actively migrating business logic here from TypeScript.
 - `docs/`: Architecture and subsystem documentation
@@ -90,37 +118,53 @@ This fork is deployed to **Cloudflare Workers** at `opencut.stratoslab.xyz`. The
 
 ### Prerequisites
 
-- [Bun](https://bun.sh/docs/installation)
+- [Bun](https://bun.sh/docs/installation) or [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 - [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
 
 > **Note:** Docker is optional but recommended for running the local database and Redis. If you only want to work on frontend features, you can skip it.
 
-### Setup
+### Setup (Vite + React SPA — Recommended)
 
 1. Fork and clone the repository
 
-2. Copy the environment file:
+2. Install dependencies and start the dev server:
 
-   ```bash
-   # Unix/Linux/Mac
-   cp apps/web/.env.example apps/web/.env.local
+    ```bash
+    cd apps/web-vite
+    bun install
+    bun dev
+    ```
 
-   # Windows PowerShell
-   Copy-Item apps/web/.env.example apps/web/.env.local
-   ```
+The application will be available at [http://localhost:5173](http://localhost:5173).
 
-3. Start the database and Redis:
+No database, no auth, no environment variables needed.
 
-   ```bash
-   docker compose up -d db redis serverless-redis-http
-   ```
+### Setup (Next.js — Legacy)
 
-4. Install dependencies and start the dev server:
+The original Next.js app in `apps/web/` is preserved for reference. It requires Docker for the database:
 
-   ```bash
-   bun install
-   bun dev:web
-   ```
+1. Copy the environment file:
+
+    ```bash
+    # Unix/Linux/Mac
+    cp apps/web/.env.example apps/web/.env.local
+
+    # Windows PowerShell
+    Copy-Item apps/web/.env.example apps/web/.env.local
+    ```
+
+2. Start the database and Redis:
+
+    ```bash
+    docker compose up -d db redis serverless-redis-http
+    ```
+
+3. Install dependencies and start the dev server:
+
+    ```bash
+    bun install
+    bun dev:web
+    ```
 
 The application will be available at [http://localhost:3000](http://localhost:3000).
 
@@ -182,15 +226,17 @@ cd apps/web
 bun add opencut-wasm
 ```
 
-### Self-Hosting with Docker
+### Self-Hosting with Docker (Legacy)
 
-To run everything (including a production build of the app) in Docker:
+To run the original Next.js stack (including a production build of the app) in Docker:
 
 ```bash
 docker compose up -d
 ```
 
 The app will be available at [http://localhost:3100](http://localhost:3100).
+
+For the Vite + React SPA, no Docker is needed — just `bun install && bun dev` in `apps/web-vite/`.
 
 ## Contributing
 
