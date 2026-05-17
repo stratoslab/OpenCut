@@ -5,7 +5,9 @@ import { useEditor } from "@/editor/use-editor";
 import { useAssetsPanelStore } from "@/components/editor/panels/assets/assets-panel-store";
 import { AudioWaveform, WAVEFORM_GAIN_SAMPLE_COUNT } from "./audio-waveform";
 import { AudioVolumeLine } from "./audio-volume-line";
+import { TransitionIndicator } from "./transition-indicator";
 import { useElementPreview } from "@/timeline/hooks/use-element-preview";
+import { UpdateElementsCommand } from "@/commands/timeline/element/update-elements";
 import {
 	useKeyframeDrag,
 	type KeyframeDragState,
@@ -39,6 +41,7 @@ import type {
 	VideoElement,
 	ImageElement,
 	AudioElement,
+	Transition,
 } from "@/timeline";
 import type { MediaAsset } from "@/media/types";
 import { mediaSupportsAudio } from "@/media/media-utils";
@@ -391,19 +394,20 @@ export function TimelineElement({
 									: undefined,
 						}}
 					>
-						<ElementInner
-							element={element}
-							displayElement={renderElement}
-							track={track}
-							isSelected={isSelected}
-							isExpanded={expandedRows.length > 0}
-							baseTrackHeight={baseTrackHeight}
-							expandedContent={expandedContent}
-							onElementClick={onElementClick}
-							onElementMouseDown={onElementMouseDown}
-							onResizeStart={onResizeStart}
-							isDropTarget={isDropTarget}
-						/>
+					<ElementInner
+						element={element}
+						displayElement={renderElement}
+						track={track}
+						isSelected={isSelected}
+						isExpanded={expandedRows.length > 0}
+						baseTrackHeight={baseTrackHeight}
+						expandedContent={expandedContent}
+						onElementClick={onElementClick}
+						onElementMouseDown={onElementMouseDown}
+						onResizeStart={onResizeStart}
+						isDropTarget={isDropTarget}
+						elementWidth={elementWidth}
+					/>
 						{isSelected && (
 							<div
 								className="pointer-events-none absolute inset-x-0 top-0 overflow-hidden"
@@ -523,6 +527,7 @@ function ElementInner({
 	onElementMouseDown,
 	onResizeStart,
 	isDropTarget = false,
+	elementWidth,
 }: {
 	element: TimelineElementType;
 	displayElement?: TimelineElementType;
@@ -546,11 +551,35 @@ function ElementInner({
 		side: "left" | "right";
 	}) => void;
 	isDropTarget?: boolean;
+	elementWidth: number;
 }) {
 	const visibleElement = displayElement ?? element;
 	const isReducedOpacity =
 		(canElementBeHidden(visibleElement) && visibleElement.hidden) ||
 		isDropTarget;
+
+	const isVideoOrImage =
+		element.type === "video" || element.type === "image";
+	const videoImageElement = isVideoOrImage
+		? (element as VideoElement | ImageElement)
+		: null;
+
+	const handleTransitionChange = (transition: Transition | undefined) => {
+		if (!videoImageElement) return;
+		const editor = useEditor();
+		editor.command.execute({
+			command: new UpdateElementsCommand({
+				updates: [
+					{
+						trackId: track.id,
+						elementId: element.id,
+						patch: { exitTransition: transition },
+					},
+				],
+			}),
+		});
+	};
+
 	return (
 		<div
 			className="absolute top-0 bottom-0"
@@ -602,6 +631,14 @@ function ElementInner({
 					</button>
 				</div>
 			</div>
+
+			{isVideoOrImage && videoImageElement?.exitTransition && (
+				<TransitionIndicator
+					transition={videoImageElement.exitTransition}
+					onTransitionChange={handleTransitionChange}
+					elementWidth={elementWidth}
+				/>
+			)}
 
 			{isSelected && (
 				<>

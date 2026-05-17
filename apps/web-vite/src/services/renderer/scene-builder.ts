@@ -1,8 +1,8 @@
-import type { SceneTracks, TimelineTrack } from "@/timeline";
+import type { SceneTracks, TimelineTrack, VideoElement, ImageElement } from "@/timeline";
 import type { MediaAsset } from "@/media/types";
 import { RootNode } from "./nodes/root-node";
-import { VideoNode } from "./nodes/video-node";
-import { ImageNode } from "./nodes/image-node";
+import { VideoNode, type NextClipInfo as VideoNextClipInfo } from "./nodes/video-node";
+import { ImageNode, type NextClipInfo as ImageNextClipInfo } from "./nodes/image-node";
 import { TextNode } from "./nodes/text-node";
 import { StickerNode } from "./nodes/sticker-node";
 import { GraphicNode } from "./nodes/graphic-node";
@@ -46,7 +46,10 @@ function buildTrackNodes({
 	for (const track of tracks) {
 		const elements = getVisibleSortedElements({ track });
 
-		for (const element of elements) {
+		for (let i = 0; i < elements.length; i++) {
+			const element = elements[i];
+			const nextElement = i < elements.length - 1 ? elements[i + 1] : null;
+
 			if (element.type === "effect") {
 				nodes.push(
 					new EffectLayerNode({
@@ -66,6 +69,24 @@ function buildTrackNodes({
 				}
 
 				if (element.type === "video" && mediaAsset.type === "video") {
+					const videoElement = element as VideoElement;
+					let nextClipInfo: VideoNextClipInfo | undefined;
+
+					if (videoElement.exitTransition && nextElement && (nextElement.type === "video" || nextElement.type === "image")) {
+						const nextMedia = mediaMap.get(nextElement.mediaId);
+						if (nextMedia?.file && nextMedia?.url) {
+							nextClipInfo = {
+								url: nextMedia.url,
+								file: nextMedia.file,
+								mediaId: nextMedia.id,
+								startTime: nextElement.startTime,
+								duration: nextElement.duration,
+								trimStart: nextElement.trimStart,
+								trimEnd: nextElement.trimEnd,
+							};
+						}
+					}
+
 					nodes.push(
 						new VideoNode({
 							mediaId: mediaAsset.id,
@@ -82,10 +103,28 @@ function buildTrackNodes({
 							blendMode: readBlendModeFromParams({ params: element.params }),
 							effects: element.effects ?? [],
 							masks: element.masks ?? [],
+							exitTransition: videoElement.exitTransition,
+							nextClip: nextClipInfo,
 						}),
 					);
 				}
 				if (element.type === "image" && mediaAsset.type === "image") {
+					const imageElement = element as ImageElement;
+					let nextClipInfo: ImageNextClipInfo | undefined;
+
+					if (imageElement.exitTransition && nextElement && (nextElement.type === "video" || nextElement.type === "image")) {
+						const nextMedia = mediaMap.get(nextElement.mediaId);
+						if (nextMedia?.url) {
+							nextClipInfo = {
+								url: nextMedia.url,
+								startTime: nextElement.startTime,
+								duration: nextElement.duration,
+								trimStart: nextElement.trimStart,
+								trimEnd: nextElement.trimEnd,
+							};
+						}
+					}
+
 					nodes.push(
 						new ImageNode({
 							url: mediaAsset.url,
@@ -99,6 +138,8 @@ function buildTrackNodes({
 							blendMode: readBlendModeFromParams({ params: element.params }),
 							effects: element.effects ?? [],
 							masks: element.masks ?? [],
+							exitTransition: imageElement.exitTransition,
+							nextClip: nextClipInfo,
 							...(isPreview && {
 								maxSourceSize: PREVIEW_MAX_IMAGE_SIZE,
 							}),

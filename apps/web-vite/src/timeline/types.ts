@@ -114,6 +114,23 @@ interface BaseTimelineElement {
 	params: ParamValues;
 }
 
+export type TransitionType =
+	| "crossfade"
+	| "slide-left"
+	| "slide-right"
+	| "slide-up"
+	| "slide-down"
+	| "wipe-left"
+	| "wipe-right"
+	| "zoom-in"
+	| "zoom-out";
+
+export interface Transition {
+	type: TransitionType;
+	/** Duration in seconds */
+	duration: number;
+}
+
 export interface VideoElement extends BaseTimelineElement {
 	type: "video";
 	mediaId: string;
@@ -122,6 +139,7 @@ export interface VideoElement extends BaseTimelineElement {
 	retime?: RetimeConfig;
 	effects?: Effect[];
 	masks?: Mask[];
+	exitTransition?: Transition;
 }
 
 export interface ImageElement extends BaseTimelineElement {
@@ -130,6 +148,7 @@ export interface ImageElement extends BaseTimelineElement {
 	hidden?: boolean;
 	effects?: Effect[];
 	masks?: Mask[];
+	exitTransition?: Transition;
 }
 
 export interface TextElement extends BaseTimelineElement {

@@ -1,6 +1,7 @@
 import { drawCssBackground } from "@/gradients";
 import { getMaskDefinition } from "@/masks";
 import { incrementCounter } from "@/diagnostics/render-perf";
+import { renderTransition } from "../transitions";
 import type { AnyBaseNode } from "../nodes/base-node";
 import type { CanvasRenderer } from "../canvas-renderer";
 import { createCanvasSurface } from "../canvas-utils";
@@ -11,11 +12,14 @@ import {
 	GraphicNode,
 	type ResolvedGraphicNodeState,
 } from "../nodes/graphic-node";
-import { ImageNode } from "../nodes/image-node";
+import {
+	ImageNode,
+	type ResolvedImageNodeState,
+} from "../nodes/image-node";
 import { RootNode } from "../nodes/root-node";
 import { StickerNode } from "../nodes/sticker-node";
 import { renderTextToContext, TextNode } from "../nodes/text-node";
-import { VideoNode } from "../nodes/video-node";
+import { VideoNode, type ResolvedVideoNodeState } from "../nodes/video-node";
 import type { ResolvedVisualSourceNodeState } from "../nodes/visual-node";
 import type {
 	FrameDescriptor,
@@ -222,6 +226,22 @@ async function collectVisualSourceNode({
 		return;
 	}
 
+	const isTransitioning =
+		(node instanceof VideoNode || node instanceof ImageNode) &&
+		node.resolved.transitionFrame !== undefined &&
+		node.resolved.transitionProgress !== undefined;
+
+	if (isTransitioning && (node instanceof VideoNode || node instanceof ImageNode)) {
+		await collectTransitionVisualSourceNode({
+			node,
+			renderer,
+			path,
+			items,
+			textures,
+		});
+		return;
+	}
+
 	const source =
 		node instanceof GraphicNode
 			? node.getSource({ resolvedParams: node.resolved.resolvedParams })
@@ -274,6 +294,96 @@ async function collectVisualSourceNode({
 	if (strokeLayer) {
 		items.push(strokeLayer);
 	}
+}
+
+async function collectTransitionVisualSourceNode({
+	node,
+	renderer,
+	path,
+	items,
+	textures,
+}: {
+	node: VideoNode | ImageNode;
+	renderer: CanvasRenderer;
+	path: string;
+	items: FrameItemDescriptor[];
+	textures: Map<string, TextureUploadDescriptor>;
+}) {
+	const resolved = node.resolved as ResolvedVideoNodeState | ResolvedImageNodeState;
+	if (!resolved.source || !resolved.transitionFrame || resolved.transitionProgress === undefined) {
+		return;
+	}
+
+	const transitionType = node.params.exitTransition?.type ?? "crossfade";
+	const progress = resolved.transitionProgress;
+	const { width, height } = renderer;
+
+	const textureId = `${path}:transition`;
+	const contentHash = `transition:${transitionType}:${progress}:${width}x${height}`;
+
+	textures.set(textureId, {
+		kind: "rendered",
+		id: textureId,
+		contentHash,
+		width,
+		height,
+		draw: (ctx) => {
+			const outgoingSource = resolved.source as CanvasImageSource;
+			const incomingSource = resolved.transitionFrame as CanvasImageSource;
+			const outgoingWidth = (resolved as ResolvedVisualSourceNodeState).sourceWidth;
+			const outgoingHeight = (resolved as ResolvedVisualSourceNodeState).sourceHeight;
+			const incomingWidth = resolved.transitionWidth ?? outgoingWidth;
+			const incomingHeight = resolved.transitionHeight ?? outgoingHeight;
+
+			renderTransition(
+				ctx,
+				{ type: transitionType, progress, width, height },
+				() => {
+					drawCoverImage(ctx, outgoingSource, outgoingWidth, outgoingHeight, width, height);
+				},
+				() => {
+					drawCoverImage(ctx, incomingSource, incomingWidth, incomingHeight, width, height);
+				},
+			);
+		},
+	});
+
+	const transform = computeVisualTransform({
+		renderer,
+		resolved: resolved as ResolvedVisualSourceNodeState,
+		sourceWidth: width,
+		sourceHeight: height,
+	});
+
+	items.push({
+		type: "layer",
+		textureId,
+		transform,
+		opacity: resolved.opacity,
+		blendMode: node.params.blendMode ?? "normal",
+		effectPassGroups: resolved.effectPasses,
+		mask: null,
+	});
+}
+
+function drawCoverImage(
+	ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+	source: CanvasImageSource,
+	sourceWidth: number,
+	sourceHeight: number,
+	targetWidth: number,
+	targetHeight: number,
+) {
+	const coverScale = Math.max(
+		targetWidth / sourceWidth,
+		targetHeight / sourceHeight,
+	);
+	const scaledWidth = sourceWidth * coverScale;
+	const scaledHeight = sourceHeight * coverScale;
+	const offsetX = (targetWidth - scaledWidth) / 2;
+	const offsetY = (targetHeight - scaledHeight) / 2;
+
+	ctx.drawImage(source, offsetX, offsetY, scaledWidth, scaledHeight);
 }
 
 function collectTextNode({

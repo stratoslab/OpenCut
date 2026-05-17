@@ -1,4 +1,4 @@
-import { mediaTimeToSeconds, roundMediaTime } from "@/wasm";
+import { mediaTimeToSeconds, roundMediaTime, TICKS_PER_SECOND } from "@/wasm";
 import { getElementLocalTime } from "@/animation";
 import { resolveEffectParamsAtTime } from "@/animation/effect-param-channel";
 import {
@@ -35,10 +35,17 @@ import {
 	GraphicNode,
 	type ResolvedGraphicNodeState,
 } from "./nodes/graphic-node";
-import { ImageNode, loadImageSource } from "./nodes/image-node";
+import {
+	ImageNode,
+	loadImageSource,
+	type ResolvedImageNodeState,
+} from "./nodes/image-node";
 import { StickerNode, loadStickerSource } from "./nodes/sticker-node";
 import { TextNode, type ResolvedTextNodeState } from "./nodes/text-node";
-import { VideoNode } from "./nodes/video-node";
+import {
+	VideoNode,
+	type ResolvedVideoNodeState,
+} from "./nodes/video-node";
 import type {
 	ResolvedVisualNodeState,
 	ResolvedVisualSourceNodeState,
@@ -190,7 +197,7 @@ async function resolveVideoNode({
 }: {
 	node: VideoNode;
 	context: ResolveContext;
-}): Promise<ResolvedVisualSourceNodeState | null> {
+}): Promise<ResolvedVideoNodeState | null> {
 	const clipTime = context.time - node.params.timeOffset;
 	if (clipTime < 0 || clipTime >= node.params.duration) {
 		return null;
@@ -221,12 +228,49 @@ async function resolveVideoNode({
 		return null;
 	}
 
-	return {
+	const result: ResolvedVideoNodeState = {
 		...visualState,
 		source: frame,
 		sourceWidth: frame.width,
 		sourceHeight: frame.height,
 	};
+
+	if (node.params.exitTransition && node.params.nextClip) {
+		const transition = node.params.exitTransition;
+		const nextClip = node.params.nextClip;
+		const elementEndTime = node.params.timeOffset + node.params.duration;
+		const transitionDurationTicks = transition.duration * TICKS_PER_SECOND;
+		const transitionStart = elementEndTime - transitionDurationTicks;
+		const transitionEnd = elementEndTime;
+
+		if (context.time >= transitionStart && context.time < transitionEnd) {
+			const progress = (context.time - transitionStart) / transitionDurationTicks;
+			const nextClipTime = context.time - transitionStart;
+			const nextSourceTimeTicks =
+				nextClip.trimStart +
+				getSourceTimeAtClipTime({
+					clipTime: Math.max(0, nextClipTime),
+					retime: undefined,
+				});
+
+			const nextFrame = await videoCache.getFrameAt({
+				mediaId: nextClip.mediaId,
+				file: nextClip.file,
+				time: mediaTimeToSeconds({
+					time: roundMediaTime({ time: nextSourceTimeTicks }),
+				}),
+			});
+
+			if (nextFrame) {
+				result.transitionFrame = nextFrame;
+				result.transitionProgress = Math.max(0, Math.min(1, progress));
+				result.transitionWidth = nextFrame.width;
+				result.transitionHeight = nextFrame.height;
+			}
+		}
+	}
+
+	return result;
 }
 
 async function resolveImageNode({
@@ -235,7 +279,7 @@ async function resolveImageNode({
 }: {
 	node: ImageNode;
 	context: ResolveContext;
-}): Promise<ResolvedVisualSourceNodeState | null> {
+}): Promise<ResolvedImageNodeState | null> {
 	const source = await loadImageSource({
 		url: node.params.url,
 		maxSourceSize: node.params.maxSourceSize,
@@ -250,12 +294,42 @@ async function resolveImageNode({
 		return null;
 	}
 
-	return {
+	const result: ResolvedImageNodeState = {
 		...visualState,
 		source: source.source,
 		sourceWidth: source.width,
 		sourceHeight: source.height,
 	};
+
+	if (node.params.exitTransition && node.params.nextClip) {
+		const transition = node.params.exitTransition;
+		const nextClip = node.params.nextClip;
+		const elementEndTime = node.params.timeOffset + node.params.duration;
+		const transitionDurationTicks = transition.duration * TICKS_PER_SECOND;
+		const transitionStart = elementEndTime - transitionDurationTicks;
+		const transitionEnd = elementEndTime;
+
+		if (context.time >= transitionStart && context.time < transitionEnd) {
+			const progress = (context.time - transitionStart) / transitionDurationTicks;
+			const nextClipTime = context.time - transitionStart;
+
+			try {
+				const nextSource = await loadImageSource({
+					url: nextClip.url,
+					maxSourceSize: node.params.maxSourceSize,
+				});
+
+				result.transitionFrame = nextSource.source;
+				result.transitionProgress = Math.max(0, Math.min(1, progress));
+				result.transitionWidth = nextSource.width;
+				result.transitionHeight = nextSource.height;
+			} catch {
+				// If next clip fails to load, continue without transition
+			}
+		}
+	}
+
+	return result;
 }
 
 async function resolveStickerNode({

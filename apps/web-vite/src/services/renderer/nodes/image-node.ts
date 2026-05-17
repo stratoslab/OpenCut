@@ -1,12 +1,30 @@
+import type { Transition } from "@/timeline";
 import {
 	VisualNode,
 	type ResolvedVisualSourceNodeState,
 	type VisualNodeParams,
 } from "./visual-node";
 
+export interface NextClipInfo {
+	url: string;
+	startTime: number;
+	duration: number;
+	trimStart: number;
+	trimEnd: number;
+}
+
 export interface ImageNodeParams extends VisualNodeParams {
 	url: string;
 	maxSourceSize?: number;
+	exitTransition?: Transition;
+	nextClip?: NextClipInfo;
+}
+
+export interface ResolvedImageNodeState extends ResolvedVisualSourceNodeState {
+	transitionFrame?: CanvasImageSource;
+	transitionProgress?: number;
+	transitionWidth?: number;
+	transitionHeight?: number;
 }
 
 export interface CachedImageSource {
@@ -70,5 +88,5 @@ export function loadImageSource({
 
 export class ImageNode extends VisualNode<
 	ImageNodeParams,
-	ResolvedVisualSourceNodeState
+	ResolvedImageNodeState
 > {}
