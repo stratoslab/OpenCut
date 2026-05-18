@@ -282,6 +282,28 @@ export class ScenesManager {
 		}
 	}
 
+	updateScene({
+		sceneId,
+		updates,
+	}: {
+		sceneId: string;
+		updates: Partial<Omit<TScene, "id" | "createdAt">>;
+	}): void {
+		const scenes = this.list.map((scene) =>
+			scene.id === sceneId
+				? {
+						...scene,
+						...updates,
+						updatedAt: new Date(),
+					}
+				: scene,
+		);
+		this.setScenes({
+			scenes,
+			activeSceneId: this.active?.id ?? undefined,
+		});
+	}
+
 	subscribe(listener: () => void): () => void {
 		this.listeners.add(listener);
 		return () => this.listeners.delete(listener);

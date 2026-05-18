@@ -40,34 +40,50 @@ export function parseLLMResponse(
 			}
 		}
 	} catch {
-		const timeRangeRegex = /(\d+(?:\.\d+)?)\s*[-–to]+\s*(\d+(?:\.\d+)?)/g;
-		let match;
+		// Fall through to plain-text parsing below.
+	}
 
-		while ((match = timeRangeRegex.exec(rawResponse)) !== null) {
-			const start = parseFloat(match[1]);
-			const end = parseFloat(match[2]);
-
-			if (
-				start >= 0 &&
-				end <= videoDuration &&
-				start < end
-			) {
-				const contextStart = Math.max(0, match.index - 50);
-				const contextEnd = Math.min(rawResponse.length, match.index + match[0].length + 50);
-				const context = rawResponse.slice(contextStart, contextEnd).trim();
-
-				suggestions.push({
-					id: `llm-${Date.now()}-${suggestions.length}`,
-					description: context,
-					timeRange: { start, end },
-					confidence: 0.5,
-					rawResponse,
-				});
-			}
-		}
+	if (suggestions.length === 0) {
+		parsePlainTextRanges({ rawResponse, videoDuration, suggestions });
 	}
 
 	return suggestions;
+}
+
+function parsePlainTextRanges({
+	rawResponse,
+	videoDuration,
+	suggestions,
+}: {
+	rawResponse: string;
+	videoDuration: number;
+	suggestions: EditSuggestion[];
+}) {
+	const timeRangeRegex =
+		/(\d+(?:\.\d+)?)\s*(?:-|–|to|through|until)\s*(\d+(?:\.\d+)?)/gi;
+	let match;
+
+	while ((match = timeRangeRegex.exec(rawResponse)) !== null) {
+		const start = parseFloat(match[1]);
+		const end = parseFloat(match[2]);
+
+		if (start >= 0 && end <= videoDuration && start < end) {
+			const contextStart = Math.max(0, match.index - 50);
+			const contextEnd = Math.min(
+				rawResponse.length,
+				match.index + match[0].length + 50,
+			);
+			const context = rawResponse.slice(contextStart, contextEnd).trim();
+
+			suggestions.push({
+				id: `llm-${Date.now()}-${suggestions.length}`,
+				description: context,
+				timeRange: { start, end },
+				confidence: 0.5,
+				rawResponse,
+			});
+		}
+	}
 }
 
 export function formatTranscriptForLLM(

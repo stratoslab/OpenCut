@@ -1,5 +1,8 @@
 import { describe, it, expect } from "bun:test";
-import { computeDiff, aggregateTimestamps } from "@/text-edit-engine/diff-calculator";
+import {
+	computeDiff,
+	aggregateTimestamps,
+} from "@/text-edit-engine/diff-calculator";
 import {
 	computeTimelineCuts,
 	applyRippleEdit,
@@ -38,9 +41,11 @@ function generateRandomClips(
 ): TimelineClip[] {
 	const clips: TimelineClip[] = [];
 	let currentTime = 0;
+	const durationPerClip = videoDuration / count;
 
 	for (let i = 0; i < count; i++) {
-		const duration = 1 + Math.random() * (videoDuration / count);
+		const duration =
+			i === count - 1 ? videoDuration - currentTime : durationPerClip;
 		clips.push({
 			id: `clip-${i}`,
 			name: `Clip ${i}`,
@@ -59,15 +64,22 @@ function generateRandomClips(
 describe("Edit Duration Math (Req 3)", () => {
 	it("Property: originalDuration - sum(deletedRanges) == newDuration", () => {
 		for (let run = 0; run < 100; run++) {
-			const { words, text } = generateWordTranscript(20 + Math.floor(Math.random() * 50));
+			const { words, text } = generateWordTranscript(
+				20 + Math.floor(Math.random() * 50),
+			);
 			const clips = generateRandomClips(3, words[words.length - 1].end);
 
 			const deleteCount = 1 + Math.floor(Math.random() * 5);
-			const deleteStart = Math.floor(Math.random() * (words.length - deleteCount));
+			const deleteStart = Math.floor(
+				Math.random() * (words.length - deleteCount),
+			);
 			const deletedWords = words.slice(deleteStart, deleteStart + deleteCount);
 
 			const deletedText = deletedWords.map((w) => w.text).join(" ");
-			const editedText = text.replace(deletedText, "").replace(/\s+/g, " ").trim();
+			const editedText = text
+				.replace(deletedText, "")
+				.replace(/\s+/g, " ")
+				.trim();
 
 			const engine = new TextEditEngine(words, clips);
 			const result = engine.applyTextEdit(text, editedText);
@@ -87,7 +99,9 @@ describe("Edit Duration Math (Req 3)", () => {
 				0,
 			);
 
-			expect(Math.abs(newDuration - (originalDuration - deletedDuration))).toBeLessThan(0.01);
+			expect(
+				Math.abs(newDuration - (originalDuration - deletedDuration)),
+			).toBeLessThan(0.01);
 		}
 	});
 });
@@ -103,7 +117,10 @@ describe("Idempotent Cuts (Req 3)", () => {
 
 			const deletedWords = words.slice(deleteStart, deleteEnd);
 			const deletedText = deletedWords.map((w) => w.text).join(" ");
-			const editedText = text.replace(deletedText, "").replace(/\s+/g, " ").trim();
+			const editedText = text
+				.replace(deletedText, "")
+				.replace(/\s+/g, " ")
+				.trim();
 
 			const engine = new TextEditEngine(words, clips);
 			const result1 = engine.applyTextEdit(text, editedText);
@@ -125,8 +142,14 @@ describe("Idempotent Cuts (Req 3)", () => {
 			const start2 = Math.max(0, start1 - 2);
 			const end2 = end1 + Math.floor(Math.random() * 3);
 
-			const deleted1 = words.slice(start1, end1).map((w) => w.text).join(" ");
-			const textAfterFirst = text.replace(deleted1, "").replace(/\s+/g, " ").trim();
+			const deleted1 = words
+				.slice(start1, end1)
+				.map((w) => w.text)
+				.join(" ");
+			const textAfterFirst = text
+				.replace(deleted1, "")
+				.replace(/\s+/g, " ")
+				.trim();
 
 			const engine = new TextEditEngine(words, clips);
 			const result1 = engine.applyTextEdit(text, textAfterFirst);

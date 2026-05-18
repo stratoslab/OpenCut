@@ -8,6 +8,7 @@ mod gpu;
 mod masks;
 #[cfg(target_arch = "wasm32")]
 mod perf;
+mod transcript_edit;
 
 #[cfg(target_arch = "wasm32")]
 pub use compositor::*;
@@ -20,3 +21,4 @@ pub use masks::*;
 #[cfg(target_arch = "wasm32")]
 pub use perf::*;
 pub use time::*;
+pub use transcript_edit::*;

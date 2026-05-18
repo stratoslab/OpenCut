@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/resizable";
 import { AssetsPanel } from "@/components/editor/panels/assets";
 import { PropertiesPanel } from "@/components/editor/panels/properties";
+import { TranscriptPanel } from "@/transcript-editor/TranscriptPanel";
 import { Timeline } from "@/timeline/components";
 import { PreviewPanel } from "@/preview/components";
 import { EditorHeader } from "@/components/editor/editor-header";
@@ -154,7 +155,7 @@ function EditorLayout() {
 						setPanel({ panel: "preview", size: sizes[1] ?? panels.preview });
 						setPanel({
 							panel: "properties",
-							size: sizes[2] ?? panels.properties,
+							size: sizes[3] ?? panels.properties,
 						});
 					}}
 				>
@@ -179,6 +180,19 @@ function EditorLayout() {
 							overlayInstances={overlaySource.instances}
 							onOverlayVisibilityChange={setOverlayVisibility}
 						/>
+					</ResizablePanel>
+
+					<ResizableHandle withHandle />
+
+					<ResizablePanel
+						defaultSize={20}
+						minSize={15}
+						maxSize={35}
+						className="min-w-0"
+					>
+						<div className="panel bg-background h-full overflow-hidden rounded-sm border">
+							<TranscriptPanel />
+						</div>
 					</ResizablePanel>
 
 					<ResizableHandle withHandle />
