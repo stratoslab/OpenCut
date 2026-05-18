@@ -1,6 +1,6 @@
 {
-  "version": "7.0",
-  "description": "OpenCut architecture workflows — P0-P2 complete: GPU foundation, AI Power, advanced features (3D, keyframes, audio engine, proxy, text animations, bundling, history, multi-output, SDK, performance)",
+  "version": "9.0",
+  "description": "OpenCut architecture workflows — REAL data flows from codebase analysis: media → transcription → AI → text-edit-engine → timeline execution. Fixed gaps: MediaTime conversion, double transcription, AI context precision, SRT import, edit execution path, word timing accuracy.",
   "nodes": {
     "user": {
       "id": "user",
@@ -617,6 +617,78 @@
       "package": "@opencut/web-vite",
       "icon": "⚡",
       "description": "Performance budgets, lazy loading, code splitting, Vite manual chunks"
+    },
+    "layers-3d-panel": {
+      "id": "layers-3d-panel",
+      "label": "3D Layers Panel",
+      "type": "component",
+      "package": "@opencut/web-vite",
+      "icon": "🎲",
+      "description": "React UI panel for 3D layer management — import modal, layer list, transform controls, material editor, animation config"
+    },
+    "keyframes-panel": {
+      "id": "keyframes-panel",
+      "label": "Keyframes Panel",
+      "type": "component",
+      "package": "@opencut/web-vite",
+      "icon": "📈",
+      "description": "React UI panel for keyframe management — channel list, 13 easing modes, curve preview, copy/paste/export/import"
+    },
+    "audio-panel": {
+      "id": "audio-panel",
+      "label": "Audio Panel",
+      "type": "component",
+      "package": "@opencut/web-vite",
+      "icon": "🎚️",
+      "description": "React UI panel with 4 tabs: 10-band EQ, effects (reverb/compressor/limiter/noise gate), BPM detection, varispeed"
+    },
+    "text-animations-panel": {
+      "id": "text-animations-panel",
+      "label": "Text Animations Panel",
+      "type": "component",
+      "package": "@opencut/web-vite",
+      "icon": "✨",
+      "description": "React UI panel with 20+ presets filtered by category (entrance/exit/emphasis/special), duration/delay controls"
+    },
+    "proxy-panel": {
+      "id": "proxy-panel",
+      "label": "Proxy Panel",
+      "type": "component",
+      "package": "@opencut/web-vite",
+      "icon": "🖼️",
+      "description": "React UI panel with 3 tabs: generation status/progress, config (resolution/quality/format/cache), cache management"
+    },
+    "project-bundle-panel": {
+      "id": "project-bundle-panel",
+      "label": "Project Bundle Panel",
+      "type": "component",
+      "package": "@opencut/web-vite",
+      "icon": "📦",
+      "description": "React UI panel for .opencut export/import — metadata form, drag-drop import, validation display, bundle info"
+    },
+    "history-panel": {
+      "id": "history-panel",
+      "label": "History Panel",
+      "type": "component",
+      "package": "@opencut/web-vite",
+      "icon": "📜",
+      "description": "React UI panel for command history — undo/redo buttons, filter (all/undoable/redone), jump to index, persistent storage"
+    },
+    "multi-output-panel": {
+      "id": "multi-output-panel",
+      "label": "Multi-Output Panel",
+      "type": "component",
+      "package": "@opencut/web-vite",
+      "icon": "📺",
+      "description": "React UI panel for output routing — add/remove outputs, type/resolution config, enable/disable toggles, active selection"
+    },
+    "editor-header": {
+      "id": "editor-header",
+      "label": "Editor Header",
+      "type": "component",
+      "package": "@opencut/web-vite",
+      "icon": "🔝",
+      "description": "Top bar with project dropdown, bundle export/import buttons, feedback, export, theme toggle"
     }
   },
   "flows": [
@@ -810,7 +882,7 @@
       "id": "user-transcribes-video",
       "label": "Transcribe Video",
       "category": "ai",
-      "description": "User runs Whisper transcription on video audio",
+      "description": "User runs Whisper transcription on video audio — generates WordTranscript with word-level timings stored on TScene",
       "steps": [
         {
           "from": "user",
@@ -852,7 +924,13 @@
           "from": "transcription-service",
           "to": "transcription-service",
           "action": "segmentsToWordSegments()",
-          "data": "Split sentence segments → word-level with estimated timestamps"
+          "data": "Split sentence segments → word-level with estimated timestamps (word-segments.ts splits evenly within segment duration)"
+        },
+        {
+          "from": "transcription-service",
+          "to": "transcription-service",
+          "action": "buildCaptionChunks()",
+          "data": "Groups WordSegments into CaptionChunk[] for display with approximate word timings"
         },
         {
           "from": "transcription-service",
@@ -878,7 +956,7 @@
       "id": "user-edits-by-text",
       "label": "Text-Based Video Editing",
       "category": "ai",
-      "description": "User deletes text from transcript → corresponding video is cut",
+      "description": "User deletes text from transcript → TextEditEngine computes diff → aggregates timestamps → computes timeline cuts → applies ripple edit",
       "steps": [
         {
           "from": "user",
@@ -890,25 +968,31 @@
           "from": "transcript-editor",
           "to": "text-edit-engine",
           "action": "applyTextEdit(originalText, editedText)",
-          "data": "Diff calculation → deleted word indices"
+          "data": "WordSegment[] + original/edited text strings"
         },
         {
           "from": "text-edit-engine",
           "to": "text-edit-engine",
-          "action": "aggregateTimestamps()",
-          "data": "Word indices → [{ start, end }] time ranges"
+          "action": "computeDiff(originalText, editedText, wordSegments)",
+          "data": "Returns DiffResult with deletedWordIndices and TextEditRange[]"
         },
         {
           "from": "text-edit-engine",
           "to": "text-edit-engine",
-          "action": "computeTimelineCuts()",
-          "data": "Time ranges → CutOperation[] (trim/split/delete)"
+          "action": "aggregateTimestamps(deletedWordIndices, wordSegments)",
+          "data": "Word indices → [{ start, end }] time ranges in seconds"
+        },
+        {
+          "from": "text-edit-engine",
+          "to": "text-edit-engine",
+          "action": "computeTimelineCuts(timeRanges, clips)",
+          "data": "Time ranges → CutOperation[] (delete/trim-start/trim-end/split)"
         },
         {
           "from": "text-edit-engine",
           "to": "react-ui",
           "action": "Show EditPreviewPanel",
-          "data": "{ deletedText, timeRange, affectedClips }"
+          "data": "{ deletedText, timeRange, affectedClips, durationRemoved }"
         },
         {
           "from": "user",
@@ -919,14 +1003,20 @@
         {
           "from": "react-ui",
           "to": "text-edit-engine",
-          "action": "applyRippleEdit()",
-          "data": "Close gaps by shifting subsequent clips"
+          "action": "applyRippleEdit(clips, deletedRanges)",
+          "data": "Close gaps by shifting subsequent clips, updates startTime/trimStart/trimEnd"
         },
         {
           "from": "text-edit-engine",
           "to": "timeline-manager",
-          "action": "Update VideoElements",
-          "data": "New clip arrangement with adjusted startTime/duration"
+          "action": "Update VideoElements via command",
+          "data": "New clip arrangement with adjusted startTime/duration/trimStart/trimEnd"
+        },
+        {
+          "from": "timeline-manager",
+          "to": "command-manager",
+          "action": "execute(command)",
+          "data": "Push to undo stack"
         },
         {
           "from": "timeline-manager",
@@ -988,7 +1078,7 @@
           "from": "user",
           "to": "react-ui",
           "action": "Click suggestion to apply",
-          "data": "EditSuggestion → flows through TextEditEngine"
+          "data": "EditSuggestion — see gemma-chat-edit-suggestion flow for execution gap"
         }
       ]
     },
@@ -1806,7 +1896,7 @@
       "id": "ai-copilot-uses-transcript",
       "label": "AI Co-Pilot — Transcript Context",
       "category": "ai",
-      "description": "AI Co-Pilot reads the stored transcript from the active scene and includes it in plan generation context",
+      "description": "AI Co-Pilot reads stored transcript from active scene — CURRENT GAP: receives flat string, loses WordTranscript word-level precision needed for timeline edits",
       "steps": [
         {
           "from": "user",
@@ -1818,13 +1908,13 @@
           "from": "react-ui",
           "to": "scenes-manager",
           "action": "getActiveScene()",
-          "data": "TScene with optional transcript field"
+          "data": "TScene with optional transcript field (WordTranscript)"
         },
         {
           "from": "scenes-manager",
           "to": "react-ui",
           "action": "Return scene.transcript?.fullText",
-          "data": "WordTranscript.fullText or undefined"
+          "data": "WordTranscript.fullText or undefined — GAP: word-level timings lost"
         },
         {
           "from": "react-ui",
@@ -1836,13 +1926,13 @@
           "from": "react-ui",
           "to": "ai-agent",
           "action": "generatePlan(goal, { ..., transcript })",
-          "data": "ProjectContext includes transcript string"
+          "data": "ProjectContext includes transcript as flat string — GAP: should include WordTranscript with word timings"
         },
         {
           "from": "ai-agent",
           "to": "ai-worker",
           "action": "Post { type: 'generate', messages }",
-          "data": "Prompt includes '- Transcript: ${escaped_text}'"
+          "data": "Prompt includes '- Transcript: ${escaped_text}' — flat text only"
         },
         {
           "from": "ai-worker",
@@ -1861,6 +1951,100 @@
           "to": "react-ui",
           "action": "Display plan for review",
           "data": "Step list with descriptions informed by transcript context"
+        }
+      ]
+    },
+    {
+      "id": "import-srt-subtitles",
+      "label": "Import SRT/ASS Subtitles",
+      "category": "editing",
+      "description": "User imports SRT/ASS subtitle file — CURRENT GAP: creates SubtitleCue[] but no WordTranscript, breaking text-based editing for imported subtitles",
+      "steps": [
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Import SRT/ASS file via file picker",
+          "data": "File object (.srt or .ass)"
+        },
+        {
+          "from": "react-ui",
+          "to": "subtitles/parse",
+          "action": "parseSRT() or parseASS()",
+          "data": "File text → SubtitleCue[] { start, end, text, style? }"
+        },
+        {
+          "from": "subtitles/parse",
+          "to": "subtitles/insert",
+          "action": "insertCaptions(cues)",
+          "data": "Creates text track entries for rendering"
+        },
+        {
+          "from": "subtitles/insert",
+          "to": "scenes-manager",
+          "action": "Store cues on scene",
+          "data": "GAP: No WordTranscript generated — text-based editing unavailable"
+        },
+        {
+          "from": "subtitles/insert",
+          "to": "react-ui",
+          "action": "Render captions on preview",
+          "data": "Captions visible at correct timestamps"
+        }
+      ]
+    },
+    {
+      "id": "gemma-chat-edit-suggestion",
+      "label": "Gemma Chat — Edit Suggestion Execution",
+      "category": "ai",
+      "description": "GemmaChatPanel parses LLM response for EditSuggestion — CURRENT GAP: no execution path to timeline, suggestions displayed but not actionable",
+      "steps": [
+        {
+          "from": "user",
+          "to": "gemma-chat",
+          "action": "Type edit request",
+          "data": "Natural language editing instruction"
+        },
+        {
+          "from": "gemma-chat",
+          "to": "gemma-chat",
+          "action": "chunkTranscript()",
+          "data": "Split transcript into ≤4096 token chunks with word timings"
+        },
+        {
+          "from": "gemma-chat",
+          "to": "browser",
+          "action": "Send to local Gemma model (WebGPU)",
+          "data": "Prompt: system + transcript context + user query"
+        },
+        {
+          "from": "browser",
+          "to": "gemma-chat",
+          "action": "Stream response",
+          "data": "Text response (may include JSON edit suggestions)"
+        },
+        {
+          "from": "gemma-chat",
+          "to": "gemma-chat",
+          "action": "parseLLMResponse()",
+          "data": "Extract EditSuggestion { description, start, end, type } from response"
+        },
+        {
+          "from": "gemma-chat",
+          "to": "react-ui",
+          "action": "Display suggestions as clickable cards",
+          "data": "EditSuggestion[] with time ranges"
+        },
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Click suggestion",
+          "data": "EditSuggestion — GAP: no execution path to TextEditEngine or CommandManager"
+        },
+        {
+          "from": "react-ui",
+          "to": "react-ui",
+          "action": "GAP: Should route to text-edit-engine or command-manager",
+          "data": "Missing: EditSuggestion → EditOperation → CommandManager.execute()"
         }
       ]
     },
@@ -2535,6 +2719,440 @@
           "to": "react-ui",
           "action": "Import bundle on another machine",
           "data": "File upload → importBundle() → validate"
+        }
+      ]
+    },
+    {
+      "id": "manage-3d-layers",
+      "label": "Manage 3D Layers",
+      "category": "editing",
+      "description": "User imports 3D models and manages layers via the 3D Layers panel",
+      "steps": [
+        {
+          "from": "user",
+          "to": "layers-3d-panel",
+          "action": "Click Import, enter model URL and name",
+          "data": "{ name, url, format: gltf|glb|obj|fbx|ply|splat }"
+        },
+        {
+          "from": "layers-3d-panel",
+          "to": "3d-layer-manager",
+          "action": "loadThree() + loadModel()",
+          "data": "Lazy-load Three.js from CDN, parse and add model to scene"
+        },
+        {
+          "from": "3d-layer-manager",
+          "to": "layers-3d-panel",
+          "action": "Return Model3DAsset",
+          "data": "{ id, name, url, format, sizeBytes }"
+        },
+        {
+          "from": "user",
+          "to": "layers-3d-panel",
+          "action": "Adjust transform XYZ, material properties",
+          "data": "Position, rotation, scale, color, metalness, roughness, opacity"
+        },
+        {
+          "from": "layers-3d-panel",
+          "to": "3d-layer-manager",
+          "action": "updateLayerTransform()",
+          "data": "Transform3D { position, rotation, scale }"
+        },
+        {
+          "from": "user",
+          "to": "layers-3d-panel",
+          "action": "Configure animation (type, speed, axis, loop)",
+          "data": "Animation3D { type: rotate|spin|bounce|float|pulse|orbit, speed, axis, loop }"
+        },
+        {
+          "from": "layers-3d-panel",
+          "to": "3d-layer-manager",
+          "action": "renderFrame() → ImageBitmap",
+          "data": "3D scene rendered to OffscreenCanvas, composited into timeline"
+        }
+      ]
+    },
+    {
+      "id": "manage-keyframes",
+      "label": "Manage Keyframes",
+      "category": "editing",
+      "description": "User creates and manages keyframe animations via the Keyframes panel",
+      "steps": [
+        {
+          "from": "user",
+          "to": "keyframes-panel",
+          "action": "Add channel for property",
+          "data": "{ property: string, easing: EasingType }"
+        },
+        {
+          "from": "keyframes-panel",
+          "to": "keyframe-manager",
+          "action": "addChannel()",
+          "data": "KeyframeChannel { id, property, keyframes[], easing }"
+        },
+        {
+          "from": "user",
+          "to": "keyframes-panel",
+          "action": "Add keyframe with time and value",
+          "data": "{ time: number, value: number, easing?: EasingType }"
+        },
+        {
+          "from": "keyframes-panel",
+          "to": "keyframe-manager",
+          "action": "addKeyframe()",
+          "data": "Keyframe inserted, sorted by time"
+        },
+        {
+          "from": "user",
+          "to": "keyframes-panel",
+          "action": "Copy/paste/export/import keyframes",
+          "data": "JSON serialization or clipboard buffer"
+        },
+        {
+          "from": "keyframes-panel",
+          "to": "keyframe-manager",
+          "action": "copyKeyframes() / pasteKeyframes() / exportKeyframes() / importKeyframes()",
+          "data": "KeyframeCopyBuffer or JSON string"
+        },
+        {
+          "from": "keyframes-panel",
+          "to": "keyframes-panel",
+          "action": "Render easing curve preview",
+          "data": "SVG polyline from EASING_FUNCTIONS evaluation"
+        }
+      ]
+    },
+    {
+      "id": "process-audio",
+      "label": "Process Audio",
+      "category": "editing",
+      "description": "User applies EQ, effects, beat detection, and varispeed via the Audio panel",
+      "steps": [
+        {
+          "from": "user",
+          "to": "audio-panel",
+          "action": "Adjust 10-band EQ sliders",
+          "data": "EQBand[] { frequency, gain, q, type }"
+        },
+        {
+          "from": "audio-panel",
+          "to": "audio-engine",
+          "action": "createEffectChain(trackId)",
+          "data": "AudioEffectChain { eq, reverb, compressor, limiter, noiseGate }"
+        },
+        {
+          "from": "user",
+          "to": "audio-panel",
+          "action": "Enable reverb/compressor/limiter/noise gate, adjust params",
+          "data": "Effect configs with threshold, ratio, attack, release, etc."
+        },
+        {
+          "from": "audio-panel",
+          "to": "audio-engine",
+          "action": "detectBeets(audioBuffer)",
+          "data": "OfflineAudioContext + FFT energy analysis → { beats[], bpm, confidence }"
+        },
+        {
+          "from": "user",
+          "to": "audio-panel",
+          "action": "Configure varispeed",
+          "data": "VarispeedConfig { speed: 0.25-4, pitchPreservation: boolean }"
+        },
+        {
+          "from": "audio-panel",
+          "to": "audio-engine",
+          "action": "applyVarispeed(audioBuffer, config)",
+          "data": "Resampled AudioBuffer with optional pitch preservation"
+        }
+      ]
+    },
+    {
+      "id": "apply-text-animations",
+      "label": "Apply Text Animations",
+      "category": "editing",
+      "description": "User selects and configures text animations via the Text Animations panel",
+      "steps": [
+        {
+          "from": "user",
+          "to": "text-animations-panel",
+          "action": "Filter by category (entrance/exit/emphasis/special)",
+          "data": "Category filter"
+        },
+        {
+          "from": "text-animations-panel",
+          "to": "text-animations",
+          "action": "getPresetsByCategory()",
+          "data": "TextAnimationPreset[] filtered by category"
+        },
+        {
+          "from": "user",
+          "to": "text-animations-panel",
+          "action": "Select preset, adjust duration and delay",
+          "data": "{ duration: 0.1-3s, delay: 0-2s }"
+        },
+        {
+          "from": "text-animations-panel",
+          "to": "text-animations",
+          "action": "getPreset(id)",
+          "data": "TextAnimationPreset with type, duration, delay, easing, params"
+        },
+        {
+          "from": "user",
+          "to": "text-animations-panel",
+          "action": "Click Apply Animation",
+          "data": "TextAnimation applied to selected text element"
+        },
+        {
+          "from": "text-animations-panel",
+          "to": "timeline-manager",
+          "action": "Update text element with animation config",
+          "data": "Element updated with animation CSS"
+        }
+      ]
+    },
+    {
+      "id": "manage-proxies",
+      "label": "Manage Proxies",
+      "category": "editing",
+      "description": "User monitors proxy generation, configures settings, and manages cache via the Proxy panel",
+      "steps": [
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Import video → proxy generation triggered automatically",
+          "data": "Video file → toast notification directs to Proxy tab"
+        },
+        {
+          "from": "react-ui",
+          "to": "proxy-manager",
+          "action": "generateProxy(sourceId, video, onProgress)",
+          "data": "ProxyGenerationProgress { current, total, percent, eta }"
+        },
+        {
+          "from": "proxy-panel",
+          "to": "proxy-manager",
+          "action": "Poll getAllProxies() every 1s",
+          "data": "ProxyEntry[] with id, sourceId, proxyUrl, width, height"
+        },
+        {
+          "from": "user",
+          "to": "proxy-panel",
+          "action": "Configure proxy settings (resolution, quality, format, cache)",
+          "data": "ProxyConfig { maxResolution, quality, format, cacheLocation }"
+        },
+        {
+          "from": "proxy-panel",
+          "to": "proxy-manager",
+          "action": "updateConfig(config)",
+          "data": "New proxy configuration applied to future generations"
+        },
+        {
+          "from": "user",
+          "to": "proxy-panel",
+          "action": "Clear cache or evict old proxies",
+          "data": "clearCache() or evictOldProxies(maxAgeMs)"
+        }
+      ]
+    },
+    {
+      "id": "bundle-project",
+      "label": "Bundle Project",
+      "category": "editing",
+      "description": "User exports/imports entire project as portable .opencut file via header buttons or panel",
+      "steps": [
+        {
+          "from": "user",
+          "to": "editor-header",
+          "action": "Click export button in header",
+          "data": "Export dialog opens"
+        },
+        {
+          "from": "editor-header",
+          "to": "project-bundler",
+          "action": "createBundle(projectData, mediaFiles, metadata)",
+          "data": "ProjectBundle { version, metadata, project, media[], checksum }"
+        },
+        {
+          "from": "project-bundler",
+          "to": "project-bundler",
+          "action": "exportBundle(bundle) → Blob",
+          "data": "application/x-opencut blob"
+        },
+        {
+          "from": "editor-header",
+          "to": "user",
+          "action": "Trigger browser download",
+          "data": "{name}.opencut file"
+        },
+        {
+          "from": "user",
+          "to": "editor-header",
+          "action": "Click import button, select .opencut file",
+          "data": "File upload"
+        },
+        {
+          "from": "editor-header",
+          "to": "project-bundler",
+          "action": "importBundle(blob) → validateBundle()",
+          "data": "BundleValidationResult { valid, errors[], warnings[] }"
+        },
+        {
+          "from": "editor-header",
+          "to": "react-ui",
+          "action": "Show validation result (success/error)",
+          "data": "Toast notification + validation display"
+        }
+      ]
+    },
+    {
+      "id": "view-command-history",
+      "label": "View Command History",
+      "category": "editing",
+      "description": "User views, filters, and navigates command history via the History panel",
+      "steps": [
+        {
+          "from": "user",
+          "to": "history-panel",
+          "action": "Open History tab in AssetsPanel",
+          "data": "Panel loads with commandHistoryManager.getHistory()"
+        },
+        {
+          "from": "history-panel",
+          "to": "command-history",
+          "action": "Poll getHistory() every 500ms",
+          "data": "CommandHistoryEntry[] { id, commandName, timestamp, undoable, redone }"
+        },
+        {
+          "from": "user",
+          "to": "history-panel",
+          "action": "Click undo/redo buttons",
+          "data": "undo() or redo() signal"
+        },
+        {
+          "from": "history-panel",
+          "to": "command-history",
+          "action": "undo() / redo()",
+          "data": "CommandHistoryEntry returned, currentIndex updated"
+        },
+        {
+          "from": "user",
+          "to": "history-panel",
+          "action": "Filter by type (all/undoable/redone)",
+          "data": "Filtered entry list"
+        },
+        {
+          "from": "user",
+          "to": "history-panel",
+          "action": "Click entry to jump to that point",
+          "data": "jumpToIndex(index)"
+        },
+        {
+          "from": "history-panel",
+          "to": "command-history",
+          "action": "jumpToIndex(index)",
+          "data": "currentIndex set, UI highlights current position"
+        }
+      ]
+    },
+    {
+      "id": "route-multi-output",
+      "label": "Route Multi-Output",
+      "category": "editing",
+      "description": "User configures multiple output targets (preview, external monitor, streaming, recording)",
+      "steps": [
+        {
+          "from": "user",
+          "to": "multi-output-panel",
+          "action": "Click Add Output, configure name/type/resolution",
+          "data": "{ name, type: preview|external-monitor|streaming|recording, width, height }"
+        },
+        {
+          "from": "multi-output-panel",
+          "to": "multi-output",
+          "action": "addOutput(target)",
+          "data": "OutputTarget { id, name, type, canvas, resolution, enabled }"
+        },
+        {
+          "from": "user",
+          "to": "multi-output-panel",
+          "action": "Toggle output enable/disable, set active",
+          "data": "toggleOutput(outputId) or setActiveOutput(outputId)"
+        },
+        {
+          "from": "multi-output-panel",
+          "to": "multi-output",
+          "action": "toggleOutput() / setActiveOutput()",
+          "data": "Output state updated"
+        },
+        {
+          "from": "renderer-manager",
+          "to": "multi-output",
+          "action": "renderToAll(frameData) or renderToOutput(outputId, frameData)",
+          "data": "ImageBitmap drawn to each enabled output canvas"
+        },
+        {
+          "from": "multi-output",
+          "to": "multi-output",
+          "action": "Draw frame to each output canvas",
+          "data": "canvas.getContext('2d').drawImage(frameData, 0, 0, width, height)"
+        }
+      ]
+    },
+    {
+      "id": "mediatime-conversion",
+      "label": "MediaTime Tick Conversion",
+      "category": "core",
+      "description": "MediaTime is i64 tick count — conversion to seconds needed for AI context and text-edit-engine",
+      "steps": [
+        {
+          "from": "timeline-manager",
+          "to": "wasm/media-time",
+          "action": "MediaTime.toSeconds()",
+          "data": "i64 ticks → f64 seconds (GAP: currently uses approximate float conversion)"
+        },
+        {
+          "from": "wasm/media-time",
+          "to": "transcription-service",
+          "action": "Pass seconds to Whisper worker",
+          "data": "Float timestamps for word segments"
+        },
+        {
+          "from": "transcription-service",
+          "to": "ai-agent",
+          "action": "Build ProjectContext",
+          "data": "GAP: MediaTime ticks converted to floats, losing precision for AI context"
+        },
+        {
+          "from": "ai-agent",
+          "to": "text-edit-engine",
+          "action": "applyTextEdit()",
+          "data": "GAP: TextEditEngine uses float seconds, but timeline uses MediaTime ticks — conversion needed for execution"
+        }
+      ]
+    },
+    {
+      "id": "word-timing-accuracy",
+      "label": "Word Timing Accuracy",
+      "category": "core",
+      "description": "Word timings approximated by even splitting within segments — not frame-accurate",
+      "steps": [
+        {
+          "from": "transcription-service",
+          "to": "transcription-service",
+          "action": "segmentsToWordSegments()",
+          "data": "word-segments.ts splits segment duration evenly across words — GAP: not frame-accurate"
+        },
+        {
+          "from": "transcription-service",
+          "to": "transcription-service",
+          "action": "buildCaptionChunks()",
+          "data": "Approximates word timings within chunks — GAP: cumulative error across long segments"
+        },
+        {
+          "from": "transcription-service",
+          "to": "text-edit-engine",
+          "action": "computeDiff() with wordSegments",
+          "data": "GAP: Inaccurate timings cause misaligned cuts when deleting text"
         }
       ]
     }
