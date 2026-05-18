@@ -72,11 +72,20 @@ export function AiAgentPanel() {
         startTime: e.startTime,
       }));
 
+      const MAX_CHARS = 12_000;
+      const rawTranscript = scene.transcript?.fullText;
+      const transcript = rawTranscript
+        ? rawTranscript.length > MAX_CHARS
+          ? rawTranscript.slice(0, MAX_CHARS) + "... [truncated]"
+          : rawTranscript
+        : undefined;
+
       const context = {
         duration: scene.tracks.main.elements.reduce((sum, e) => sum + e.duration, 0),
         trackCount: Object.keys(scene.tracks).length,
         mainTrackElements: mainElements,
         audioTrackCount: scene.tracks.audio?.length ?? 0,
+        transcript,
       };
 
       const generatedPlan = await agent.generatePlan(goal, context);

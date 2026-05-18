@@ -6,13 +6,17 @@ export function buildPlanPrompt(goal: string, context: ProjectContext): string {
     .map((e) => `${e.name}: ${e.duration}s at ${e.startTime}s`)
     .join(", ");
 
+  const escapedTranscript = context.transcript
+    ? context.transcript.replace(/`/g, "'").replace(/\$\{/g, "$ {")
+    : undefined;
+
   return `You are a video editing assistant. Given the project state below, create a step-by-step plan to achieve: "${goal}"
 
 Project:
 - Duration: ${context.duration}s
 - Tracks: ${context.trackCount} (main: ${context.mainTrackElements.length} elements, audio: ${context.audioTrackCount})
 - Clips: [${clipsDescription}]
-- Transcript: ${context.transcript ?? "none"}
+- Transcript: ${escapedTranscript ?? "none"}
 
 Available actions: ${ACTION_TYPES.join(", ")}
 

@@ -176,6 +176,19 @@ export function Captions() {
 				return;
 			}
 
+			dispatch({ type: "update_step", step: "Storing transcript..." });
+			const wordTranscript = await transcriptionService.transcribeToWords({
+				audioData: samples,
+				language: selectedLanguage === "auto" ? undefined : selectedLanguage,
+				videoDuration: editor.timeline.getTotalDuration(),
+			});
+
+			const activeScene = editor.scenes.getActiveScene();
+			editor.scenes.updateScene({
+				sceneId: activeScene.id,
+				updates: { transcript: wordTranscript },
+			});
+
 			dispatch({ type: "succeed", warnings: [] });
 		} catch (error) {
 			console.error("Transcription failed:", error);

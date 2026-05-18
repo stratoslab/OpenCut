@@ -3,6 +3,7 @@ import type { Effect } from "@/effects/types";
 import type { Mask } from "@/masks/types";
 import type { ParamValues } from "@/params";
 import type { MediaTime } from "@/wasm";
+import type { WordTranscript } from "@/transcription/types";
 
 export type ElementRef = {
 	trackId: string;
@@ -22,6 +23,7 @@ export interface TScene {
 	isMain: boolean;
 	tracks: SceneTracks;
 	bookmarks: Bookmark[];
+	transcript?: WordTranscript;
 	createdAt: Date;
 	updatedAt: Date;
 }
