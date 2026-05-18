@@ -4,6 +4,10 @@ import type { EditSuggestion } from "@/text-edit-engine/types";
 import { chunkTranscript } from "./transcript-chunker";
 import { parseLLMResponse, formatTranscriptForLLM } from "./llm-parser";
 import { cn } from "@/utils/ui";
+import {
+	getAICapabilities,
+	sanitizeTranscriptDiagnostic,
+} from "./capabilities";
 
 interface Message {
 	id: string;
@@ -24,6 +28,7 @@ export const GemmaChatPanel: React.FC<GemmaChatPanelProps> = ({
 	videoDuration,
 	onSuggestEdit,
 }) => {
+	const capabilities = getAICapabilities();
 	const [messages, setMessages] = useState<Message[]>([
 		{
 			id: "welcome",
@@ -44,6 +49,10 @@ export const GemmaChatPanel: React.FC<GemmaChatPanelProps> = ({
 
 	const handleSend = useCallback(async () => {
 		if (!input.trim() || isLoading) return;
+		if (!capabilities.available) {
+			setError(capabilities.unavailableReason ?? "Local AI is unavailable.");
+			return;
+		}
 
 		const userMessage: Message = {
 			id: `user-${Date.now()}`,
@@ -106,7 +115,9 @@ If no edits are needed, just respond conversationally.`;
 			setMessages((prev) => [...prev, assistantMessage]);
 		} catch (err) {
 			const errorMessage =
-				err instanceof Error ? err.message : "Failed to get response";
+				err instanceof Error
+					? sanitizeTranscriptDiagnostic(err)
+					: "Failed to get response";
 
 			if (errorMessage.includes("aborted")) {
 				setError("Request timed out after 30 seconds. Please try again.");
@@ -126,7 +137,14 @@ If no edits are needed, just respond conversationally.`;
 		} finally {
 			setIsLoading(false);
 		}
-	}, [input, isLoading, transcript, videoDuration]);
+	}, [
+		capabilities.available,
+		capabilities.unavailableReason,
+		input,
+		isLoading,
+		transcript,
+		videoDuration,
+	]);
 
 	const handleSuggestionClick = useCallback(
 		(suggestion: EditSuggestion) => {
@@ -166,7 +184,9 @@ If no edits are needed, just respond conversationally.`;
 												onClick={() => handleSuggestionClick(suggestion)}
 												className="w-full text-left p-2 rounded-md bg-background/50 hover:bg-background text-xs transition-colors"
 											>
-												<div className="font-medium">{suggestion.description}</div>
+												<div className="font-medium">
+													{suggestion.description}
+												</div>
 												<div className="text-muted-foreground mt-1">
 													{suggestion.timeRange.start.toFixed(1)}s →{" "}
 													{suggestion.timeRange.end.toFixed(1)}s
@@ -217,16 +237,21 @@ If no edits are needed, just respond conversationally.`;
 						}}
 						placeholder="Ask about your video or request edits..."
 						className="flex-1 px-3 py-2 text-sm bg-background border border-input rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
-						disabled={isLoading}
+						disabled={isLoading || !capabilities.available}
 					/>
 					<button
 						onClick={handleSend}
-						disabled={isLoading || !input.trim()}
+						disabled={isLoading || !input.trim() || !capabilities.available}
 						className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						Send
 					</button>
 				</div>
+				{!capabilities.available && (
+					<p className="mt-2 text-xs text-muted-foreground">
+						{capabilities.unavailableReason}
+					</p>
+				)}
 			</div>
 		</div>
 	);

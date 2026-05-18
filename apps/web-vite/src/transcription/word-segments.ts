@@ -1,4 +1,8 @@
-import type { TranscriptionSegment, WordSegment, WordTranscript } from "./types";
+import type {
+	TranscriptionSegment,
+	WordSegment,
+	WordTranscript,
+} from "./types";
 
 export function splitSegmentIntoWords(
 	segment: TranscriptionSegment,
@@ -59,14 +63,15 @@ export function buildWordTranscript(
 }
 
 export function validateWordSegments(words: WordSegment[]): boolean {
+	const epsilon = 0.000_001;
 	for (const word of words) {
-		if (word.start < 0 || word.end < word.start) {
+		if (word.start < -epsilon || word.end + epsilon < word.start) {
 			return false;
 		}
 	}
 
 	for (let i = 1; i < words.length; i++) {
-		if (words[i].start < words[i - 1].end) {
+		if (words[i].start + epsilon < words[i - 1].end) {
 			return false;
 		}
 	}

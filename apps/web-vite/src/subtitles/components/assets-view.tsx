@@ -22,6 +22,7 @@ import type {
 } from "@/transcription/types";
 import { transcriptionService } from "@/services/transcription/service";
 import { decodeAudioToFloat32 } from "@/media/audio";
+import { mediaTimeToSeconds } from "@/wasm";
 import { buildCaptionChunks } from "@/transcription/caption";
 import { insertCaptionChunksAsTextTrack } from "@/subtitles/insert";
 import { parseSubtitleFile } from "@/subtitles/parse";
@@ -116,7 +117,8 @@ export function Captions() {
 	}, []);
 
 	const isProcessing = processing.status === "processing";
-	const isModelLoading = modelStage === "downloading" || modelStage === "loading";
+	const isModelLoading =
+		modelStage === "downloading" || modelStage === "loading";
 
 	const activeDiagnostics = useEditor((e) =>
 		e.diagnostics.getActive({ scope: TRANSCRIPTION_DIAGNOSTICS_SCOPE }),
@@ -180,7 +182,9 @@ export function Captions() {
 			const wordTranscript = await transcriptionService.transcribeToWords({
 				audioData: samples,
 				language: selectedLanguage === "auto" ? undefined : selectedLanguage,
-				videoDuration: editor.timeline.getTotalDuration(),
+				videoDuration: mediaTimeToSeconds({
+					time: editor.timeline.getTotalDuration(),
+				}),
 			});
 
 			const activeScene = editor.scenes.getActiveScene();
@@ -335,7 +339,9 @@ export function Captions() {
 						<SectionField label="Model">
 							<Select
 								value={selectedModel}
-								onValueChange={(value) => selectModel(value as TranscriptionModelId)}
+								onValueChange={(value) =>
+									selectModel(value as TranscriptionModelId)
+								}
 								disabled={isModelLoading || modelReady}
 							>
 								<SelectTrigger>
@@ -378,7 +384,9 @@ export function Captions() {
 							className="mt-auto w-full"
 							onClick={loadModel}
 						>
-							Load {TRANSCRIPTION_MODELS.find((m) => m.id === selectedModel)?.name ?? "Model"}
+							Load{" "}
+							{TRANSCRIPTION_MODELS.find((m) => m.id === selectedModel)?.name ??
+								"Model"}
 						</Button>
 					)}
 
