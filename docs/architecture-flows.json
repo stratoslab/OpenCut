@@ -513,6 +513,30 @@
       "package": "@opencut/web-vite",
       "icon": "♿",
       "description": "Keyboard shortcuts (20+), screen reader announcements, reduced motion/high contrast detection"
+    },
+    "local-backup": {
+      "id": "local-backup",
+      "label": "Local Backup",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "💾",
+      "description": "External drive + network share backup with rotation and auto-backup scheduling"
+    },
+    "mobile-app": {
+      "id": "mobile-app",
+      "label": "Mobile App",
+      "type": "component",
+      "package": "@opencut/mobile",
+      "icon": "📱",
+      "description": "React Native + Expo shell calling same Rust/WASM core via expo-gl"
+    },
+    "desktop-app": {
+      "id": "desktop-app",
+      "label": "Desktop App",
+      "type": "component",
+      "package": "opencut-desktop",
+      "icon": "🖥️",
+      "description": "GPUI native desktop app with local file system access and external drive backup"
     }
   },
   "flows": [
@@ -2171,6 +2195,76 @@
           "to": "react-ui",
           "action": "UI updates",
           "data": "Timeline, preview, panels reflect action"
+        }
+      ]
+    },
+    {
+      "id": "local-backup",
+      "label": "Local Backup",
+      "category": "deployment",
+      "description": "User backs up projects to external drive or network share",
+      "steps": [
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Connect external drive, click Backup",
+          "data": "Drive path detected"
+        },
+        {
+          "from": "react-ui",
+          "to": "local-backup",
+          "action": "backupProject(project, path, type)",
+          "data": "Project serialized to .opencut format"
+        },
+        {
+          "from": "local-backup",
+          "to": "local-backup",
+          "action": "Write to external drive",
+          "data": "Encrypted project file with metadata"
+        },
+        {
+          "from": "local-backup",
+          "to": "local-backup",
+          "action": "Rotate old backups",
+          "data": "Keep maxBackups (default 10), delete oldest"
+        },
+        {
+          "from": "local-backup",
+          "to": "react-ui",
+          "action": "Backup complete",
+          "data": "Entry added to backup history"
+        }
+      ]
+    },
+    {
+      "id": "mobile-editing",
+      "label": "Mobile Video Editing",
+      "category": "deployment",
+      "description": "User edits video on mobile device using same Rust/WASM core",
+      "steps": [
+        {
+          "from": "user",
+          "to": "mobile-app",
+          "action": "Import video from camera roll",
+          "data": "expo-media-library access"
+        },
+        {
+          "from": "mobile-app",
+          "to": "mobile-app",
+          "action": "Load Rust/WASM compositor",
+          "data": "expo-gl WebGPU context"
+        },
+        {
+          "from": "mobile-app",
+          "to": "mobile-app",
+          "action": "Render timeline preview",
+          "data": "Same shader pipeline as web/desktop"
+        },
+        {
+          "from": "mobile-app",
+          "to": "mobile-app",
+          "action": "Export to camera roll",
+          "data": "MediaRecorder + file system write"
         }
       ]
     }

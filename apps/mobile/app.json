@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "OpenCut",
+    "slug": "opencut",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0a0a0a"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.opencut.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0a0a0a"
+      },
+      "package": "com.opencut.mobile"
+    },
+    "plugins": [
+      "expo-av",
+      "expo-media-library",
+      "expo-gl"
+    ]
+  }
+}
