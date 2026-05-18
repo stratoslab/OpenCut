@@ -20,6 +20,27 @@ pub enum BlendMode {
     Saturation,
     Color,
     Luminosity,
+    // Additional contrast modes
+    LinearBurn,
+    DarkerColor,
+    LinearDodge,
+    LighterColor,
+    VividLight,
+    LinearLight,
+    PinLight,
+    HardMix,
+    // Additional arithmetic modes
+    Subtract,
+    Divide,
+    // Artistic modes
+    Reflect,
+    Glow,
+    Phoenix,
+    // Stencil and silhouette modes
+    StencilAlpha,
+    SilhouetteAlpha,
+    StencilLuma,
+    SilhouetteLuma,
 }
 
 impl BlendMode {
@@ -42,6 +63,23 @@ impl BlendMode {
             Self::Saturation => 14,
             Self::Color => 15,
             Self::Luminosity => 16,
+            Self::LinearBurn => 17,
+            Self::DarkerColor => 18,
+            Self::LinearDodge => 19,
+            Self::LighterColor => 20,
+            Self::VividLight => 21,
+            Self::LinearLight => 22,
+            Self::PinLight => 23,
+            Self::HardMix => 24,
+            Self::Subtract => 25,
+            Self::Divide => 26,
+            Self::Reflect => 27,
+            Self::Glow => 28,
+            Self::Phoenix => 29,
+            Self::StencilAlpha => 30,
+            Self::SilhouetteAlpha => 31,
+            Self::StencilLuma => 32,
+            Self::SilhouetteLuma => 33,
         }
     }
 }

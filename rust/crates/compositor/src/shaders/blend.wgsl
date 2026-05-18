@@ -21,7 +21,7 @@ fn clamp01(color: vec3f) -> vec3f {
 }
 
 fn lum(c: vec3f) -> f32 {
-    return dot(c, vec3f(0.3, 0.59, 0.11));
+    return dot(c, vec3f(0.2126, 0.7152, 0.0722));
 }
 
 fn sat(c: vec3f) -> f32 {
@@ -123,6 +123,69 @@ fn blend_rgb(base: vec3f, layer: vec3f, mode: u32) -> vec3f {
         case 14u { return set_lum(set_sat(base, sat(layer)), lum(base)); }
         case 15u { return set_lum(layer, lum(base)); }
         case 16u { return set_lum(base, lum(layer)); }
+        // Linear Burn: base + layer - 1, clamped to 0
+        case 17u { return max(base + layer - vec3f(1.0), vec3f(0.0)); }
+        // Darker Color: choose pixel with lower luminance
+        case 18u { return select(layer, base, lum(base) < lum(layer)); }
+        // Linear Dodge: base + layer, clamped to 1
+        case 19u { return min(base + layer, vec3f(1.0)); }
+        // Lighter Color: choose pixel with higher luminance
+        case 20u { return select(layer, base, lum(base) > lum(layer)); }
+        // Vivid Light: color dodge if layer > 0.5, color burn otherwise
+        case 21u {
+            return select(
+                color_burn(base, (layer - vec3f(0.5)) * 2.0),
+                color_dodge(base, (layer - vec3f(0.5)) * 2.0),
+                layer > vec3f(0.5),
+            );
+        }
+        // Linear Light: linear burn if layer <= 0.5, linear dodge otherwise
+        case 22u {
+            return select(
+                max(base + layer * 2.0 - vec3f(1.0), vec3f(0.0)),
+                min(base + (layer - vec3f(0.5)) * 2.0, vec3f(1.0)),
+                layer > vec3f(0.5),
+            );
+        }
+        // Pin Light: replace based on layer value
+        case 23u {
+            let doubled = layer * 2.0;
+            let darken = min(base, doubled);
+            let lighten = max(base, doubled - vec3f(1.0));
+            return select(darken, lighten, layer > vec3f(0.5));
+        }
+        // Hard Mix: only pure primaries (0 or 1)
+        case 24u {
+            return floor(base + layer);
+        }
+        // Subtract: base - layer, clamped to 0
+        case 25u { return max(base - layer, vec3f(0.0)); }
+        // Divide: base / layer, with div-by-zero protection
+        case 26u {
+            return min(base / max(layer, vec3f(0.0001)), vec3f(1.0));
+        }
+        // Reflect: layer^2 / (1 - base), with protection
+        case 27u {
+            let denom = vec3f(1.0) - base;
+            return select(layer * layer / max(denom, vec3f(0.0001)), layer, denom < vec3f(0.0001));
+        }
+        // Glow: base^2 / (1 - layer), inverse of Reflect
+        case 28u {
+            let denom = vec3f(1.0) - layer;
+            return select(base * base / max(denom, vec3f(0.0001)), base, denom < vec3f(0.0001));
+        }
+        // Phoenix: min(base, layer) - max(base, layer) + 1
+        case 29u {
+            return min(base, layer) - max(base, layer) + vec3f(1.0);
+        }
+        // Stencil Alpha: show base only where layer alpha is opaque
+        case 30u { return select(vec3f(0.0), base, layer.a > 0.5); }
+        // Silhouette Alpha: show base only where layer alpha is transparent
+        case 31u { return select(vec3f(0.0), base, layer.a <= 0.5); }
+        // Stencil Luma: show base only where layer luminance is bright
+        case 32u { return select(vec3f(0.0), base, lum(layer) > 0.5); }
+        // Silhouette Luma: show base only where layer luminance is dark
+        case 33u { return select(vec3f(0.0), base, lum(layer) <= 0.5); }
         default { return layer; }
     }
 }
@@ -132,7 +195,14 @@ fn fragment_main(input: VertexOutput) -> @location(0) vec4f {
     let base = textureSample(base_texture, base_sampler, input.tex_coord);
     let layer = textureSample(layer_texture, layer_sampler, input.tex_coord);
 
-    let blend_rgb_value = blend_rgb(base.rgb, layer.rgb, uniforms.blend_mode);
+    // Stencil and silhouette modes bypass normal alpha compositing
+    let mode = uniforms.blend_mode;
+    if (mode >= 30u && mode <= 33u) {
+        let blend_result = blend_rgb(base.rgb, layer.rgb, mode);
+        return vec4f(blend_result, base.a);
+    }
+
+    let blend_rgb_value = blend_rgb(base.rgb, layer.rgb, mode);
     let out_alpha = layer.a + base.a * (1.0 - layer.a);
     let out_rgb =
         ((1.0 - layer.a) * base.rgb) +

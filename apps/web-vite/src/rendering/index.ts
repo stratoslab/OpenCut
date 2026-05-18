@@ -27,7 +27,24 @@ export type BlendMode =
 	| "hue"
 	| "saturation"
 	| "color"
-	| "luminosity";
+	| "luminosity"
+	| "linear-burn"
+	| "darker-color"
+	| "linear-dodge"
+	| "lighter-color"
+	| "vivid-light"
+	| "linear-light"
+	| "pin-light"
+	| "hard-mix"
+	| "subtract"
+	| "divide"
+	| "reflect"
+	| "glow"
+	| "phoenix"
+	| "stencil-alpha"
+	| "silhouette-alpha"
+	| "stencil-luma"
+	| "silhouette-luma";
 
 export function buildTransformFromParams({
 	params,
@@ -76,23 +93,13 @@ function readNumberParam({
 }
 
 function isBlendMode(value: string): value is BlendMode {
-	return (
-		value === "normal" ||
-		value === "darken" ||
-		value === "multiply" ||
-		value === "color-burn" ||
-		value === "lighten" ||
-		value === "screen" ||
-		value === "plus-lighter" ||
-		value === "color-dodge" ||
-		value === "overlay" ||
-		value === "soft-light" ||
-		value === "hard-light" ||
-		value === "difference" ||
-		value === "exclusion" ||
-		value === "hue" ||
-		value === "saturation" ||
-		value === "color" ||
-		value === "luminosity"
-	);
+	return [
+		"normal", "darken", "multiply", "color-burn", "lighten", "screen",
+		"plus-lighter", "color-dodge", "overlay", "soft-light", "hard-light",
+		"difference", "exclusion", "hue", "saturation", "color", "luminosity",
+		"linear-burn", "darker-color", "linear-dodge", "lighter-color",
+		"vivid-light", "linear-light", "pin-light", "hard-mix",
+		"subtract", "divide", "reflect", "glow", "phoenix",
+		"stencil-alpha", "silhouette-alpha", "stencil-luma", "silhouette-luma",
+	].includes(value);
 }

@@ -2,7 +2,7 @@
 
 ## Tasks
 
-- [ ] **Task 1: Create BrollAnalyzer**
+- [x] **Task 1: Create BrollAnalyzer**
   - **What:** Rule-based transcript analysis detecting proper nouns, action verbs, descriptive phrases. Returns BrollSuggestion[] with timestamps and keywords.
   - **Files:** Create `apps/web-vite/src/broll/broll-analyzer.ts`
   - **Done when:** Given a transcript, returns suggestions distributed across timeline with relevant keywords
@@ -20,7 +20,7 @@
   - **Done when:** User can view suggestions, search Pexels, insert results into timeline
   - **Depends on:** Tasks 1-2
 
-- [ ] **Task 4: Write tests**
+- [x] **Task 4: Write tests**
   - **What:** PBTs for suggestion distribution (not clustered), keyword relevance, Pexels search integration
   - **Files:** Create `apps/web-vite/src/broll/__tests__/broll-analyzer.test.ts`
   - **Done when:** All tests pass

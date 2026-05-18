@@ -2,7 +2,7 @@
 
 ## Tasks
 
-- [ ] **Task 1: Create OnboardingDialog component**
+- [x] **Task 1: Create OnboardingDialog component**
   - **What:** 3-step modal dialog with navigation (Next/Back/Skip/Get Started), localStorage integration for first-run detection
   - **Files:** Create `apps/web-vite/src/onboarding/components/OnboardingDialog.tsx`
   - **Done when:** Dialog auto-shows on first visit, 3 steps navigable, completion recorded in localStorage

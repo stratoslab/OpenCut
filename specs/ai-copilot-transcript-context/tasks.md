@@ -22,14 +22,14 @@ Tasks 2–3 could be done in parallel, but Task 3 depends on Task 1 being merged
 
 ## Tasks
 
-- [ ] **Task 1: Add `transcript` field to `TScene` interface**
+- [x] **Task 1: Add `transcript` field to `TScene` interface**
   - **What:** Add `transcript?: WordTranscript` to the `TScene` interface in `timeline/types.ts`. Import `WordTranscript` from `@/transcription/types`. This is a single-line type addition.
   - **Files:**
     - `apps/web-vite/src/timeline/types.ts` — add import and field
   - **Done when:** `TScene` has an optional `transcript` field typed as `WordTranscript | undefined`, and the project compiles without errors
   - **Depends on:** none
 
-- [ ] **Task 2: Wire `transcript` through storage serialization**
+- [x] **Task 2: Wire `transcript` through storage serialization**
   - **What:** The `saveProject()` and `loadProject()` methods in `StorageService` explicitly map each scene field. Add `transcript` to both maps so it round-trips through IndexedDB save/load.
     - In `saveProject()`: add `transcript: scene.transcript` to the serialized scene object
     - In `loadProject()`: add `transcript: scene.transcript` to the deserialized scene object (it's already optional so it'll be `undefined` for old projects)
@@ -38,7 +38,7 @@ Tasks 2–3 could be done in parallel, but Task 3 depends on Task 1 being merged
   - **Done when:** A project with a transcript survives page refresh — save, reload, and the transcript is still accessible on the scene
   - **Depends on:** Task 1
 
-- [ ] **Task 3: Store `WordTranscript` on scene after transcription**
+- [x] **Task 3: Store `WordTranscript` on scene after transcription**
   - **What:** In the Captions panel (`assets-view.tsx`), after `transcribe()` succeeds:
     1. Call `transcriptionService.transcribeToWords()` with the same audio data instead of (or in addition to) `transcribe()`
     2. Get the resulting `WordTranscript`
@@ -49,7 +49,7 @@ Tasks 2–3 could be done in parallel, but Task 3 depends on Task 1 being merged
   - **Done when:** After transcription completes, `editor.scenes.getActiveScene().transcript` contains a valid `WordTranscript` with the full text
   - **Depends on:** Task 1
 
-- [ ] **Task 4: Escape transcript text in prompt template**
+- [x] **Task 4: Escape transcript text in prompt template**
   - **What:** The `buildPlanPrompt()` interpolates transcript text into a template literal. If the transcript contains backticks (`` ` ``) or `${...}` patterns, they would break the template. Add simple sanitization:
     - Replace `` ` `` with `'` in the transcript string
     - Replace `${` with `$` + `{` (or equivalent safe escape)
@@ -59,7 +59,7 @@ Tasks 2–3 could be done in parallel, but Task 3 depends on Task 1 being merged
   - **Done when:** A transcript containing backticks, `${...}`, or JSON-special characters produces a valid prompt that the LLM can parse
   - **Depends on:** Task 1
 
-- [ ] **Task 5: Read transcript and include in `AiAgentPanel` context**
+- [x] **Task 5: Read transcript and include in `AiAgentPanel` context**
   - **What:** In `AiAgentPanel.tsx`, when building the `context` object for `generatePlan()`:
     1. After getting the active scene (`editor.scenes.getActiveScene()`), extract `scene.transcript?.fullText`
     2. If the transcript is longer than ~12,000 characters, truncate to 12,000 chars and append `... [truncated]`
@@ -72,7 +72,7 @@ Tasks 2–3 could be done in parallel, but Task 3 depends on Task 1 being merged
 
 ## Property-Based Tests
 
-- [ ] **Task 6: Write property-based tests for transcript serialization round-trip**
+- [x] **Task 6: Write property-based tests for transcript serialization round-trip**
   - **What:** Implement a test that:
     - Generates random `WordTranscript` objects (varying lengths, special characters, empty strings)
     - Simulates the serialize/deserialize flow through `SerializedScene`
@@ -83,7 +83,7 @@ Tasks 2–3 could be done in parallel, but Task 3 depends on Task 1 being merged
   - **Done when:** Test runs, generates 100+ random cases covering edge chars (`\n`, `${`, `` ` ``, quotes, non-ASCII), and all pass
   - **Depends on:** Task 1, Task 2
 
-- [ ] **Task 7: Write unit test for transcript truncation in AiAgentPanel**
+- [x] **Task 7: Write unit test for transcript truncation in AiAgentPanel**
   - **What:** Extract the truncation logic from Task 5 into a pure function and test:
     - Transcript under 12,000 chars → returned as-is
     - Transcript over 12,000 chars → truncated with `... [truncated]` suffix

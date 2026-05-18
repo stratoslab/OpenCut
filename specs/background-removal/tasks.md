@@ -2,7 +2,7 @@
 
 ## Tasks
 
-- [ ] **Task 1: Create BackgroundRemovalDialog**
+- [x] **Task 1: Create BackgroundRemovalDialog**
   - **What:** Dialog with image upload/timeline selection, "Remove Background" button, progress indicator, result preview
   - **Files:** Create `apps/web-vite/src/background-removal/components/BackgroundRemovalDialog.tsx`
   - **Done when:** User can select image, process it, see result

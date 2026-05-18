@@ -2,13 +2,13 @@
 
 ## Tasks
 
-- [ ] **Task 1: Create QuickActionsBar component**
+- [x] **Task 1: Create QuickActionsBar component**
   - **What:** Floating bar with 5 action buttons, appears after transcription, dismissible
   - **Files:** Create `apps/web-vite/src/subtitles/components/QuickActionsBar.tsx`
   - **Done when:** Bar appears post-transcription, buttons clickable, dismissible
   - **Depends on:** none
 
-- [ ] **Task 2: Wire actions to existing services**
+- [x] **Task 2: Wire actions to existing services**
   - **What:** Connect each button to its service: Smart Cut → smart-cut-executor, Add Subtitles → insertCaptionChunks, Popover → style editor with animation
   - **Files:** Update `apps/web-vite/src/subtitles/components/QuickActionsBar.tsx`
   - **Done when:** Each button executes its action correctly with confirmation dialogs where needed
