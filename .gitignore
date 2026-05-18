@@ -25,4 +25,7 @@ target/
 
 .cargo-tools/
 
-rust-migration-notes.mdapps/web-vite/dist/
+rust-migration-notes.md
+apps/web-vite/dist/
+apps/web-vite/tsconfig.app.tsbuildinfo
+.DS_Store
