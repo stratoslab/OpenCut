@@ -104,23 +104,29 @@ export class ProjectBundler {
 		return bundle;
 	}
 
-	validateBundle(bundle: Record<string, unknown>): BundleValidationResult {
+	validateBundle(bundle: unknown): BundleValidationResult {
 		const errors: string[] = [];
 		const warnings: string[] = [];
 
+		if (!bundle || typeof bundle !== "object") {
+			errors.push("Bundle is not a valid object");
+			return { valid: errors.length === 0, errors, warnings };
+		}
+
+		const obj = bundle as Record<string, unknown>;
 		const required = ["version", "createdAt", "metadata", "project"];
 		for (const key of required) {
-			if (!(key in bundle)) {
+			if (!(key in obj)) {
 				errors.push(`Missing required field: ${key}`);
 			}
 		}
 
-		const version = bundle.version as string;
+		const version = obj.version as string | undefined;
 		if (version && !version.startsWith("1.")) {
 			warnings.push(`Unknown bundle version: ${version}`);
 		}
 
-		const media = bundle.media as BundleMediaReference[] | undefined;
+		const media = obj.media as BundleMediaReference[] | undefined;
 		if (media) {
 			for (const m of media) {
 				if (!m.id || !m.name || !m.type) {

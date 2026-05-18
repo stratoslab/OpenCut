@@ -14,6 +14,14 @@ import {
 	ColorsIcon,
 	Film02Icon,
 	BotIcon,
+	CubeIcon,
+	Clock01Icon,
+	Grid02Icon,
+	MusicNote01Icon,
+	AiGenerativeIcon,
+	KeyframeIcon,
+	Database01Icon,
+	Archive01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 
@@ -28,6 +36,14 @@ export const TAB_KEYS = [
 	"scene-detection",
 	"ai-copilot",
 	"adjustment",
+	"3d",
+	"keyframes",
+	"audio",
+	"text-animations",
+	"proxy",
+	"project-bundle",
+	"history",
+	"multi-output",
 	"settings",
 ] as const;
 
@@ -79,6 +95,38 @@ export const tabs = {
 	adjustment: {
 		icon: createHugeiconsIcon({ icon: SlidersHorizontalIcon }),
 		label: "Adjustment",
+	},
+	"3d": {
+		icon: createHugeiconsIcon({ icon: CubeIcon }),
+		label: "3D",
+	},
+	keyframes: {
+		icon: createHugeiconsIcon({ icon: KeyframeIcon }),
+		label: "Keyframes",
+	},
+	audio: {
+		icon: createHugeiconsIcon({ icon: MusicNote01Icon }),
+		label: "Audio",
+	},
+	"text-animations": {
+		icon: createHugeiconsIcon({ icon: AiGenerativeIcon }),
+		label: "Text Anim",
+	},
+	proxy: {
+		icon: createHugeiconsIcon({ icon: Database01Icon }),
+		label: "Proxy",
+	},
+	"project-bundle": {
+		icon: createHugeiconsIcon({ icon: Archive01Icon }),
+		label: "Bundle",
+	},
+	history: {
+		icon: createHugeiconsIcon({ icon: Clock01Icon }),
+		label: "History",
+	},
+	"multi-output": {
+		icon: createHugeiconsIcon({ icon: Grid02Icon }),
+		label: "Outputs",
 	},
 	settings: {
 		icon: createHugeiconsIcon({ icon: Settings01Icon }),

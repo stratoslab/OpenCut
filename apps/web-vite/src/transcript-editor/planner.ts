@@ -4,6 +4,33 @@ import type { MediaTime } from "@/wasm";
 
 const TICKS_PER_SECOND = 120_000;
 
+let wasmPlanner: WasmTranscriptPlanner | null = null;
+
+export async function initWasmPlanner() {
+	if (!wasmPlanner) {
+		try {
+			const wasm = await import("opencut-wasm");
+			const planner: WasmTranscriptPlanner = {};
+			if ("validateWordTranscript" in wasm && typeof wasm.validateWordTranscript === "function") {
+				planner.validateWordTranscript = wasm.validateWordTranscript as WasmTranscriptPlanner["validateWordTranscript"];
+			}
+			if ("planSelectionTranscriptEdit" in wasm && typeof wasm.planSelectionTranscriptEdit === "function") {
+				planner.planSelectionTranscriptEdit = wasm.planSelectionTranscriptEdit as WasmTranscriptPlanner["planSelectionTranscriptEdit"];
+			}
+			if ("planSuggestionTranscriptEdit" in wasm && typeof wasm.planSuggestionTranscriptEdit === "function") {
+				planner.planSuggestionTranscriptEdit = wasm.planSuggestionTranscriptEdit as WasmTranscriptPlanner["planSuggestionTranscriptEdit"];
+			}
+			if ("resolveWordIndicesForTimeRange" in wasm && typeof wasm.resolveWordIndicesForTimeRange === "function") {
+				planner.resolveWordIndicesForTimeRange = wasm.resolveWordIndicesForTimeRange as WasmTranscriptPlanner["resolveWordIndicesForTimeRange"];
+			}
+			wasmPlanner = Object.keys(planner).length > 0 ? planner : null;
+		} catch {
+			wasmPlanner = null;
+		}
+	}
+	return wasmPlanner;
+}
+
 export interface TranscriptDeletedRange {
 	wordIndices: number[];
 	timeRange: { start: number; end: number };
@@ -185,7 +212,7 @@ export function mediaTimeToTranscriptSeconds({
 }
 
 function getWasmPlanner(): WasmTranscriptPlanner | null {
-	return null;
+	return wasmPlanner;
 }
 
 function validateTranscriptLocal(

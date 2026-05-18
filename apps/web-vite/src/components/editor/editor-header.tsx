@@ -21,11 +21,23 @@ import { DEFAULT_LOGO_URL } from "@/site/brand";
 import { SOCIAL_LINKS } from "@/site/social";
 import { toast } from "sonner";
 import { useEditor } from "@/editor/use-editor";
-import { CommandIcon, Logout05Icon } from "@hugeicons/core-free-icons";
+import { CommandIcon, Logout05Icon, Download01Icon, Upload01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ShortcutsDialog } from "@/actions/components/shortcuts-dialog";
 import Image from "@/components/ui/image";
 import { cn } from "@/utils/ui";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Textarea } from "../ui/textarea";
+import { projectBundler, type BundleMetadata } from "@/project/project-bundler";
 
 export function EditorHeader() {
 	return (
@@ -35,6 +47,7 @@ export function EditorHeader() {
 				<EditableProjectName />
 			</div>
 			<nav className="flex items-center gap-2">
+				<ProjectBundleButtons />
 				<FeedbackPopover />
 				<ExportButton />
 				<ThemeToggle />
@@ -244,5 +257,178 @@ function EditableProjectName() {
 				isEditing && "ring-1 ring-ring cursor-text hover:bg-transparent",
 			)}
 		/>
+	);
+}
+
+function ProjectBundleButtons() {
+	const editor = useEditor();
+	const activeProject = useEditor((e) => e.project.getActive());
+	const [showExportDialog, setShowExportDialog] = useState(false);
+	const [showImportDialog, setShowImportDialog] = useState(false);
+	const [exportName, setExportName] = useState("");
+	const [exportDescription, setExportDescription] = useState("");
+	const [exportAuthor, setExportAuthor] = useState("");
+
+	const handleExport = async () => {
+		if (!activeProject) {
+			toast.error("No active project");
+			return;
+		}
+
+		try {
+			const mediaAssets = editor.media.getAssets();
+			const mediaFiles = mediaAssets.map((asset) => ({
+				id: asset.id,
+				name: asset.name,
+				type: asset.type,
+				file: asset.file,
+			}));
+
+			const metadata: Partial<BundleMetadata> = {
+				name: exportName || activeProject.metadata.name,
+				description: exportDescription,
+				author: exportAuthor || "OpenCut User",
+			};
+
+			const projectData = {
+				metadata: activeProject.metadata,
+				scenes: activeProject.scenes,
+				currentSceneId: activeProject.currentSceneId,
+				settings: activeProject.settings,
+				version: activeProject.version,
+			};
+
+			const bundle = await projectBundler.createBundle(projectData, mediaFiles, metadata);
+			const blob = await projectBundler.exportBundle(bundle);
+
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = `${bundle.metadata.name.replace(/\s+/g, "-").toLowerCase()}.opencut`;
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			URL.revokeObjectURL(url);
+
+			setShowExportDialog(false);
+			toast.success("Project exported");
+		} catch (error) {
+			toast.error(`Export failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+		}
+	};
+
+	const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		if (!file) return;
+
+		try {
+			const blob = new Blob([file], { type: "application/x-opencut" });
+			const bundle = await projectBundler.importBundle(blob);
+			const validation = projectBundler.validateBundle(bundle);
+
+			if (!validation.valid) {
+				toast.error(`Invalid bundle: ${validation.errors.join(", ")}`);
+				return;
+			}
+
+			toast.success(`Imported: ${bundle.metadata.name}`);
+			setShowImportDialog(false);
+		} catch (error) {
+			toast.error(`Import failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+		}
+	};
+
+	return (
+		<>
+			<div className="flex items-center gap-1">
+				<Button
+					variant="ghost"
+					size="icon"
+					className="size-8"
+					onClick={() => {
+						setExportName(activeProject?.metadata.name ?? "");
+						setShowExportDialog(true);
+					}}
+				>
+					<HugeiconsIcon icon={Download01Icon} className="size-4" />
+				</Button>
+				<Button
+					variant="ghost"
+					size="icon"
+					className="size-8"
+					onClick={() => setShowImportDialog(true)}
+				>
+					<HugeiconsIcon icon={Upload01Icon} className="size-4" />
+				</Button>
+			</div>
+
+			<Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Export Project</DialogTitle>
+						<DialogDescription>
+							Package your project as a .opencut file.
+						</DialogDescription>
+					</DialogHeader>
+					<div className="space-y-3">
+						<div className="space-y-2">
+							<Label className="text-xs">Project Name</Label>
+							<Input
+								value={exportName}
+								onChange={(e) => setExportName(e.target.value)}
+								className="h-8 text-xs"
+							/>
+						</div>
+						<div className="space-y-2">
+							<Label className="text-xs">Description</Label>
+							<Textarea
+								value={exportDescription}
+								onChange={(e) => setExportDescription(e.target.value)}
+								className="text-xs"
+								rows={2}
+							/>
+						</div>
+						<div className="space-y-2">
+							<Label className="text-xs">Author</Label>
+							<Input
+								value={exportAuthor}
+								onChange={(e) => setExportAuthor(e.target.value)}
+								className="h-8 text-xs"
+							/>
+						</div>
+					</div>
+					<DialogFooter>
+						<Button onClick={handleExport}>Export Project</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			<Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Import Project</DialogTitle>
+						<DialogDescription>
+							Load a .opencut project file.
+						</DialogDescription>
+					</DialogHeader>
+					<div className="rounded border-2 border-dashed p-6 text-center">
+						<input
+							type="file"
+							accept=".opencut,application/x-opencut"
+							onChange={handleImport}
+							className="hidden"
+							id="header-bundle-import"
+						/>
+						<label
+							htmlFor="header-bundle-import"
+							className="cursor-pointer text-muted-foreground hover:text-foreground"
+						>
+							<HugeiconsIcon icon={Upload01Icon} className="mx-auto mb-2 size-8" />
+							<p className="text-sm">Click to select a .opencut file</p>
+						</label>
+					</div>
+				</DialogContent>
+			</Dialog>
+		</>
 	);
 }

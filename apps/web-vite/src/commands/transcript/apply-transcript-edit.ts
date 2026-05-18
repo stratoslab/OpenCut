@@ -19,6 +19,7 @@ interface ApplyTranscriptEditCommandArgs {
 export class ApplyTranscriptEditCommand extends Command {
 	private beforeScenes: TScene[] | null = null;
 	private afterScenes: TScene[] | null = null;
+	private editedSceneId: string | null = null;
 
 	constructor(private readonly args: ApplyTranscriptEditCommandArgs) {
 		super();
@@ -29,6 +30,7 @@ export class ApplyTranscriptEditCommand extends Command {
 		const activeScene = editor.scenes.getActiveScene();
 		const scenes = editor.scenes.getScenes();
 		this.beforeScenes = scenes;
+		this.editedSceneId = activeScene.id;
 
 		const nextTracks = applyPlanToTracks({
 			tracks: activeScene.tracks,
@@ -72,10 +74,9 @@ export class ApplyTranscriptEditCommand extends Command {
 			return this.execute();
 		}
 		const editor = EditorCore.getInstance();
-		const activeSceneId = editor.scenes.getActiveSceneOrNull()?.id;
 		editor.scenes.setScenes({
 			scenes: this.afterScenes,
-			activeSceneId,
+			activeSceneId: this.editedSceneId ?? undefined,
 		});
 		return undefined;
 	}
