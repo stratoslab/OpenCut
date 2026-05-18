@@ -1,6 +1,6 @@
 {
-  "version": "4.0",
-  "description": "OpenCut (StratosCut) architecture workflows — Vite + React SPA, fully client-side with AI features suite + 11 spec'd features",
+  "version": "5.0",
+  "description": "OpenCut architecture workflows — Vite + React SPA, fully client-side with P0 GPU foundation + P1 AI Power features (AI upscale, auto color grade, agent execution, scopes, frame cache, export engine)",
   "nodes": {
     "user": {
       "id": "user",
@@ -126,7 +126,7 @@
       "type": "wasm",
       "package": "opencut-wasm",
       "icon": "⚙️",
-      "description": "GPU video frame compositing via wgpu (WebGPU)"
+      "description": "GPU video frame compositing via wgpu (WebGPU) — 34 blend modes, 6 transitions"
     },
     "effects-pipeline": {
       "id": "effects-pipeline",
@@ -134,7 +134,7 @@
       "type": "wasm",
       "package": "opencut-wasm",
       "icon": "✨",
-      "description": "GPU shader effect pipeline"
+      "description": "GPU shader effect pipeline — 13 effects (blur, color-correct, chromatic-aberr, vignette, sharpen, sepia, grayscale, invert, pixelate, noise, lens-distortion, glow, ai-upscale, color-grade)"
     },
     "mask-pipeline": {
       "id": "mask-pipeline",
@@ -150,7 +150,31 @@
       "type": "component",
       "package": "@opencut/web-vite",
       "icon": "🔄",
-      "description": "Canvas 2D transition rendering (crossfade, slide, wipe, zoom)"
+      "description": "GPU transitions (crossfade, slide, wipe, zoom, dissolve, push)"
+    },
+    "video-scopes": {
+      "id": "video-scopes",
+      "label": "Video Scopes",
+      "type": "wasm",
+      "package": "opencut-wasm",
+      "icon": "📊",
+      "description": "GPU compute shaders for histogram, vectorscope, waveform monitoring"
+    },
+    "frame-cache": {
+      "id": "frame-cache",
+      "label": "Frame Cache",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "🗃️",
+      "description": "3-tier LRU frame cache with SHA-256 effects hash invalidation"
+    },
+    "export-engine": {
+      "id": "export-engine",
+      "label": "Export Engine",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "📤",
+      "description": "Zero-copy export via transferToImageBitmap(), progress tracking, resume support"
     },
     "storage-service": {
       "id": "storage-service",
@@ -191,14 +215,6 @@
       "package": "@opencut/web-vite",
       "icon": "🤖",
       "description": "Local Gemma LLM conversational assistant (WebGPU)"
-    },
-    "export-pipeline": {
-      "id": "export-pipeline",
-      "label": "Export Pipeline",
-      "type": "service",
-      "package": "@opencut/web-vite",
-      "icon": "📤",
-      "description": "Browser-native MP4/WebM export (MediaRecorder + Canvas capture)"
     },
     "scene-graph": {
       "id": "scene-graph",
@@ -299,7 +315,7 @@
       "type": "service",
       "package": "@opencut/web-vite",
       "icon": "🤖",
-      "description": "AI Co-Pilot — plan generation, validation, sequential step execution"
+      "description": "AI Co-Pilot — plan generation, validation, sequential step execution (19 action types mapped to CommandManager)"
     },
     "ai-worker": {
       "id": "ai-worker",
@@ -362,7 +378,7 @@
       "type": "component",
       "package": "@opencut/web-vite",
       "icon": "🔎",
-      "description": "Cmd+Shift+P fuzzy-searchable command palette (spec'd, not yet implemented)"
+      "description": "Cmd+Shift+P fuzzy-searchable command palette"
     },
     "smart-cut": {
       "id": "smart-cut",
@@ -370,7 +386,7 @@
       "type": "service",
       "package": "@opencut/web-vite",
       "icon": "✂️",
-      "description": "One-click filler word + silence removal with sensitivity control (spec'd, not yet implemented)"
+      "description": "One-click filler word + silence removal with sensitivity control"
     },
     "subtitle-style-editor": {
       "id": "subtitle-style-editor",
@@ -378,7 +394,7 @@
       "type": "component",
       "package": "@opencut/web-vite",
       "icon": "🎨",
-      "description": "Live preview style editor with presets, custom controls, animations (spec'd, not yet implemented)"
+      "description": "Live preview style editor with presets, custom controls, animations"
     },
     "quick-actions-bar": {
       "id": "quick-actions-bar",
@@ -386,7 +402,7 @@
       "type": "component",
       "package": "@opencut/web-vite",
       "icon": "⚡",
-      "description": "Post-transcription floating bar: Smart Cut, filler removal, silence removal (spec'd, not yet implemented)"
+      "description": "Post-transcription floating bar: Smart Cut, filler removal, silence removal"
     },
     "smart-suggestions": {
       "id": "smart-suggestions",
@@ -394,7 +410,7 @@
       "type": "service",
       "package": "@opencut/web-vite",
       "icon": "💡",
-      "description": "Floating AI suggestion cards with Apply/Dismiss (spec'd, not yet implemented)"
+      "description": "Floating AI suggestion cards with Apply/Dismiss"
     },
     "version-control": {
       "id": "version-control",
@@ -402,7 +418,7 @@
       "type": "service",
       "package": "@opencut/web-vite",
       "icon": "🔀",
-      "description": "Git-like version control: commits, branches, tags, diff view (spec'd, not yet implemented)"
+      "description": "Git-like version control: commits, branches, tags, diff view"
     },
     "background-removal": {
       "id": "background-removal",
@@ -410,7 +426,7 @@
       "type": "service",
       "package": "@opencut/web-vite",
       "icon": "🖼️",
-      "description": "Client-side WASM background removal via @imgly/background-removal (spec'd, not yet implemented)"
+      "description": "Client-side WASM background removal via @imgly/background-removal"
     },
     "broll-suggestions": {
       "id": "broll-suggestions",
@@ -418,7 +434,7 @@
       "type": "service",
       "package": "@opencut/web-vite",
       "icon": "🎬",
-      "description": "Transcript-based B-roll suggestions with Pexels API (spec'd, not yet implemented)"
+      "description": "Transcript-based B-roll suggestions with Pexels API"
     },
     "onboarding-flow": {
       "id": "onboarding-flow",
@@ -426,7 +442,7 @@
       "type": "component",
       "package": "@opencut/web-vite",
       "icon": "👋",
-      "description": "3-step first-run dialog: welcome, AI model status, guided tour (spec'd, not yet implemented)"
+      "description": "3-step first-run dialog: welcome, AI model status, guided tour"
     },
     "audio-analysis": {
       "id": "audio-analysis",
@@ -434,7 +450,7 @@
       "type": "service",
       "package": "@opencut/web-vite",
       "icon": "📊",
-      "description": "Beat detection (FFT), auto-ducking, LUFS loudness normalization (spec'd, not yet implemented)"
+      "description": "Beat detection (FFT), auto-ducking, LUFS loudness normalization"
     },
     "pexels-api": {
       "id": "pexels-api",
@@ -554,14 +570,14 @@
       "description": "User exports the edited video as MP4/WebM",
       "steps": [
         { "from": "user", "to": "react-ui", "action": "Click 'Export' button, select format/quality", "data": "{ format: 'mp4' | 'webm', quality, fps, includeAudio }" },
-        { "from": "react-ui", "to": "renderer-manager", "action": "exportProject(options)", "data": "Export configuration" },
-        { "from": "renderer-manager", "to": "renderer-manager", "action": "createTimelineAudioBuffer()", "data": "Mix all audio tracks → AudioBuffer (~5% progress)" },
-        { "from": "renderer-manager", "to": "scene-graph", "action": "buildScene()", "data": "RootNode tree from tracks + mediaAssets + canvasSize" },
-        { "from": "scene-graph", "to": "export-pipeline", "action": "SceneExporter.export()", "data": "Frame-by-frame render loop" },
-        { "from": "export-pipeline", "to": "wasm-compositor", "action": "renderFrame() per frame", "data": "Each frame composited via GPU" },
-        { "from": "export-pipeline", "to": "video-element", "action": "captureStream() from canvas", "data": "Canvas video stream + audio track" },
-        { "from": "export-pipeline", "to": "media-recorder", "action": "MediaRecorder.encode()", "data": "VP9 (WebM) or H.264 (MP4) + Opus/AAC audio" },
-        { "from": "export-pipeline", "to": "user", "action": "Download file", "data": "Blob → browser download" }
+        { "from": "react-ui", "to": "export-engine", "action": "exportProject(options)", "data": "Export configuration with zero-copy, progress, resume" },
+        { "from": "export-engine", "to": "export-engine", "action": "createTimelineAudioBuffer()", "data": "Mix all audio tracks → AudioBuffer (~5% progress)" },
+        { "from": "export-engine", "to": "scene-graph", "action": "buildScene()", "data": "RootNode tree from tracks + mediaAssets + canvasSize" },
+        { "from": "export-engine", "to": "frame-cache", "action": "Check cache for frame", "data": "SHA-256 effects hash → cache hit/miss" },
+        { "from": "frame-cache", "to": "wasm-compositor", "action": "renderFrame() per frame (on miss)", "data": "Each frame composited via GPU" },
+        { "from": "export-engine", "to": "video-element", "action": "transferToImageBitmap() for zero-copy", "data": "Canvas video stream + audio track" },
+        { "from": "export-engine", "to": "media-recorder", "action": "MediaRecorder.encode()", "data": "VP9 (WebM) or H.264 (MP4) + Opus/AAC audio" },
+        { "from": "export-engine", "to": "user", "action": "Download file", "data": "Blob → browser download with progress tracking" }
       ]
     },
     {
@@ -576,7 +592,7 @@
         { "from": "command-manager", "to": "command-manager", "action": "Execute inverse command", "data": "undo: inverseCommand.execute()" },
         { "from": "command-manager", "to": "timeline-manager", "action": "Restore previous state", "data": "Scene tracks reverted to snapshot" },
         { "from": "timeline-manager", "to": "scenes-manager", "action": "updateSceneTracks()", "data": "Notify listeners of state change" },
-        { "from": "scenes-manager", "to": "renderer-manager", "action": "Re-render preview", "data": "Preview reflects undone/redone state" },
+        { "from": "scenes-manager", "to": "renderer-manager", "action": "Re-render preview", "data": "Preview reflectss undone/redone state" },
         { "from": "scenes-manager", "to": "save-manager", "action": "markDirty()", "data": "Auto-save restored state" }
       ]
     },
@@ -656,6 +672,8 @@
       "description": "A single frame is rendered for the preview panel",
       "steps": [
         { "from": "playback-manager", "to": "renderer-manager", "action": "Request frame at currentTime", "data": "{ time, canvasSize }" },
+        { "from": "renderer-manager", "to": "frame-cache", "action": "Check cache for frame", "data": "SHA-256 effects hash lookup" },
+        { "from": "frame-cache", "to": "renderer-manager", "action": "Return cached frame (hit) or request render (miss)", "data": "ImageBitmap or cache miss signal" },
         { "from": "renderer-manager", "to": "scene-graph", "action": "buildScene()", "data": "RootNode tree from current tracks state" },
         { "from": "scene-graph", "to": "scene-graph", "action": "resolveRenderTree(node, time)", "data": "Resolve all node state at specific time" },
         { "from": "scene-graph", "to": "renderer-manager", "action": "buildFrameDescriptor()", "data": "WASM-compatible frame description" },
@@ -671,11 +689,11 @@
       "category": "editing",
       "description": "User applies a visual effect to a clip",
       "steps": [
-        { "from": "user", "to": "react-ui", "action": "Select effect from effects panel", "data": "Effect type + parameters" },
+        { "from": "user", "to": "react-ui", "action": "Select effect from effects panel", "data": "Effect type + parameters (14 effects: blur, color-correct, chromatic-aberr, vignette, sharpen, sepia, grayscale, invert, pixelate, noise, lens-distortion, glow, ai-upscale, color-grade)" },
         { "from": "react-ui", "to": "timeline-manager", "action": "AddClipEffectCommand", "data": "{ clipId, effectType, params }" },
         { "from": "timeline-manager", "to": "command-manager", "action": "execute(command)", "data": "Push to undo stack" },
         { "from": "timeline-manager", "to": "renderer-manager", "action": "Re-render preview", "data": "Scene graph includes new effect node" },
-        { "from": "renderer-manager", "to": "effects-pipeline", "action": "applyEffectPasses()", "data": "GPU shader execution with params" },
+        { "from": "renderer-manager", "to": "effects-pipeline", "action": "applyEffectPasses()", "data": "GPU shader execution with params (EffectUniformBuffer: resolution[2], direction[2], scalars[4])" },
         { "from": "effects-pipeline", "to": "web-gpu", "action": "Compute shader pass", "data": "Source texture → effect → output OffscreenCanvas" },
         { "from": "effects-pipeline", "to": "renderer-manager", "action": "Return processed frame", "data": "OffscreenCanvas with effect applied" },
         { "from": "renderer-manager", "to": "react-ui", "action": "Preview updated", "data": "Effect visible in preview panel" }
@@ -729,7 +747,8 @@
         { "from": "ai-agent", "to": "react-ui", "action": "Display plan for review", "data": "Step list with descriptions and action types" },
         { "from": "user", "to": "react-ui", "action": "Click 'Execute'", "data": "Confirmation" },
         { "from": "react-ui", "to": "ai-agent", "action": "executePlan(plan, callbacks)", "data": "Sequential step execution" },
-        { "from": "ai-agent", "to": "ai-agent", "action": "Execute each step via CommandManager", "data": "Each step mapped to existing commands (single undo group)" },
+        { "from": "ai-agent", "to": "command-manager", "action": "Execute each step via CommandManager", "data": "19 action types mapped: split-clip, delete-clip, trim-start, trim-end, add-transition, remove-transition, add-effect, remove-effect, mute-audio, unmute-audio, adjust-volume, add-text, delete-text, retime-clip, add-marker, delete-marker, normalize-audio, auto-duck, add-caption" },
+        { "from": "command-manager", "to": "timeline-manager", "action": "command.execute()", "data": "SplitElementsCommand, DeleteElementsCommand, UpdateElementsCommand, InsertElementCommand, AddClipEffectCommand, etc." },
         { "from": "ai-agent", "to": "react-ui", "action": "Progress updates per step", "data": "Step N of M, progress bar" }
       ]
     },
@@ -794,6 +813,52 @@
         { "from": "ai-worker", "to": "ai-agent", "action": "Stream response tokens", "data": "{ status: 'update', output: text }" },
         { "from": "ai-agent", "to": "ai-agent", "action": "parsePlanResponse() + validatePlan()", "data": "Parse JSON, verify all 19 action types are valid" },
         { "from": "ai-agent", "to": "react-ui", "action": "Display plan for review", "data": "Step list with descriptions informed by transcript context" }
+      ]
+    },
+    {
+      "id": "view-video-scopes",
+      "label": "View Video Scopes",
+      "category": "editing",
+      "description": "User views histogram, vectorscope, and waveform for color analysis",
+      "steps": [
+        { "from": "user", "to": "react-ui", "action": "Open scopes panel", "data": "Scope type selection (histogram/vectorscope/waveform)" },
+        { "from": "react-ui", "to": "renderer-manager", "action": "Request scope data for current frame", "data": "{ scopeType: 'histogram' | 'vectorscope' | 'waveform' }" },
+        { "from": "renderer-manager", "to": "wasm-compositor", "action": "Compute scope shader", "data": "GPU compute shader processes frame pixels" },
+        { "from": "wasm-compositor", "to": "video-scopes", "action": "Execute compute pass", "data": "histogram.wgsl / vectorscope.wgsl / waveform.wgsl" },
+        { "from": "video-scopes", "to": "react-ui", "action": "Return scope data", "data": "Histogram: 256-bin RGB channels, Vectorscope: chrominance plot, Waveform: luminance distribution" },
+        { "from": "react-ui", "to": "react-ui", "action": "Render scope visualization", "data": "Canvas 2D scope display" }
+      ]
+    },
+    {
+      "id": "apply-ai-upscale",
+      "label": "Apply AI Upscale Effect",
+      "category": "ai",
+      "description": "User applies AI upscaling to enhance video quality",
+      "steps": [
+        { "from": "user", "to": "react-ui", "action": "Select AI Upscale from effects panel", "data": "{ effectType: 'ai-upscale', intensity: 0-100 }" },
+        { "from": "react-ui", "to": "timeline-manager", "action": "AddClipEffectCommand", "data": "{ clipId, effectType: 'ai-upscale', params: { intensity } }" },
+        { "from": "timeline-manager", "to": "command-manager", "action": "execute(command)", "data": "Push to undo stack" },
+        { "from": "timeline-manager", "to": "renderer-manager", "action": "Re-render preview", "data": "Scene graph includes ai-upscale effect node" },
+        { "from": "renderer-manager", "to": "effects-pipeline", "action": "applyEffectPasses()", "data": "ai_upscale.wgsl: edge-directed sharpening with Laplacian edge detection" },
+        { "from": "effects-pipeline", "to": "web-gpu", "action": "Compute shader pass", "data": "3x3 neighborhood sampling → gradient calculation → edge-directed sharpening" },
+        { "from": "effects-pipeline", "to": "renderer-manager", "action": "Return processed frame", "data": "OffscreenCanvas with enhanced detail" },
+        { "from": "renderer-manager", "to": "react-ui", "action": "Preview updated", "data": "Upscaled detail visible in preview panel" }
+      ]
+    },
+    {
+      "id": "apply-auto-color-grade",
+      "label": "Apply Auto Color Grade",
+      "category": "ai",
+      "description": "User applies cinematic color grading presets",
+      "steps": [
+        { "from": "user", "to": "react-ui", "action": "Select Auto Color Grade, choose preset", "data": "{ effectType: 'color-grade', preset: 'cinematic'|'warm'|'cool'|'dramatic'|'vintage'|'neutral', intensity: 0-100 }" },
+        { "from": "react-ui", "to": "timeline-manager", "action": "AddClipEffectCommand", "data": "{ clipId, effectType: 'color-grade', params: { preset, intensity } }" },
+        { "from": "timeline-manager", "to": "command-manager", "action": "execute(command)", "data": "Push to undo stack" },
+        { "from": "timeline-manager", "to": "renderer-manager", "action": "Re-render preview", "data": "Scene graph includes color-grade effect node" },
+        { "from": "renderer-manager", "to": "effects-pipeline", "action": "applyEffectPasses()", "data": "color_grade.wgsl: HSL-based grading with shadow tint, highlight tint, contrast, saturation" },
+        { "from": "effects-pipeline", "to": "web-gpu", "action": "Compute shader pass", "data": "RGB→HSL conversion → lightness stretch → shadow/highlight tinting → saturation boost → HSL→RGB" },
+        { "from": "effects-pipeline", "to": "renderer-manager", "action": "Return processed frame", "data": "OffscreenCanvas with cinematic color grade" },
+        { "from": "renderer-manager", "to": "react-ui", "action": "Preview updated", "data": "Color graded preview visible in panel" }
       ]
     }
   ]
