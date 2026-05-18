@@ -26,6 +26,7 @@ import { mediaTimeToSeconds } from "@/wasm";
 import { buildCaptionChunks } from "@/transcription/caption";
 import { insertCaptionChunksAsTextTrack } from "@/subtitles/insert";
 import { parseSubtitleFile } from "@/subtitles/parse";
+import { cuesToWordTranscript } from "@/subtitles/to-word-transcript";
 import { Spinner } from "@/components/ui/spinner";
 import {
 	Section,
@@ -233,6 +234,22 @@ export function Captions() {
 				dispatch({ type: "fail", error: "No captions were generated" });
 				return;
 			}
+
+			// Generate WordTranscript from imported cues to enable text-based editing
+			const videoDuration = mediaTimeToSeconds({
+				time: editor.timeline.getTotalDuration(),
+			});
+			const wordTranscript = cuesToWordTranscript({
+				cues: result.captions,
+				videoDuration,
+				language: "unknown",
+			});
+
+			const activeScene = editor.scenes.getActiveScene();
+			editor.scenes.updateScene({
+				sceneId: activeScene.id,
+				updates: { transcript: wordTranscript },
+			});
 
 			const nextWarnings = [...result.warnings];
 			if (result.skippedCueCount > 0) {

@@ -44,6 +44,12 @@ export interface ProjectContext {
   mainTrackElements: { id: string; name: string; duration: number; startTime: number }[];
   audioTrackCount: number;
   transcript?: string;
+  wordTranscript?: {
+    words: { text: string; start: number; end: number }[];
+    fullText: string;
+    language?: string;
+    videoDuration?: number;
+  };
 }
 
 export interface PlanCallbacks {

@@ -5,11 +5,13 @@ import { useEditor } from "@/editor/use-editor";
 import { useTimelineStore } from "@/timeline/timeline-store";
 import { WordSpan } from "./WordSpan";
 import { EditPreviewPanel } from "./EditPreviewPanel";
+import { GemmaChatPanel } from "./GemmaChatPanel";
 import {
 	planSelectionEdit,
 	validateTranscript,
 	type TranscriptEditPlan,
 } from "./planner";
+import { cn } from "@/utils/ui";
 
 export function TranscriptPanel() {
 	const editor = useEditor();
@@ -27,6 +29,7 @@ export function TranscriptPanel() {
 		null,
 	);
 	const [error, setError] = useState<string | null>(null);
+	const [showChat, setShowChat] = useState(false);
 
 	const transcript = activeScene?.transcript ?? null;
 	const validation = useMemo(
@@ -144,46 +147,81 @@ export function TranscriptPanel() {
 					>
 						Delete
 					</Button>
+					<Button
+						variant={showChat ? "default" : "outline"}
+						size="sm"
+						onClick={() => setShowChat(!showChat)}
+					>
+						{showChat ? "Editor" : "AI Chat"}
+					</Button>
 				</div>
 				{error && <p className="mt-2 text-xs text-destructive">{error}</p>}
 			</div>
 
-			<div className="flex-1 overflow-y-auto p-4 text-sm leading-7">
-				{transcript.words.map((word) => (
-					<React.Fragment key={word.wordIndex}>
-						<WordSpan
-							word={word}
-							isSelected={selected.has(word.wordIndex)}
-							isHovered={hoveredWordIndex === word.wordIndex}
-							isHighlighted={searchMatches.has(word.wordIndex)}
-							isDeleted={false}
-							onWordHover={(nextWord) =>
-								setHoveredWordIndex(nextWord?.wordIndex ?? null)
-							}
-							onWordClick={(clickedWord) => {
-								setSelectedWordIndices([clickedWord.wordIndex]);
-								setPreviewPlan(null);
-							}}
-							onSelectionStart={(startWord) => {
-								setSelectionAnchor(startWord.wordIndex);
-								setSelectedWordIndices([startWord.wordIndex]);
-								setPreviewPlan(null);
-							}}
-							onSelectionEnd={(endWord) => {
-								const start = selectionAnchor ?? endWord.wordIndex;
-								const min = Math.min(start, endWord.wordIndex);
-								const max = Math.max(start, endWord.wordIndex);
-								setSelectedWordIndices(
-									Array.from(
-										{ length: max - min + 1 },
-										(_, index) => min + index,
-									),
-								);
-							}}
-						/>{" "}
-					</React.Fragment>
-				))}
-			</div>
+			{showChat && transcript ? (
+				<GemmaChatPanel
+					transcript={transcript}
+					videoDuration={transcript.videoDuration}
+					onSuggestEdit={(suggestion) => {
+						try {
+							setError(null);
+							const plan = planSelectionEdit({
+								transcript,
+								selectedWordIndices: transcript.words
+									.map((w, i) => ({ word: w, index: i }))
+									.filter(({ word }) => word.start >= suggestion.timeRange.start && word.end <= suggestion.timeRange.end)
+									.map(({ index }) => index),
+								tracks: activeScene.tracks,
+								ripple: rippleEditingEnabled,
+							});
+							setPreviewPlan(plan);
+						} catch (caught) {
+							setError(
+								caught instanceof Error
+									? caught.message
+									: "Could not plan AI suggestion",
+							);
+						}
+					}}
+				/>
+			) : (
+				<div className="flex-1 overflow-y-auto p-4 text-sm leading-7">
+					{transcript.words.map((word) => (
+						<React.Fragment key={word.wordIndex}>
+							<WordSpan
+								word={word}
+								isSelected={selected.has(word.wordIndex)}
+								isHovered={hoveredWordIndex === word.wordIndex}
+								isHighlighted={searchMatches.has(word.wordIndex)}
+								isDeleted={false}
+								onWordHover={(nextWord) =>
+									setHoveredWordIndex(nextWord?.wordIndex ?? null)
+								}
+								onWordClick={(clickedWord) => {
+									setSelectedWordIndices([clickedWord.wordIndex]);
+									setPreviewPlan(null);
+								}}
+								onSelectionStart={(startWord) => {
+									setSelectionAnchor(startWord.wordIndex);
+									setSelectedWordIndices([startWord.wordIndex]);
+									setPreviewPlan(null);
+								}}
+								onSelectionEnd={(endWord) => {
+									const start = selectionAnchor ?? endWord.wordIndex;
+									const min = Math.min(start, endWord.wordIndex);
+									const max = Math.max(start, endWord.wordIndex);
+									setSelectedWordIndices(
+										Array.from(
+											{ length: max - min + 1 },
+											(_, index) => min + index,
+										),
+									);
+								}}
+							/>{" "}
+						</React.Fragment>
+					))}
+				</div>
+			)}
 
 			{previewPlan && (
 				<EditPreviewPanel

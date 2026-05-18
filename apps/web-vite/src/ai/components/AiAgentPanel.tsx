@@ -80,12 +80,26 @@ export function AiAgentPanel() {
           : rawTranscript
         : undefined;
 
+      const wordTranscript = scene.transcript
+        ? {
+            words: scene.transcript.words.map(w => ({
+              text: w.text,
+              start: w.start,
+              end: w.end,
+            })),
+            fullText: scene.transcript.fullText,
+            language: scene.transcript.language,
+            videoDuration: scene.transcript.videoDuration,
+          }
+        : undefined;
+
       const context = {
         duration: scene.tracks.main.elements.reduce((sum, e) => sum + e.duration, 0),
         trackCount: Object.keys(scene.tracks).length,
         mainTrackElements: mainElements,
         audioTrackCount: scene.tracks.audio?.length ?? 0,
         transcript,
+        wordTranscript,
       };
 
       const generatedPlan = await agent.generatePlan(goal, context);

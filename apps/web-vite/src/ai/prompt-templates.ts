@@ -10,13 +10,17 @@ export function buildPlanPrompt(goal: string, context: ProjectContext): string {
     ? context.transcript.replace(/`/g, "'").replace(/\$\{/g, "$ {")
     : undefined;
 
+  const wordTimingsInfo = context.wordTranscript?.words
+    ? `\n- Word-level timings available: ${context.wordTranscript.words.length} words with precise start/end times in seconds`
+    : "";
+
   return `You are a video editing assistant. Given the project state below, create a step-by-step plan to achieve: "${goal}"
 
 Project:
 - Duration: ${context.duration}s
 - Tracks: ${context.trackCount} (main: ${context.mainTrackElements.length} elements, audio: ${context.audioTrackCount})
 - Clips: [${clipsDescription}]
-- Transcript: ${escapedTranscript ?? "none"}
+- Transcript: ${escapedTranscript ?? "none"}${wordTimingsInfo}
 
 Available actions: ${ACTION_TYPES.join(", ")}
 
