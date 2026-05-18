@@ -9,6 +9,8 @@ import { pixelateEffectDefinition } from "./pixelate";
 import { noiseEffectDefinition } from "./noise";
 import { lensDistortionEffectDefinition } from "./lens-distortion";
 import { glowEffectDefinition } from "./glow";
+import { aiUpscaleEffectDefinition } from "./ai-upscale";
+import { colorGradeEffectDefinition } from "./color-grade";
 
 const defaultEffects = [
 	blurEffectDefinition,
@@ -23,6 +25,8 @@ const defaultEffects = [
 	noiseEffectDefinition,
 	lensDistortionEffectDefinition,
 	glowEffectDefinition,
+	aiUpscaleEffectDefinition,
+	colorGradeEffectDefinition,
 ];
 
 export function registerDefaultEffects(): void {

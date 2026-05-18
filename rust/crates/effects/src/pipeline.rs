@@ -33,6 +33,10 @@ const GLOW_THRESHOLD_SHADER_ID: &str = "glow-threshold";
 const GLOW_THRESHOLD_SHADER_SOURCE: &str = include_str!("shaders/glow_threshold.wgsl");
 const GLOW_COMPOSITE_SHADER_ID: &str = "glow-composite";
 const GLOW_COMPOSITE_SHADER_SOURCE: &str = include_str!("shaders/glow_composite.wgsl");
+const AI_UPSCALE_SHADER_ID: &str = "ai-upscale";
+const AI_UPSCALE_SHADER_SOURCE: &str = include_str!("shaders/ai_upscale.wgsl");
+const COLOR_GRADE_SHADER_ID: &str = "color-grade";
+const COLOR_GRADE_SHADER_SOURCE: &str = include_str!("shaders/color_grade.wgsl");
 
 pub struct ApplyEffectsOptions<'a> {
     pub source: &'a wgpu::Texture,
@@ -116,6 +120,8 @@ impl EffectPipeline {
             (LENS_DISTORTION_SHADER_ID, LENS_DISTORTION_SHADER_SOURCE, "lens-distortion"),
             (GLOW_THRESHOLD_SHADER_ID, GLOW_THRESHOLD_SHADER_SOURCE, "glow-threshold"),
             (GLOW_COMPOSITE_SHADER_ID, GLOW_COMPOSITE_SHADER_SOURCE, "glow-composite"),
+            (AI_UPSCALE_SHADER_ID, AI_UPSCALE_SHADER_SOURCE, "ai-upscale"),
+            (COLOR_GRADE_SHADER_ID, COLOR_GRADE_SHADER_SOURCE, "color-grade"),
         ];
 
         let mut pipelines = HashMap::new();
