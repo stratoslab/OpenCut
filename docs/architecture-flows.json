@@ -1,6 +1,6 @@
 {
-  "version": "5.0",
-  "description": "OpenCut architecture workflows — Vite + React SPA, fully client-side with P0 GPU foundation + P1 AI Power features (AI upscale, auto color grade, agent execution, scopes, frame cache, export engine)",
+  "version": "6.0",
+  "description": "OpenCut architecture workflows — P0 GPU foundation + P1 AI Power + P2 Advanced (plugins, performance, templates, AI voiceover, accessibility)",
   "nodes": {
     "user": {
       "id": "user",
@@ -458,6 +458,61 @@
       "type": "external",
       "icon": "🎥",
       "description": "Stock footage search for B-roll suggestions"
+    },
+    "plugin-system": {
+      "id": "plugin-system",
+      "label": "Plugin System",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "🧩",
+      "description": "Third-party effects, transitions, export formats via plugin manifest API"
+    },
+    "gpu-memory-pool": {
+      "id": "gpu-memory-pool",
+      "label": "GPU Memory Pool",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "🗃️",
+      "description": "Reference-counted GPU texture/buffer pooling with LRU eviction"
+    },
+    "offscreen-renderer": {
+      "id": "offscreen-renderer",
+      "label": "Offscreen Renderer",
+      "type": "runtime",
+      "icon": "🖼️",
+      "description": "WebWorker-based offscreen rendering via OffscreenCanvas"
+    },
+    "template-manager": {
+      "id": "template-manager",
+      "label": "Template Manager",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "📋",
+      "description": "Project templates (YouTube, TikTok, Podcast) with presets and import/export"
+    },
+    "caption-style-manager": {
+      "id": "caption-style-manager",
+      "label": "Caption Style Manager",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "🎨",
+      "description": "6 preset caption styles (Classic, Minimal, Karaoke, TikTok, Elegant, Bold News)"
+    },
+    "voiceover-service": {
+      "id": "voiceover-service",
+      "label": "Voiceover Service",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "🎙️",
+      "description": "AI voiceover generation with 4 voice profiles and Web Speech API integration"
+    },
+    "accessibility": {
+      "id": "accessibility",
+      "label": "Accessibility",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "♿",
+      "description": "Keyboard shortcuts (20+), screen reader announcements, reduced motion/high contrast detection"
     }
   },
   "flows": [
@@ -467,14 +522,54 @@
       "category": "editing",
       "description": "User imports a video/audio/image file into the project",
       "steps": [
-        { "from": "user", "to": "react-ui", "action": "Drag & drop or file picker", "data": "File object (video/audio/image)" },
-        { "from": "react-ui", "to": "media-manager", "action": "addMediaAsset()", "data": "File → ArrayBuffer + metadata extraction" },
-        { "from": "media-manager", "to": "opfs", "action": "Write media binary", "data": "ArrayBuffer stored in OPFS per projectId" },
-        { "from": "media-manager", "to": "indexeddb", "action": "Store media metadata", "data": "{ id, name, type, duration, width, height, projectId }" },
-        { "from": "media-manager", "to": "scenes-manager", "action": "Create timeline element", "data": "VideoElement/ImageElement/AudioElement with mediaId reference" },
-        { "from": "scenes-manager", "to": "command-manager", "action": "execute(AddMediaAssetCommand)", "data": "Command pushed to undo stack" },
-        { "from": "command-manager", "to": "save-manager", "action": "markDirty()", "data": "Debounced save triggered (800ms)" },
-        { "from": "save-manager", "to": "storage-service", "action": "saveProject()", "data": "Full project state → IndexedDB" }
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Drag & drop or file picker",
+          "data": "File object (video/audio/image)"
+        },
+        {
+          "from": "react-ui",
+          "to": "media-manager",
+          "action": "addMediaAsset()",
+          "data": "File → ArrayBuffer + metadata extraction"
+        },
+        {
+          "from": "media-manager",
+          "to": "opfs",
+          "action": "Write media binary",
+          "data": "ArrayBuffer stored in OPFS per projectId"
+        },
+        {
+          "from": "media-manager",
+          "to": "indexeddb",
+          "action": "Store media metadata",
+          "data": "{ id, name, type, duration, width, height, projectId }"
+        },
+        {
+          "from": "media-manager",
+          "to": "scenes-manager",
+          "action": "Create timeline element",
+          "data": "VideoElement/ImageElement/AudioElement with mediaId reference"
+        },
+        {
+          "from": "scenes-manager",
+          "to": "command-manager",
+          "action": "execute(AddMediaAssetCommand)",
+          "data": "Command pushed to undo stack"
+        },
+        {
+          "from": "command-manager",
+          "to": "save-manager",
+          "action": "markDirty()",
+          "data": "Debounced save triggered (800ms)"
+        },
+        {
+          "from": "save-manager",
+          "to": "storage-service",
+          "action": "saveProject()",
+          "data": "Full project state → IndexedDB"
+        }
       ]
     },
     {
@@ -483,16 +578,66 @@
       "category": "editing",
       "description": "User modifies timeline elements via UI or keyboard shortcuts",
       "steps": [
-        { "from": "user", "to": "react-ui", "action": "Click/drag on timeline or press shortcut", "data": "Element ID, action type, parameters" },
-        { "from": "react-ui", "to": "action-registry", "action": "invokeAction()", "data": "{ action: 'split' | 'delete-selected' | 'copy-selected', ... }" },
-        { "from": "action-registry", "to": "editor-core", "action": "Route to appropriate manager", "data": "Action → TimelineManager / ScenesManager" },
-        { "from": "editor-core", "to": "command-manager", "action": "execute(command)", "data": "SplitElementsCommand / DeleteElementsCommand / etc." },
-        { "from": "command-manager", "to": "timeline-manager", "action": "command.execute()", "data": "Mutate scene tracks: split clips, adjust trimStart/trimEnd" },
-        { "from": "timeline-manager", "to": "command-manager", "action": "Ripple adjustment (if enabled)", "data": "Shift subsequent clips to close gaps" },
-        { "from": "command-manager", "to": "command-manager", "action": "Push to undo history", "data": "{ undo: inverseCommand, redo: command }" },
-        { "from": "command-manager", "to": "scenes-manager", "action": "updateSceneTracks()", "data": "Notify all listeners of track changes" },
-        { "from": "scenes-manager", "to": "renderer-manager", "action": "Re-render preview", "data": "Scene graph rebuilt → WASM composite" },
-        { "from": "scenes-manager", "to": "save-manager", "action": "markDirty()", "data": "Debounced auto-save" }
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Click/drag on timeline or press shortcut",
+          "data": "Element ID, action type, parameters"
+        },
+        {
+          "from": "react-ui",
+          "to": "action-registry",
+          "action": "invokeAction()",
+          "data": "{ action: 'split' | 'delete-selected' | 'copy-selected', ... }"
+        },
+        {
+          "from": "action-registry",
+          "to": "editor-core",
+          "action": "Route to appropriate manager",
+          "data": "Action → TimelineManager / ScenesManager"
+        },
+        {
+          "from": "editor-core",
+          "to": "command-manager",
+          "action": "execute(command)",
+          "data": "SplitElementsCommand / DeleteElementsCommand / etc."
+        },
+        {
+          "from": "command-manager",
+          "to": "timeline-manager",
+          "action": "command.execute()",
+          "data": "Mutate scene tracks: split clips, adjust trimStart/trimEnd"
+        },
+        {
+          "from": "timeline-manager",
+          "to": "command-manager",
+          "action": "Ripple adjustment (if enabled)",
+          "data": "Shift subsequent clips to close gaps"
+        },
+        {
+          "from": "command-manager",
+          "to": "command-manager",
+          "action": "Push to undo history",
+          "data": "{ undo: inverseCommand, redo: command }"
+        },
+        {
+          "from": "command-manager",
+          "to": "scenes-manager",
+          "action": "updateSceneTracks()",
+          "data": "Notify all listeners of track changes"
+        },
+        {
+          "from": "scenes-manager",
+          "to": "renderer-manager",
+          "action": "Re-render preview",
+          "data": "Scene graph rebuilt → WASM composite"
+        },
+        {
+          "from": "scenes-manager",
+          "to": "save-manager",
+          "action": "markDirty()",
+          "data": "Debounced auto-save"
+        }
       ]
     },
     {
@@ -501,15 +646,60 @@
       "category": "editing",
       "description": "User presses play to preview the video",
       "steps": [
-        { "from": "user", "to": "react-ui", "action": "Click play button or press Space", "data": "Play/pause toggle" },
-        { "from": "react-ui", "to": "action-registry", "action": "invokeAction('toggle-play')", "data": "Action signal" },
-        { "from": "action-registry", "to": "playback-manager", "action": "play() / pause()", "data": "Playback state change" },
-        { "from": "playback-manager", "to": "browser", "action": "requestAnimationFrame loop", "data": "updateTime() called every frame (~60fps)" },
-        { "from": "playback-manager", "to": "renderer-manager", "action": "Render frame at currentTime", "data": "{ time, canvasSize, tracks } → WASM renderFrame()" },
-        { "from": "renderer-manager", "to": "wasm-compositor", "action": "renderFrame(frameDescriptor)", "data": "GPU composite all layers → output canvas" },
-        { "from": "playback-manager", "to": "audio-manager", "action": "handlePlaybackChange()", "data": "{ playing, time, speed }" },
-        { "from": "audio-manager", "to": "web-audio", "action": "scheduleAudioClips()", "data": "Web Audio API: lookahead 2s window, 500ms interval" },
-        { "from": "playback-manager", "to": "react-ui", "action": "Notify time update", "data": "Timeline ruler + preview update via useSyncExternalStore" }
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Click play button or press Space",
+          "data": "Play/pause toggle"
+        },
+        {
+          "from": "react-ui",
+          "to": "action-registry",
+          "action": "invokeAction('toggle-play')",
+          "data": "Action signal"
+        },
+        {
+          "from": "action-registry",
+          "to": "playback-manager",
+          "action": "play() / pause()",
+          "data": "Playback state change"
+        },
+        {
+          "from": "playback-manager",
+          "to": "browser",
+          "action": "requestAnimationFrame loop",
+          "data": "updateTime() called every frame (~60fps)"
+        },
+        {
+          "from": "playback-manager",
+          "to": "renderer-manager",
+          "action": "Render frame at currentTime",
+          "data": "{ time, canvasSize, tracks } → WASM renderFrame()"
+        },
+        {
+          "from": "renderer-manager",
+          "to": "wasm-compositor",
+          "action": "renderFrame(frameDescriptor)",
+          "data": "GPU composite all layers → output canvas"
+        },
+        {
+          "from": "playback-manager",
+          "to": "audio-manager",
+          "action": "handlePlaybackChange()",
+          "data": "{ playing, time, speed }"
+        },
+        {
+          "from": "audio-manager",
+          "to": "web-audio",
+          "action": "scheduleAudioClips()",
+          "data": "Web Audio API: lookahead 2s window, 500ms interval"
+        },
+        {
+          "from": "playback-manager",
+          "to": "react-ui",
+          "action": "Notify time update",
+          "data": "Timeline ruler + preview update via useSyncExternalStore"
+        }
       ]
     },
     {
@@ -518,16 +708,66 @@
       "category": "ai",
       "description": "User runs Whisper transcription on video audio",
       "steps": [
-        { "from": "user", "to": "react-ui", "action": "Click 'Transcribe' button", "data": "Video element reference" },
-        { "from": "react-ui", "to": "transcription-service", "action": "transcribeToWords()", "data": "Audio extracted as Float32Array (16kHz mono)" },
-        { "from": "transcription-service", "to": "web-worker", "action": "Post message: { type: 'transcribe', audio }", "data": "Float32Array transferred to worker" },
-        { "from": "web-worker", "to": "web-worker", "action": "Load Whisper ONNX model", "data": "Model download → progress_callback reports %" },
-        { "from": "web-worker", "to": "web-worker", "action": "Run inference", "data": "Audio → segments with timestamps" },
-        { "from": "web-worker", "to": "transcription-service", "action": "Post message: { type: 'transcribe-complete' }", "data": "{ text, segments: [{ text, start, end }] }" },
-        { "from": "transcription-service", "to": "transcription-service", "action": "segmentsToWordSegments()", "data": "Split sentence segments → word-level with estimated timestamps" },
-        { "from": "transcription-service", "to": "transcript-editor", "action": "Set WordTranscript", "data": "{ words: WordSegment[], fullText, language, videoDuration }" },
-        { "from": "transcription-service", "to": "scenes-manager", "action": "Store transcript on active scene", "data": "scene.transcript = WordTranscript → auto-persisted via save cycle" },
-        { "from": "transcript-editor", "to": "react-ui", "action": "Render transcript view", "data": "Interactive text with word-level hover/click" }
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Click 'Transcribe' button",
+          "data": "Video element reference"
+        },
+        {
+          "from": "react-ui",
+          "to": "transcription-service",
+          "action": "transcribeToWords()",
+          "data": "Audio extracted as Float32Array (16kHz mono)"
+        },
+        {
+          "from": "transcription-service",
+          "to": "web-worker",
+          "action": "Post message: { type: 'transcribe', audio }",
+          "data": "Float32Array transferred to worker"
+        },
+        {
+          "from": "web-worker",
+          "to": "web-worker",
+          "action": "Load Whisper ONNX model",
+          "data": "Model download → progress_callback reports %"
+        },
+        {
+          "from": "web-worker",
+          "to": "web-worker",
+          "action": "Run inference",
+          "data": "Audio → segments with timestamps"
+        },
+        {
+          "from": "web-worker",
+          "to": "transcription-service",
+          "action": "Post message: { type: 'transcribe-complete' }",
+          "data": "{ text, segments: [{ text, start, end }] }"
+        },
+        {
+          "from": "transcription-service",
+          "to": "transcription-service",
+          "action": "segmentsToWordSegments()",
+          "data": "Split sentence segments → word-level with estimated timestamps"
+        },
+        {
+          "from": "transcription-service",
+          "to": "transcript-editor",
+          "action": "Set WordTranscript",
+          "data": "{ words: WordSegment[], fullText, language, videoDuration }"
+        },
+        {
+          "from": "transcription-service",
+          "to": "scenes-manager",
+          "action": "Store transcript on active scene",
+          "data": "scene.transcript = WordTranscript → auto-persisted via save cycle"
+        },
+        {
+          "from": "transcript-editor",
+          "to": "react-ui",
+          "action": "Render transcript view",
+          "data": "Interactive text with word-level hover/click"
+        }
       ]
     },
     {
@@ -536,16 +776,66 @@
       "category": "ai",
       "description": "User deletes text from transcript → corresponding video is cut",
       "steps": [
-        { "from": "user", "to": "transcript-editor", "action": "Select and delete text", "data": "Text selection range" },
-        { "from": "transcript-editor", "to": "text-edit-engine", "action": "applyTextEdit(originalText, editedText)", "data": "Diff calculation → deleted word indices" },
-        { "from": "text-edit-engine", "to": "text-edit-engine", "action": "aggregateTimestamps()", "data": "Word indices → [{ start, end }] time ranges" },
-        { "from": "text-edit-engine", "to": "text-edit-engine", "action": "computeTimelineCuts()", "data": "Time ranges → CutOperation[] (trim/split/delete)" },
-        { "from": "text-edit-engine", "to": "react-ui", "action": "Show EditPreviewPanel", "data": "{ deletedText, timeRange, affectedClips }" },
-        { "from": "user", "to": "react-ui", "action": "Click 'Apply Cuts'", "data": "Confirmation" },
-        { "from": "react-ui", "to": "text-edit-engine", "action": "applyRippleEdit()", "data": "Close gaps by shifting subsequent clips" },
-        { "from": "text-edit-engine", "to": "timeline-manager", "action": "Update VideoElements", "data": "New clip arrangement with adjusted startTime/duration" },
-        { "from": "timeline-manager", "to": "renderer-manager", "action": "Re-render preview", "data": "Updated scene graph → WASM composite" },
-        { "from": "timeline-manager", "to": "save-manager", "action": "markDirty()", "data": "Auto-save updated project state" }
+        {
+          "from": "user",
+          "to": "transcript-editor",
+          "action": "Select and delete text",
+          "data": "Text selection range"
+        },
+        {
+          "from": "transcript-editor",
+          "to": "text-edit-engine",
+          "action": "applyTextEdit(originalText, editedText)",
+          "data": "Diff calculation → deleted word indices"
+        },
+        {
+          "from": "text-edit-engine",
+          "to": "text-edit-engine",
+          "action": "aggregateTimestamps()",
+          "data": "Word indices → [{ start, end }] time ranges"
+        },
+        {
+          "from": "text-edit-engine",
+          "to": "text-edit-engine",
+          "action": "computeTimelineCuts()",
+          "data": "Time ranges → CutOperation[] (trim/split/delete)"
+        },
+        {
+          "from": "text-edit-engine",
+          "to": "react-ui",
+          "action": "Show EditPreviewPanel",
+          "data": "{ deletedText, timeRange, affectedClips }"
+        },
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Click 'Apply Cuts'",
+          "data": "Confirmation"
+        },
+        {
+          "from": "react-ui",
+          "to": "text-edit-engine",
+          "action": "applyRippleEdit()",
+          "data": "Close gaps by shifting subsequent clips"
+        },
+        {
+          "from": "text-edit-engine",
+          "to": "timeline-manager",
+          "action": "Update VideoElements",
+          "data": "New clip arrangement with adjusted startTime/duration"
+        },
+        {
+          "from": "timeline-manager",
+          "to": "renderer-manager",
+          "action": "Re-render preview",
+          "data": "Updated scene graph → WASM composite"
+        },
+        {
+          "from": "timeline-manager",
+          "to": "save-manager",
+          "action": "markDirty()",
+          "data": "Auto-save updated project state"
+        }
       ]
     },
     {
@@ -554,13 +844,48 @@
       "category": "ai",
       "description": "User asks Gemma LLM about video content or requests edit suggestions",
       "steps": [
-        { "from": "user", "to": "gemma-chat", "action": "Type question or edit request", "data": "Natural language query" },
-        { "from": "gemma-chat", "to": "gemma-chat", "action": "chunkTranscript()", "data": "Split transcript into ≤4096 token chunks with word timings" },
-        { "from": "gemma-chat", "to": "browser", "action": "Send to local Gemma model (WebGPU)", "data": "Prompt: system + transcript context + user query" },
-        { "from": "browser", "to": "gemma-chat", "action": "Stream response", "data": "Text response (may include JSON edit suggestions)" },
-        { "from": "gemma-chat", "to": "gemma-chat", "action": "parseLLMResponse()", "data": "Extract { description, start, end } from response" },
-        { "from": "gemma-chat", "to": "react-ui", "action": "Display suggestions as clickable cards", "data": "Edit suggestions with time ranges" },
-        { "from": "user", "to": "react-ui", "action": "Click suggestion to apply", "data": "EditSuggestion → flows through TextEditEngine" }
+        {
+          "from": "user",
+          "to": "gemma-chat",
+          "action": "Type question or edit request",
+          "data": "Natural language query"
+        },
+        {
+          "from": "gemma-chat",
+          "to": "gemma-chat",
+          "action": "chunkTranscript()",
+          "data": "Split transcript into ≤4096 token chunks with word timings"
+        },
+        {
+          "from": "gemma-chat",
+          "to": "browser",
+          "action": "Send to local Gemma model (WebGPU)",
+          "data": "Prompt: system + transcript context + user query"
+        },
+        {
+          "from": "browser",
+          "to": "gemma-chat",
+          "action": "Stream response",
+          "data": "Text response (may include JSON edit suggestions)"
+        },
+        {
+          "from": "gemma-chat",
+          "to": "gemma-chat",
+          "action": "parseLLMResponse()",
+          "data": "Extract { description, start, end } from response"
+        },
+        {
+          "from": "gemma-chat",
+          "to": "react-ui",
+          "action": "Display suggestions as clickable cards",
+          "data": "Edit suggestions with time ranges"
+        },
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Click suggestion to apply",
+          "data": "EditSuggestion → flows through TextEditEngine"
+        }
       ]
     },
     {
@@ -569,15 +894,60 @@
       "category": "editing",
       "description": "User exports the edited video as MP4/WebM",
       "steps": [
-        { "from": "user", "to": "react-ui", "action": "Click 'Export' button, select format/quality", "data": "{ format: 'mp4' | 'webm', quality, fps, includeAudio }" },
-        { "from": "react-ui", "to": "export-engine", "action": "exportProject(options)", "data": "Export configuration with zero-copy, progress, resume" },
-        { "from": "export-engine", "to": "export-engine", "action": "createTimelineAudioBuffer()", "data": "Mix all audio tracks → AudioBuffer (~5% progress)" },
-        { "from": "export-engine", "to": "scene-graph", "action": "buildScene()", "data": "RootNode tree from tracks + mediaAssets + canvasSize" },
-        { "from": "export-engine", "to": "frame-cache", "action": "Check cache for frame", "data": "SHA-256 effects hash → cache hit/miss" },
-        { "from": "frame-cache", "to": "wasm-compositor", "action": "renderFrame() per frame (on miss)", "data": "Each frame composited via GPU" },
-        { "from": "export-engine", "to": "video-element", "action": "transferToImageBitmap() for zero-copy", "data": "Canvas video stream + audio track" },
-        { "from": "export-engine", "to": "media-recorder", "action": "MediaRecorder.encode()", "data": "VP9 (WebM) or H.264 (MP4) + Opus/AAC audio" },
-        { "from": "export-engine", "to": "user", "action": "Download file", "data": "Blob → browser download with progress tracking" }
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Click 'Export' button, select format/quality",
+          "data": "{ format: 'mp4' | 'webm', quality, fps, includeAudio }"
+        },
+        {
+          "from": "react-ui",
+          "to": "export-engine",
+          "action": "exportProject(options)",
+          "data": "Export configuration with zero-copy, progress, resume"
+        },
+        {
+          "from": "export-engine",
+          "to": "export-engine",
+          "action": "createTimelineAudioBuffer()",
+          "data": "Mix all audio tracks → AudioBuffer (~5% progress)"
+        },
+        {
+          "from": "export-engine",
+          "to": "scene-graph",
+          "action": "buildScene()",
+          "data": "RootNode tree from tracks + mediaAssets + canvasSize"
+        },
+        {
+          "from": "export-engine",
+          "to": "frame-cache",
+          "action": "Check cache for frame",
+          "data": "SHA-256 effects hash → cache hit/miss"
+        },
+        {
+          "from": "frame-cache",
+          "to": "wasm-compositor",
+          "action": "renderFrame() per frame (on miss)",
+          "data": "Each frame composited via GPU"
+        },
+        {
+          "from": "export-engine",
+          "to": "video-element",
+          "action": "transferToImageBitmap() for zero-copy",
+          "data": "Canvas video stream + audio track"
+        },
+        {
+          "from": "export-engine",
+          "to": "media-recorder",
+          "action": "MediaRecorder.encode()",
+          "data": "VP9 (WebM) or H.264 (MP4) + Opus/AAC audio"
+        },
+        {
+          "from": "export-engine",
+          "to": "user",
+          "action": "Download file",
+          "data": "Blob → browser download with progress tracking"
+        }
       ]
     },
     {
@@ -586,14 +956,54 @@
       "category": "editing",
       "description": "User undoes or redoes timeline edits",
       "steps": [
-        { "from": "user", "to": "react-ui", "action": "Press Ctrl+Z / Ctrl+Y or click undo/redo", "data": "Undo/redo signal" },
-        { "from": "react-ui", "to": "action-registry", "action": "invokeAction('undo' | 'redo')", "data": "Action signal" },
-        { "from": "action-registry", "to": "command-manager", "action": "undo() / redo()", "data": "Pop from undo/redo stack" },
-        { "from": "command-manager", "to": "command-manager", "action": "Execute inverse command", "data": "undo: inverseCommand.execute()" },
-        { "from": "command-manager", "to": "timeline-manager", "action": "Restore previous state", "data": "Scene tracks reverted to snapshot" },
-        { "from": "timeline-manager", "to": "scenes-manager", "action": "updateSceneTracks()", "data": "Notify listeners of state change" },
-        { "from": "scenes-manager", "to": "renderer-manager", "action": "Re-render preview", "data": "Preview reflectss undone/redone state" },
-        { "from": "scenes-manager", "to": "save-manager", "action": "markDirty()", "data": "Auto-save restored state" }
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Press Ctrl+Z / Ctrl+Y or click undo/redo",
+          "data": "Undo/redo signal"
+        },
+        {
+          "from": "react-ui",
+          "to": "action-registry",
+          "action": "invokeAction('undo' | 'redo')",
+          "data": "Action signal"
+        },
+        {
+          "from": "action-registry",
+          "to": "command-manager",
+          "action": "undo() / redo()",
+          "data": "Pop from undo/redo stack"
+        },
+        {
+          "from": "command-manager",
+          "to": "command-manager",
+          "action": "Execute inverse command",
+          "data": "undo: inverseCommand.execute()"
+        },
+        {
+          "from": "command-manager",
+          "to": "timeline-manager",
+          "action": "Restore previous state",
+          "data": "Scene tracks reverted to snapshot"
+        },
+        {
+          "from": "timeline-manager",
+          "to": "scenes-manager",
+          "action": "updateSceneTracks()",
+          "data": "Notify listeners of state change"
+        },
+        {
+          "from": "scenes-manager",
+          "to": "renderer-manager",
+          "action": "Re-render preview",
+          "data": "Preview reflectss undone/redone state"
+        },
+        {
+          "from": "scenes-manager",
+          "to": "save-manager",
+          "action": "markDirty()",
+          "data": "Auto-save restored state"
+        }
       ]
     },
     {
@@ -602,13 +1012,48 @@
       "category": "assets",
       "description": "User searches for audio assets via Freesound API (proxied through stateless Worker)",
       "steps": [
-        { "from": "user", "to": "react-ui", "action": "Type search query in sounds panel", "data": "Search string + filters (type, rating, license)" },
-        { "from": "react-ui", "to": "sounds-proxy-worker", "action": "GET /api/sounds/search", "data": "{ query, filters }" },
-        { "from": "sounds-proxy-worker", "to": "freesound-api", "action": "Proxy request with API key", "data": "Freesound API key + search params" },
-        { "from": "freesound-api", "to": "sounds-proxy-worker", "action": "Return search results", "data": "Audio metadata + preview URLs" },
-        { "from": "sounds-proxy-worker", "to": "react-ui", "action": "Return transformed results", "data": "Standardized sound objects for UI display" },
-        { "from": "user", "to": "react-ui", "action": "Click to download/save sound", "data": "Sound ID" },
-        { "from": "react-ui", "to": "indexeddb", "action": "Store in saved sounds", "data": "Sound metadata + audio blob" }
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Type search query in sounds panel",
+          "data": "Search string + filters (type, rating, license)"
+        },
+        {
+          "from": "react-ui",
+          "to": "sounds-proxy-worker",
+          "action": "GET /api/sounds/search",
+          "data": "{ query, filters }"
+        },
+        {
+          "from": "sounds-proxy-worker",
+          "to": "freesound-api",
+          "action": "Proxy request with API key",
+          "data": "Freesound API key + search params"
+        },
+        {
+          "from": "freesound-api",
+          "to": "sounds-proxy-worker",
+          "action": "Return search results",
+          "data": "Audio metadata + preview URLs"
+        },
+        {
+          "from": "sounds-proxy-worker",
+          "to": "react-ui",
+          "action": "Return transformed results",
+          "data": "Standardized sound objects for UI display"
+        },
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Click to download/save sound",
+          "data": "Sound ID"
+        },
+        {
+          "from": "react-ui",
+          "to": "indexeddb",
+          "action": "Store in saved sounds",
+          "data": "Sound metadata + audio blob"
+        }
       ]
     },
     {
@@ -617,13 +1062,48 @@
       "category": "deployment",
       "description": "Automated build on push/PR to main",
       "steps": [
-        { "from": "user", "to": "github-actions", "action": "Push or PR to main branch", "data": "Git commit (excluding markdown)" },
-        { "from": "github-actions", "to": "github-actions", "action": "Install Rust wasm32 target + wasm-pack", "data": "Rust toolchain setup" },
-        { "from": "github-actions", "to": "github-actions", "action": "Build WASM: wasm-pack build", "data": "rust/wasm → bundler target → pkg/" },
-        { "from": "github-actions", "to": "github-actions", "action": "Install Bun 1.2.18, cache modules", "data": "Package manager setup" },
-        { "from": "github-actions", "to": "github-actions", "action": "bun install", "data": "All workspace dependencies" },
-        { "from": "github-actions", "to": "github-actions", "action": "cd apps/web-vite && bun run build", "data": "Vite build → dist/ (static files)" },
-        { "from": "github-actions", "to": "github-actions", "action": "Matrix: ubuntu, windows, macos", "data": "Cross-platform build verification" }
+        {
+          "from": "user",
+          "to": "github-actions",
+          "action": "Push or PR to main branch",
+          "data": "Git commit (excluding markdown)"
+        },
+        {
+          "from": "github-actions",
+          "to": "github-actions",
+          "action": "Install Rust wasm32 target + wasm-pack",
+          "data": "Rust toolchain setup"
+        },
+        {
+          "from": "github-actions",
+          "to": "github-actions",
+          "action": "Build WASM: wasm-pack build",
+          "data": "rust/wasm → bundler target → pkg/"
+        },
+        {
+          "from": "github-actions",
+          "to": "github-actions",
+          "action": "Install Bun 1.2.18, cache modules",
+          "data": "Package manager setup"
+        },
+        {
+          "from": "github-actions",
+          "to": "github-actions",
+          "action": "bun install",
+          "data": "All workspace dependencies"
+        },
+        {
+          "from": "github-actions",
+          "to": "github-actions",
+          "action": "cd apps/web-vite && bun run build",
+          "data": "Vite build → dist/ (static files)"
+        },
+        {
+          "from": "github-actions",
+          "to": "github-actions",
+          "action": "Matrix: ubuntu, windows, macos",
+          "data": "Cross-platform build verification"
+        }
       ]
     },
     {
@@ -632,10 +1112,30 @@
       "category": "deployment",
       "description": "Deploy Vite SPA to Cloudflare Pages (static files)",
       "steps": [
-        { "from": "user", "to": "github-actions", "action": "Merge to main / manual trigger", "data": "Deploy signal" },
-        { "from": "github-actions", "to": "github-actions", "action": "Build WASM + Vite SPA", "data": "Full build pipeline → apps/web-vite/dist/" },
-        { "from": "github-actions", "to": "cloudflare-pages", "action": "Deploy static files", "data": "dist/ → Cloudflare Pages CDN" },
-        { "from": "cloudflare-pages", "to": "cloudflare-pages", "action": "Serve via global CDN", "data": "index.html + JS/CSS chunks + WASM binaries" }
+        {
+          "from": "user",
+          "to": "github-actions",
+          "action": "Merge to main / manual trigger",
+          "data": "Deploy signal"
+        },
+        {
+          "from": "github-actions",
+          "to": "github-actions",
+          "action": "Build WASM + Vite SPA",
+          "data": "Full build pipeline → apps/web-vite/dist/"
+        },
+        {
+          "from": "github-actions",
+          "to": "cloudflare-pages",
+          "action": "Deploy static files",
+          "data": "dist/ → Cloudflare Pages CDN"
+        },
+        {
+          "from": "cloudflare-pages",
+          "to": "cloudflare-pages",
+          "action": "Serve via global CDN",
+          "data": "index.html + JS/CSS chunks + WASM binaries"
+        }
       ]
     },
     {
@@ -644,12 +1144,42 @@
       "category": "deployment",
       "description": "Package the web app as a native desktop application",
       "steps": [
-        { "from": "user", "to": "todesktop", "action": "Trigger ToDesktop build", "data": "Build configuration" },
-        { "from": "todesktop", "to": "github-actions", "action": "Pull latest code", "data": "Git checkout main" },
-        { "from": "github-actions", "to": "github-actions", "action": "Build WASM + Vite SPA", "data": "Full build pipeline" },
-        { "from": "todesktop", "to": "todesktop", "action": "Electron packaging", "data": "Web app wrapped in Electron shell" },
-        { "from": "todesktop", "to": "todesktop", "action": "Platform-specific builds", "data": "macOS (.dmg), Windows (.exe), Linux (.AppImage)" },
-        { "from": "todesktop", "to": "user", "action": "Download desktop app", "data": "Platform-specific installer" }
+        {
+          "from": "user",
+          "to": "todesktop",
+          "action": "Trigger ToDesktop build",
+          "data": "Build configuration"
+        },
+        {
+          "from": "todesktop",
+          "to": "github-actions",
+          "action": "Pull latest code",
+          "data": "Git checkout main"
+        },
+        {
+          "from": "github-actions",
+          "to": "github-actions",
+          "action": "Build WASM + Vite SPA",
+          "data": "Full build pipeline"
+        },
+        {
+          "from": "todesktop",
+          "to": "todesktop",
+          "action": "Electron packaging",
+          "data": "Web app wrapped in Electron shell"
+        },
+        {
+          "from": "todesktop",
+          "to": "todesktop",
+          "action": "Platform-specific builds",
+          "data": "macOS (.dmg), Windows (.exe), Linux (.AppImage)"
+        },
+        {
+          "from": "todesktop",
+          "to": "user",
+          "action": "Download desktop app",
+          "data": "Platform-specific installer"
+        }
       ]
     },
     {
@@ -658,11 +1188,36 @@
       "category": "editing",
       "description": "Project state is automatically saved after edits",
       "steps": [
-        { "from": "command-manager", "to": "save-manager", "action": "markDirty()", "data": "Signal that project state has changed" },
-        { "from": "save-manager", "to": "save-manager", "action": "Debounce (800ms)", "data": "Wait for edit burst to settle" },
-        { "from": "save-manager", "to": "storage-service", "action": "saveProject()", "data": "Serialize full project state" },
-        { "from": "storage-service", "to": "indexeddb", "action": "Write project + scenes + tracks", "data": "{ metadata, scenes, currentSceneId, settings, version }" },
-        { "from": "storage-service", "to": "storage-service", "action": "Run migrations if needed", "data": "Check version, apply schema updates" }
+        {
+          "from": "command-manager",
+          "to": "save-manager",
+          "action": "markDirty()",
+          "data": "Signal that project state has changed"
+        },
+        {
+          "from": "save-manager",
+          "to": "save-manager",
+          "action": "Debounce (800ms)",
+          "data": "Wait for edit burst to settle"
+        },
+        {
+          "from": "save-manager",
+          "to": "storage-service",
+          "action": "saveProject()",
+          "data": "Serialize full project state"
+        },
+        {
+          "from": "storage-service",
+          "to": "indexeddb",
+          "action": "Write project + scenes + tracks",
+          "data": "{ metadata, scenes, currentSceneId, settings, version }"
+        },
+        {
+          "from": "storage-service",
+          "to": "storage-service",
+          "action": "Run migrations if needed",
+          "data": "Check version, apply schema updates"
+        }
       ]
     },
     {
@@ -671,16 +1226,66 @@
       "category": "editing",
       "description": "A single frame is rendered for the preview panel",
       "steps": [
-        { "from": "playback-manager", "to": "renderer-manager", "action": "Request frame at currentTime", "data": "{ time, canvasSize }" },
-        { "from": "renderer-manager", "to": "frame-cache", "action": "Check cache for frame", "data": "SHA-256 effects hash lookup" },
-        { "from": "frame-cache", "to": "renderer-manager", "action": "Return cached frame (hit) or request render (miss)", "data": "ImageBitmap or cache miss signal" },
-        { "from": "renderer-manager", "to": "scene-graph", "action": "buildScene()", "data": "RootNode tree from current tracks state" },
-        { "from": "scene-graph", "to": "scene-graph", "action": "resolveRenderTree(node, time)", "data": "Resolve all node state at specific time" },
-        { "from": "scene-graph", "to": "renderer-manager", "action": "buildFrameDescriptor()", "data": "WASM-compatible frame description" },
-        { "from": "renderer-manager", "to": "wasm-compositor", "action": "syncTextures()", "data": "Upload OffscreenCanvas textures to GPU" },
-        { "from": "renderer-manager", "to": "wasm-compositor", "action": "renderFrame(frameDescriptor)", "data": "GPU composite → output canvas" },
-        { "from": "wasm-compositor", "to": "web-gpu", "action": "wgpu render pass", "data": "Texture uploads → shader execution → surface present" },
-        { "from": "wasm-compositor", "to": "react-ui", "action": "Canvas element updated", "data": "Preview panel shows rendered frame" }
+        {
+          "from": "playback-manager",
+          "to": "renderer-manager",
+          "action": "Request frame at currentTime",
+          "data": "{ time, canvasSize }"
+        },
+        {
+          "from": "renderer-manager",
+          "to": "frame-cache",
+          "action": "Check cache for frame",
+          "data": "SHA-256 effects hash lookup"
+        },
+        {
+          "from": "frame-cache",
+          "to": "renderer-manager",
+          "action": "Return cached frame (hit) or request render (miss)",
+          "data": "ImageBitmap or cache miss signal"
+        },
+        {
+          "from": "renderer-manager",
+          "to": "scene-graph",
+          "action": "buildScene()",
+          "data": "RootNode tree from current tracks state"
+        },
+        {
+          "from": "scene-graph",
+          "to": "scene-graph",
+          "action": "resolveRenderTree(node, time)",
+          "data": "Resolve all node state at specific time"
+        },
+        {
+          "from": "scene-graph",
+          "to": "renderer-manager",
+          "action": "buildFrameDescriptor()",
+          "data": "WASM-compatible frame description"
+        },
+        {
+          "from": "renderer-manager",
+          "to": "wasm-compositor",
+          "action": "syncTextures()",
+          "data": "Upload OffscreenCanvas textures to GPU"
+        },
+        {
+          "from": "renderer-manager",
+          "to": "wasm-compositor",
+          "action": "renderFrame(frameDescriptor)",
+          "data": "GPU composite → output canvas"
+        },
+        {
+          "from": "wasm-compositor",
+          "to": "web-gpu",
+          "action": "wgpu render pass",
+          "data": "Texture uploads → shader execution → surface present"
+        },
+        {
+          "from": "wasm-compositor",
+          "to": "react-ui",
+          "action": "Canvas element updated",
+          "data": "Preview panel shows rendered frame"
+        }
       ]
     },
     {
@@ -689,14 +1294,54 @@
       "category": "editing",
       "description": "User applies a visual effect to a clip",
       "steps": [
-        { "from": "user", "to": "react-ui", "action": "Select effect from effects panel", "data": "Effect type + parameters (14 effects: blur, color-correct, chromatic-aberr, vignette, sharpen, sepia, grayscale, invert, pixelate, noise, lens-distortion, glow, ai-upscale, color-grade)" },
-        { "from": "react-ui", "to": "timeline-manager", "action": "AddClipEffectCommand", "data": "{ clipId, effectType, params }" },
-        { "from": "timeline-manager", "to": "command-manager", "action": "execute(command)", "data": "Push to undo stack" },
-        { "from": "timeline-manager", "to": "renderer-manager", "action": "Re-render preview", "data": "Scene graph includes new effect node" },
-        { "from": "renderer-manager", "to": "effects-pipeline", "action": "applyEffectPasses()", "data": "GPU shader execution with params (EffectUniformBuffer: resolution[2], direction[2], scalars[4])" },
-        { "from": "effects-pipeline", "to": "web-gpu", "action": "Compute shader pass", "data": "Source texture → effect → output OffscreenCanvas" },
-        { "from": "effects-pipeline", "to": "renderer-manager", "action": "Return processed frame", "data": "OffscreenCanvas with effect applied" },
-        { "from": "renderer-manager", "to": "react-ui", "action": "Preview updated", "data": "Effect visible in preview panel" }
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Select effect from effects panel",
+          "data": "Effect type + parameters (14 effects: blur, color-correct, chromatic-aberr, vignette, sharpen, sepia, grayscale, invert, pixelate, noise, lens-distortion, glow, ai-upscale, color-grade)"
+        },
+        {
+          "from": "react-ui",
+          "to": "timeline-manager",
+          "action": "AddClipEffectCommand",
+          "data": "{ clipId, effectType, params }"
+        },
+        {
+          "from": "timeline-manager",
+          "to": "command-manager",
+          "action": "execute(command)",
+          "data": "Push to undo stack"
+        },
+        {
+          "from": "timeline-manager",
+          "to": "renderer-manager",
+          "action": "Re-render preview",
+          "data": "Scene graph includes new effect node"
+        },
+        {
+          "from": "renderer-manager",
+          "to": "effects-pipeline",
+          "action": "applyEffectPasses()",
+          "data": "GPU shader execution with params (EffectUniformBuffer: resolution[2], direction[2], scalars[4])"
+        },
+        {
+          "from": "effects-pipeline",
+          "to": "web-gpu",
+          "action": "Compute shader pass",
+          "data": "Source texture → effect → output OffscreenCanvas"
+        },
+        {
+          "from": "effects-pipeline",
+          "to": "renderer-manager",
+          "action": "Return processed frame",
+          "data": "OffscreenCanvas with effect applied"
+        },
+        {
+          "from": "renderer-manager",
+          "to": "react-ui",
+          "action": "Preview updated",
+          "data": "Effect visible in preview panel"
+        }
       ]
     },
     {
@@ -705,15 +1350,60 @@
       "category": "editing",
       "description": "User copies and pastes timeline elements",
       "steps": [
-        { "from": "user", "to": "react-ui", "action": "Select elements, press Ctrl+C", "data": "Selected element IDs" },
-        { "from": "react-ui", "to": "action-registry", "action": "invokeAction('copy-selected')", "data": "Copy signal" },
-        { "from": "action-registry", "to": "clipboard-manager", "action": "copy(elements)", "data": "Serialize elements to clipboard" },
-        { "from": "user", "to": "react-ui", "action": "Move playhead, press Ctrl+V", "data": "Paste signal" },
-        { "from": "react-ui", "to": "action-registry", "action": "invokeAction('paste-copied')", "data": "Paste signal" },
-        { "from": "action-registry", "to": "clipboard-manager", "action": "paste()", "data": "Deserialize elements from clipboard" },
-        { "from": "clipboard-manager", "to": "timeline-manager", "action": "InsertElementCommand", "data": "New elements at playhead position" },
-        { "from": "timeline-manager", "to": "command-manager", "action": "execute(command)", "data": "Push to undo stack" },
-        { "from": "timeline-manager", "to": "renderer-manager", "action": "Re-render preview", "data": "Pasted elements visible" }
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Select elements, press Ctrl+C",
+          "data": "Selected element IDs"
+        },
+        {
+          "from": "react-ui",
+          "to": "action-registry",
+          "action": "invokeAction('copy-selected')",
+          "data": "Copy signal"
+        },
+        {
+          "from": "action-registry",
+          "to": "clipboard-manager",
+          "action": "copy(elements)",
+          "data": "Serialize elements to clipboard"
+        },
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Move playhead, press Ctrl+V",
+          "data": "Paste signal"
+        },
+        {
+          "from": "react-ui",
+          "to": "action-registry",
+          "action": "invokeAction('paste-copied')",
+          "data": "Paste signal"
+        },
+        {
+          "from": "action-registry",
+          "to": "clipboard-manager",
+          "action": "paste()",
+          "data": "Deserialize elements from clipboard"
+        },
+        {
+          "from": "clipboard-manager",
+          "to": "timeline-manager",
+          "action": "InsertElementCommand",
+          "data": "New elements at playhead position"
+        },
+        {
+          "from": "timeline-manager",
+          "to": "command-manager",
+          "action": "execute(command)",
+          "data": "Push to undo stack"
+        },
+        {
+          "from": "timeline-manager",
+          "to": "renderer-manager",
+          "action": "Re-render preview",
+          "data": "Pasted elements visible"
+        }
       ]
     },
     {
@@ -722,14 +1412,54 @@
       "category": "ai",
       "description": "User initiates download and loading of Gemma 4 model for AI features",
       "steps": [
-        { "from": "user", "to": "react-ui", "action": "Click 'Load Gemma 4 Model' in AI Co-Pilot panel", "data": "Load signal" },
-        { "from": "react-ui", "to": "ai-model-store", "action": "loadModel()", "data": "Sets stage = 'downloading', progress = 0" },
-        { "from": "ai-model-store", "to": "ai-worker", "action": "Post message: { type: 'load' }", "data": "Load request" },
-        { "from": "ai-worker", "to": "ai-worker", "action": "Import Transformers.js from CDN", "data": "Dynamic import with retry-wrapped fetch (5 retries, exponential backoff)" },
-        { "from": "ai-worker", "to": "ai-worker", "action": "Gemma4ForConditionalGeneration.from_pretrained()", "data": "Model download from HuggingFace (q4f16, WebGPU), progress_callback tracks %" },
-        { "from": "ai-worker", "to": "ai-model-store", "action": "Post progress messages", "data": "{ status: 'progress', progress: N } → updates UI progress bar + ETA" },
-        { "from": "ai-worker", "to": "ai-model-store", "action": "Post { status: 'ready' }", "data": "Model loaded, stage = 'ready'" },
-        { "from": "ai-model-store", "to": "react-ui", "action": "UI transitions to ready state", "data": "Green dot + t/s display, goal input enabled" }
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Click 'Load Gemma 4 Model' in AI Co-Pilot panel",
+          "data": "Load signal"
+        },
+        {
+          "from": "react-ui",
+          "to": "ai-model-store",
+          "action": "loadModel()",
+          "data": "Sets stage = 'downloading', progress = 0"
+        },
+        {
+          "from": "ai-model-store",
+          "to": "ai-worker",
+          "action": "Post message: { type: 'load' }",
+          "data": "Load request"
+        },
+        {
+          "from": "ai-worker",
+          "to": "ai-worker",
+          "action": "Import Transformers.js from CDN",
+          "data": "Dynamic import with retry-wrapped fetch (5 retries, exponential backoff)"
+        },
+        {
+          "from": "ai-worker",
+          "to": "ai-worker",
+          "action": "Gemma4ForConditionalGeneration.from_pretrained()",
+          "data": "Model download from HuggingFace (q4f16, WebGPU), progress_callback tracks %"
+        },
+        {
+          "from": "ai-worker",
+          "to": "ai-model-store",
+          "action": "Post progress messages",
+          "data": "{ status: 'progress', progress: N } → updates UI progress bar + ETA"
+        },
+        {
+          "from": "ai-worker",
+          "to": "ai-model-store",
+          "action": "Post { status: 'ready' }",
+          "data": "Model loaded, stage = 'ready'"
+        },
+        {
+          "from": "ai-model-store",
+          "to": "react-ui",
+          "action": "UI transitions to ready state",
+          "data": "Green dot + t/s display, goal input enabled"
+        }
       ]
     },
     {
@@ -738,18 +1468,78 @@
       "category": "ai",
       "description": "User describes editing goal, AI generates a plan, user reviews and executes",
       "steps": [
-        { "from": "user", "to": "react-ui", "action": "Type goal or select quick preset", "data": "Natural language editing goal" },
-        { "from": "react-ui", "to": "ai-agent", "action": "generatePlan(goal, projectContext)", "data": "{ goal, duration, tracks, clips, transcript }" },
-        { "from": "ai-agent", "to": "ai-worker", "action": "Post { type: 'generate', messages }", "data": "Structured prompt with project context + 19 action types" },
-        { "from": "ai-worker", "to": "ai-worker", "action": "session.model.generate()", "data": "WebGPU inference → JSON plan response" },
-        { "from": "ai-worker", "to": "ai-agent", "action": "Stream response tokens", "data": "{ status: 'update', output: text }" },
-        { "from": "ai-agent", "to": "ai-agent", "action": "parsePlanResponse() + validatePlan()", "data": "Parse JSON, verify all 19 action types are valid" },
-        { "from": "ai-agent", "to": "react-ui", "action": "Display plan for review", "data": "Step list with descriptions and action types" },
-        { "from": "user", "to": "react-ui", "action": "Click 'Execute'", "data": "Confirmation" },
-        { "from": "react-ui", "to": "ai-agent", "action": "executePlan(plan, callbacks)", "data": "Sequential step execution" },
-        { "from": "ai-agent", "to": "command-manager", "action": "Execute each step via CommandManager", "data": "19 action types mapped: split-clip, delete-clip, trim-start, trim-end, add-transition, remove-transition, add-effect, remove-effect, mute-audio, unmute-audio, adjust-volume, add-text, delete-text, retime-clip, add-marker, delete-marker, normalize-audio, auto-duck, add-caption" },
-        { "from": "command-manager", "to": "timeline-manager", "action": "command.execute()", "data": "SplitElementsCommand, DeleteElementsCommand, UpdateElementsCommand, InsertElementCommand, AddClipEffectCommand, etc." },
-        { "from": "ai-agent", "to": "react-ui", "action": "Progress updates per step", "data": "Step N of M, progress bar" }
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Type goal or select quick preset",
+          "data": "Natural language editing goal"
+        },
+        {
+          "from": "react-ui",
+          "to": "ai-agent",
+          "action": "generatePlan(goal, projectContext)",
+          "data": "{ goal, duration, tracks, clips, transcript }"
+        },
+        {
+          "from": "ai-agent",
+          "to": "ai-worker",
+          "action": "Post { type: 'generate', messages }",
+          "data": "Structured prompt with project context + 19 action types"
+        },
+        {
+          "from": "ai-worker",
+          "to": "ai-worker",
+          "action": "session.model.generate()",
+          "data": "WebGPU inference → JSON plan response"
+        },
+        {
+          "from": "ai-worker",
+          "to": "ai-agent",
+          "action": "Stream response tokens",
+          "data": "{ status: 'update', output: text }"
+        },
+        {
+          "from": "ai-agent",
+          "to": "ai-agent",
+          "action": "parsePlanResponse() + validatePlan()",
+          "data": "Parse JSON, verify all 19 action types are valid"
+        },
+        {
+          "from": "ai-agent",
+          "to": "react-ui",
+          "action": "Display plan for review",
+          "data": "Step list with descriptions and action types"
+        },
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Click 'Execute'",
+          "data": "Confirmation"
+        },
+        {
+          "from": "react-ui",
+          "to": "ai-agent",
+          "action": "executePlan(plan, callbacks)",
+          "data": "Sequential step execution"
+        },
+        {
+          "from": "ai-agent",
+          "to": "command-manager",
+          "action": "Execute each step via CommandManager",
+          "data": "19 action types mapped: split-clip, delete-clip, trim-start, trim-end, add-transition, remove-transition, add-effect, remove-effect, mute-audio, unmute-audio, adjust-volume, add-text, delete-text, retime-clip, add-marker, delete-marker, normalize-audio, auto-duck, add-caption"
+        },
+        {
+          "from": "command-manager",
+          "to": "timeline-manager",
+          "action": "command.execute()",
+          "data": "SplitElementsCommand, DeleteElementsCommand, UpdateElementsCommand, InsertElementCommand, AddClipEffectCommand, etc."
+        },
+        {
+          "from": "ai-agent",
+          "to": "react-ui",
+          "action": "Progress updates per step",
+          "data": "Step N of M, progress bar"
+        }
       ]
     },
     {
@@ -758,16 +1548,66 @@
       "category": "ai",
       "description": "User runs scene detection on a video clip to find scene boundaries",
       "steps": [
-        { "from": "user", "to": "react-ui", "action": "Select video, configure interval/threshold, click 'Detect Scenes'", "data": "{ videoFile, intervalSec, threshold }" },
-        { "from": "react-ui", "to": "scene-detector", "action": "detectScenes(file, options)", "data": "Video file + detection parameters" },
-        { "from": "scene-detector", "to": "frame-extractor", "action": "extractFrame(file, time) at each interval", "data": "HTMLVideoElement pool (max 2) seeks and captures frames" },
-        { "from": "frame-extractor", "to": "scene-detector", "action": "Return ImageData at timestamp", "data": "Pixel data from OffscreenCanvas" },
-        { "from": "scene-detector", "to": "histogram-calculator", "action": "computeHistogram(imageData)", "data": "24-bin RGB histogram (8 bins per channel)" },
-        { "from": "histogram-calculator", "to": "scene-detector", "action": "Return Float64Array histogram", "data": "24-element frequency array" },
-        { "from": "scene-detector", "to": "scene-detector", "action": "chiSquaredDistance(prevHistogram, histogram)", "data": "Compare consecutive histograms, flag peaks above threshold" },
-        { "from": "scene-detector", "to": "react-ui", "action": "Return SceneChange[] with thumbnails", "data": "[{ timestamp, chiSquaredDistance, beforeThumbnail, afterThumbnail, type }]" },
-        { "from": "user", "to": "react-ui", "action": "Click 'Add markers'", "data": "Create timeline bookmarks at detected boundaries" },
-        { "from": "react-ui", "to": "scenes-manager", "action": "Add bookmarks to active scene", "data": "Bookmark[] with timestamps and labels" }
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Select video, configure interval/threshold, click 'Detect Scenes'",
+          "data": "{ videoFile, intervalSec, threshold }"
+        },
+        {
+          "from": "react-ui",
+          "to": "scene-detector",
+          "action": "detectScenes(file, options)",
+          "data": "Video file + detection parameters"
+        },
+        {
+          "from": "scene-detector",
+          "to": "frame-extractor",
+          "action": "extractFrame(file, time) at each interval",
+          "data": "HTMLVideoElement pool (max 2) seeks and captures frames"
+        },
+        {
+          "from": "frame-extractor",
+          "to": "scene-detector",
+          "action": "Return ImageData at timestamp",
+          "data": "Pixel data from OffscreenCanvas"
+        },
+        {
+          "from": "scene-detector",
+          "to": "histogram-calculator",
+          "action": "computeHistogram(imageData)",
+          "data": "24-bin RGB histogram (8 bins per channel)"
+        },
+        {
+          "from": "histogram-calculator",
+          "to": "scene-detector",
+          "action": "Return Float64Array histogram",
+          "data": "24-element frequency array"
+        },
+        {
+          "from": "scene-detector",
+          "to": "scene-detector",
+          "action": "chiSquaredDistance(prevHistogram, histogram)",
+          "data": "Compare consecutive histograms, flag peaks above threshold"
+        },
+        {
+          "from": "scene-detector",
+          "to": "react-ui",
+          "action": "Return SceneChange[] with thumbnails",
+          "data": "[{ timestamp, chiSquaredDistance, beforeThumbnail, afterThumbnail, type }]"
+        },
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Click 'Add markers'",
+          "data": "Create timeline bookmarks at detected boundaries"
+        },
+        {
+          "from": "react-ui",
+          "to": "scenes-manager",
+          "action": "Add bookmarks to active scene",
+          "data": "Bookmark[] with timestamps and labels"
+        }
       ]
     },
     {
@@ -776,11 +1616,36 @@
       "category": "ai",
       "description": "User formats and exports chapter markers for YouTube video descriptions",
       "steps": [
-        { "from": "user", "to": "react-ui", "action": "Open YouTube Export panel, edit chapters", "data": "Chapter list with timestamps and titles" },
-        { "from": "react-ui", "to": "chapter-exporter", "action": "formatChapters(chapters)", "data": "Validate: first chapter at 0:00, monotonic timestamps" },
-        { "from": "chapter-exporter", "to": "react-ui", "action": "Return formatted text", "data": "'0:00 Intro\\n1:05 Main Content\\n3:00 Conclusion'" },
-        { "from": "user", "to": "react-ui", "action": "Click 'Copy to Clipboard'", "data": "Copy signal" },
-        { "from": "react-ui", "to": "browser", "action": "navigator.clipboard.writeText()", "data": "Formatted chapter text" }
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Open YouTube Export panel, edit chapters",
+          "data": "Chapter list with timestamps and titles"
+        },
+        {
+          "from": "react-ui",
+          "to": "chapter-exporter",
+          "action": "formatChapters(chapters)",
+          "data": "Validate: first chapter at 0:00, monotonic timestamps"
+        },
+        {
+          "from": "chapter-exporter",
+          "to": "react-ui",
+          "action": "Return formatted text",
+          "data": "'0:00 Intro\\n1:05 Main Content\\n3:00 Conclusion'"
+        },
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Click 'Copy to Clipboard'",
+          "data": "Copy signal"
+        },
+        {
+          "from": "react-ui",
+          "to": "browser",
+          "action": "navigator.clipboard.writeText()",
+          "data": "Formatted chapter text"
+        }
       ]
     },
     {
@@ -789,13 +1654,48 @@
       "category": "ai",
       "description": "User explicitly loads Whisper model before transcription with visible progress",
       "steps": [
-        { "from": "user", "to": "react-ui", "action": "Select model (Tiny/Small/Medium/Large v3 Turbo), click 'Load Model'", "data": "TranscriptionModelId" },
-        { "from": "react-ui", "to": "transcription-model-store", "action": "loadModel()", "data": "Sets stage = 'downloading', progress = 0" },
-        { "from": "transcription-model-store", "to": "web-worker", "action": "Post message: { type: 'init', modelId }", "data": "HuggingFace model ID (e.g., 'onnx-community/whisper-small')" },
-        { "from": "web-worker", "to": "web-worker", "action": "pipeline('automatic-speech-recognition', modelId)", "data": "Transformers.js downloads model (q4 quantization, device: 'auto')" },
-        { "from": "web-worker", "to": "transcription-model-store", "action": "Post init-progress messages", "data": "{ type: 'init-progress', progress: N } → updates UI progress bar + ETA" },
-        { "from": "web-worker", "to": "transcription-model-store", "action": "Post { type: 'init-complete' }", "data": "Model loaded, stage = 'ready'" },
-        { "from": "transcription-model-store", "to": "react-ui", "action": "UI transitions to ready state", "data": "Language selector unlocked, 'Generate transcript' button enabled" }
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Select model (Tiny/Small/Medium/Large v3 Turbo), click 'Load Model'",
+          "data": "TranscriptionModelId"
+        },
+        {
+          "from": "react-ui",
+          "to": "transcription-model-store",
+          "action": "loadModel()",
+          "data": "Sets stage = 'downloading', progress = 0"
+        },
+        {
+          "from": "transcription-model-store",
+          "to": "web-worker",
+          "action": "Post message: { type: 'init', modelId }",
+          "data": "HuggingFace model ID (e.g., 'onnx-community/whisper-small')"
+        },
+        {
+          "from": "web-worker",
+          "to": "web-worker",
+          "action": "pipeline('automatic-speech-recognition', modelId)",
+          "data": "Transformers.js downloads model (q4 quantization, device: 'auto')"
+        },
+        {
+          "from": "web-worker",
+          "to": "transcription-model-store",
+          "action": "Post init-progress messages",
+          "data": "{ type: 'init-progress', progress: N } → updates UI progress bar + ETA"
+        },
+        {
+          "from": "web-worker",
+          "to": "transcription-model-store",
+          "action": "Post { type: 'init-complete' }",
+          "data": "Model loaded, stage = 'ready'"
+        },
+        {
+          "from": "transcription-model-store",
+          "to": "react-ui",
+          "action": "UI transitions to ready state",
+          "data": "Language selector unlocked, 'Generate transcript' button enabled"
+        }
       ]
     },
     {
@@ -804,15 +1704,60 @@
       "category": "ai",
       "description": "AI Co-Pilot reads the stored transcript from the active scene and includes it in plan generation context",
       "steps": [
-        { "from": "user", "to": "react-ui", "action": "Click 'Generate Plan' in AI Co-Pilot panel", "data": "Goal text + active scene reference" },
-        { "from": "react-ui", "to": "scenes-manager", "action": "getActiveScene()", "data": "TScene with optional transcript field" },
-        { "from": "scenes-manager", "to": "react-ui", "action": "Return scene.transcript?.fullText", "data": "WordTranscript.fullText or undefined" },
-        { "from": "react-ui", "to": "react-ui", "action": "Truncate if >12,000 chars", "data": "Head-only truncation with '... [truncated]' suffix" },
-        { "from": "react-ui", "to": "ai-agent", "action": "generatePlan(goal, { ..., transcript })", "data": "ProjectContext includes transcript string" },
-        { "from": "ai-agent", "to": "ai-worker", "action": "Post { type: 'generate', messages }", "data": "Prompt includes '- Transcript: ${escaped_text}'" },
-        { "from": "ai-worker", "to": "ai-agent", "action": "Stream response tokens", "data": "{ status: 'update', output: text }" },
-        { "from": "ai-agent", "to": "ai-agent", "action": "parsePlanResponse() + validatePlan()", "data": "Parse JSON, verify all 19 action types are valid" },
-        { "from": "ai-agent", "to": "react-ui", "action": "Display plan for review", "data": "Step list with descriptions informed by transcript context" }
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Click 'Generate Plan' in AI Co-Pilot panel",
+          "data": "Goal text + active scene reference"
+        },
+        {
+          "from": "react-ui",
+          "to": "scenes-manager",
+          "action": "getActiveScene()",
+          "data": "TScene with optional transcript field"
+        },
+        {
+          "from": "scenes-manager",
+          "to": "react-ui",
+          "action": "Return scene.transcript?.fullText",
+          "data": "WordTranscript.fullText or undefined"
+        },
+        {
+          "from": "react-ui",
+          "to": "react-ui",
+          "action": "Truncate if >12,000 chars",
+          "data": "Head-only truncation with '... [truncated]' suffix"
+        },
+        {
+          "from": "react-ui",
+          "to": "ai-agent",
+          "action": "generatePlan(goal, { ..., transcript })",
+          "data": "ProjectContext includes transcript string"
+        },
+        {
+          "from": "ai-agent",
+          "to": "ai-worker",
+          "action": "Post { type: 'generate', messages }",
+          "data": "Prompt includes '- Transcript: ${escaped_text}'"
+        },
+        {
+          "from": "ai-worker",
+          "to": "ai-agent",
+          "action": "Stream response tokens",
+          "data": "{ status: 'update', output: text }"
+        },
+        {
+          "from": "ai-agent",
+          "to": "ai-agent",
+          "action": "parsePlanResponse() + validatePlan()",
+          "data": "Parse JSON, verify all 19 action types are valid"
+        },
+        {
+          "from": "ai-agent",
+          "to": "react-ui",
+          "action": "Display plan for review",
+          "data": "Step list with descriptions informed by transcript context"
+        }
       ]
     },
     {
@@ -821,12 +1766,42 @@
       "category": "editing",
       "description": "User views histogram, vectorscope, and waveform for color analysis",
       "steps": [
-        { "from": "user", "to": "react-ui", "action": "Open scopes panel", "data": "Scope type selection (histogram/vectorscope/waveform)" },
-        { "from": "react-ui", "to": "renderer-manager", "action": "Request scope data for current frame", "data": "{ scopeType: 'histogram' | 'vectorscope' | 'waveform' }" },
-        { "from": "renderer-manager", "to": "wasm-compositor", "action": "Compute scope shader", "data": "GPU compute shader processes frame pixels" },
-        { "from": "wasm-compositor", "to": "video-scopes", "action": "Execute compute pass", "data": "histogram.wgsl / vectorscope.wgsl / waveform.wgsl" },
-        { "from": "video-scopes", "to": "react-ui", "action": "Return scope data", "data": "Histogram: 256-bin RGB channels, Vectorscope: chrominance plot, Waveform: luminance distribution" },
-        { "from": "react-ui", "to": "react-ui", "action": "Render scope visualization", "data": "Canvas 2D scope display" }
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Open scopes panel",
+          "data": "Scope type selection (histogram/vectorscope/waveform)"
+        },
+        {
+          "from": "react-ui",
+          "to": "renderer-manager",
+          "action": "Request scope data for current frame",
+          "data": "{ scopeType: 'histogram' | 'vectorscope' | 'waveform' }"
+        },
+        {
+          "from": "renderer-manager",
+          "to": "wasm-compositor",
+          "action": "Compute scope shader",
+          "data": "GPU compute shader processes frame pixels"
+        },
+        {
+          "from": "wasm-compositor",
+          "to": "video-scopes",
+          "action": "Execute compute pass",
+          "data": "histogram.wgsl / vectorscope.wgsl / waveform.wgsl"
+        },
+        {
+          "from": "video-scopes",
+          "to": "react-ui",
+          "action": "Return scope data",
+          "data": "Histogram: 256-bin RGB channels, Vectorscope: chrominance plot, Waveform: luminance distribution"
+        },
+        {
+          "from": "react-ui",
+          "to": "react-ui",
+          "action": "Render scope visualization",
+          "data": "Canvas 2D scope display"
+        }
       ]
     },
     {
@@ -835,14 +1810,54 @@
       "category": "ai",
       "description": "User applies AI upscaling to enhance video quality",
       "steps": [
-        { "from": "user", "to": "react-ui", "action": "Select AI Upscale from effects panel", "data": "{ effectType: 'ai-upscale', intensity: 0-100 }" },
-        { "from": "react-ui", "to": "timeline-manager", "action": "AddClipEffectCommand", "data": "{ clipId, effectType: 'ai-upscale', params: { intensity } }" },
-        { "from": "timeline-manager", "to": "command-manager", "action": "execute(command)", "data": "Push to undo stack" },
-        { "from": "timeline-manager", "to": "renderer-manager", "action": "Re-render preview", "data": "Scene graph includes ai-upscale effect node" },
-        { "from": "renderer-manager", "to": "effects-pipeline", "action": "applyEffectPasses()", "data": "ai_upscale.wgsl: edge-directed sharpening with Laplacian edge detection" },
-        { "from": "effects-pipeline", "to": "web-gpu", "action": "Compute shader pass", "data": "3x3 neighborhood sampling → gradient calculation → edge-directed sharpening" },
-        { "from": "effects-pipeline", "to": "renderer-manager", "action": "Return processed frame", "data": "OffscreenCanvas with enhanced detail" },
-        { "from": "renderer-manager", "to": "react-ui", "action": "Preview updated", "data": "Upscaled detail visible in preview panel" }
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Select AI Upscale from effects panel",
+          "data": "{ effectType: 'ai-upscale', intensity: 0-100 }"
+        },
+        {
+          "from": "react-ui",
+          "to": "timeline-manager",
+          "action": "AddClipEffectCommand",
+          "data": "{ clipId, effectType: 'ai-upscale', params: { intensity } }"
+        },
+        {
+          "from": "timeline-manager",
+          "to": "command-manager",
+          "action": "execute(command)",
+          "data": "Push to undo stack"
+        },
+        {
+          "from": "timeline-manager",
+          "to": "renderer-manager",
+          "action": "Re-render preview",
+          "data": "Scene graph includes ai-upscale effect node"
+        },
+        {
+          "from": "renderer-manager",
+          "to": "effects-pipeline",
+          "action": "applyEffectPasses()",
+          "data": "ai_upscale.wgsl: edge-directed sharpening with Laplacian edge detection"
+        },
+        {
+          "from": "effects-pipeline",
+          "to": "web-gpu",
+          "action": "Compute shader pass",
+          "data": "3x3 neighborhood sampling → gradient calculation → edge-directed sharpening"
+        },
+        {
+          "from": "effects-pipeline",
+          "to": "renderer-manager",
+          "action": "Return processed frame",
+          "data": "OffscreenCanvas with enhanced detail"
+        },
+        {
+          "from": "renderer-manager",
+          "to": "react-ui",
+          "action": "Preview updated",
+          "data": "Upscaled detail visible in preview panel"
+        }
       ]
     },
     {
@@ -851,14 +1866,312 @@
       "category": "ai",
       "description": "User applies cinematic color grading presets",
       "steps": [
-        { "from": "user", "to": "react-ui", "action": "Select Auto Color Grade, choose preset", "data": "{ effectType: 'color-grade', preset: 'cinematic'|'warm'|'cool'|'dramatic'|'vintage'|'neutral', intensity: 0-100 }" },
-        { "from": "react-ui", "to": "timeline-manager", "action": "AddClipEffectCommand", "data": "{ clipId, effectType: 'color-grade', params: { preset, intensity } }" },
-        { "from": "timeline-manager", "to": "command-manager", "action": "execute(command)", "data": "Push to undo stack" },
-        { "from": "timeline-manager", "to": "renderer-manager", "action": "Re-render preview", "data": "Scene graph includes color-grade effect node" },
-        { "from": "renderer-manager", "to": "effects-pipeline", "action": "applyEffectPasses()", "data": "color_grade.wgsl: HSL-based grading with shadow tint, highlight tint, contrast, saturation" },
-        { "from": "effects-pipeline", "to": "web-gpu", "action": "Compute shader pass", "data": "RGB→HSL conversion → lightness stretch → shadow/highlight tinting → saturation boost → HSL→RGB" },
-        { "from": "effects-pipeline", "to": "renderer-manager", "action": "Return processed frame", "data": "OffscreenCanvas with cinematic color grade" },
-        { "from": "renderer-manager", "to": "react-ui", "action": "Preview updated", "data": "Color graded preview visible in panel" }
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Select Auto Color Grade, choose preset",
+          "data": "{ effectType: 'color-grade', preset: 'cinematic'|'warm'|'cool'|'dramatic'|'vintage'|'neutral', intensity: 0-100 }"
+        },
+        {
+          "from": "react-ui",
+          "to": "timeline-manager",
+          "action": "AddClipEffectCommand",
+          "data": "{ clipId, effectType: 'color-grade', params: { preset, intensity } }"
+        },
+        {
+          "from": "timeline-manager",
+          "to": "command-manager",
+          "action": "execute(command)",
+          "data": "Push to undo stack"
+        },
+        {
+          "from": "timeline-manager",
+          "to": "renderer-manager",
+          "action": "Re-render preview",
+          "data": "Scene graph includes color-grade effect node"
+        },
+        {
+          "from": "renderer-manager",
+          "to": "effects-pipeline",
+          "action": "applyEffectPasses()",
+          "data": "color_grade.wgsl: HSL-based grading with shadow tint, highlight tint, contrast, saturation"
+        },
+        {
+          "from": "effects-pipeline",
+          "to": "web-gpu",
+          "action": "Compute shader pass",
+          "data": "RGB→HSL conversion → lightness stretch → shadow/highlight tinting → saturation boost → HSL→RGB"
+        },
+        {
+          "from": "effects-pipeline",
+          "to": "renderer-manager",
+          "action": "Return processed frame",
+          "data": "OffscreenCanvas with cinematic color grade"
+        },
+        {
+          "from": "renderer-manager",
+          "to": "react-ui",
+          "action": "Preview updated",
+          "data": "Color graded preview visible in panel"
+        }
+      ]
+    },
+    {
+      "id": "plugin-lifecycle",
+      "label": "Plugin Lifecycle",
+      "category": "editing",
+      "description": "Third-party plugin loading, registration, and cleanup",
+      "steps": [
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Install plugin package",
+          "data": "Plugin manifest + module"
+        },
+        {
+          "from": "react-ui",
+          "to": "plugin-system",
+          "action": "loadPlugin(manifest, module)",
+          "data": "Validate manifest, check minOpenCutVersion"
+        },
+        {
+          "from": "plugin-system",
+          "to": "plugin-system",
+          "action": "createPluginAPI()",
+          "data": "Registry access, project info, command registration"
+        },
+        {
+          "from": "plugin-system",
+          "to": "plugin-system",
+          "action": "module.init(api, context)",
+          "data": "Plugin initializes with full API access"
+        },
+        {
+          "from": "plugin-system",
+          "to": "effects-pipeline",
+          "action": "registerEffect()",
+          "data": "Plugin effect added to effects registry"
+        },
+        {
+          "from": "plugin-system",
+          "to": "transitions-pipeline",
+          "action": "registerTransition()",
+          "data": "Plugin transition added to transitions registry"
+        },
+        {
+          "from": "plugin-system",
+          "to": "export-engine",
+          "action": "registerExportFormat()",
+          "data": "Plugin export format added to formats registry"
+        },
+        {
+          "from": "plugin-system",
+          "to": "react-ui",
+          "action": "Plugin status: active",
+          "data": "UI shows plugin as loaded and enabled"
+        }
+      ]
+    },
+    {
+      "id": "gpu-memory-management",
+      "label": "GPU Memory Management",
+      "category": "editing",
+      "description": "Reference-counted GPU resource pooling with automatic eviction",
+      "steps": [
+        {
+          "from": "renderer-manager",
+          "to": "gpu-memory-pool",
+          "action": "allocateTexture(id, width, height)",
+          "data": "Request texture with format and usage"
+        },
+        {
+          "from": "gpu-memory-pool",
+          "to": "gpu-memory-pool",
+          "action": "checkCache()",
+          "data": "Return existing handle if cached, increment refCount"
+        },
+        {
+          "from": "gpu-memory-pool",
+          "to": "gpu-memory-pool",
+          "action": "evictIfNeeded()",
+          "data": "LRU eviction of unreferenced textures when pool full"
+        },
+        {
+          "from": "gpu-memory-pool",
+          "to": "web-gpu",
+          "action": "Create GPU texture",
+          "data": "wgpu texture allocation"
+        },
+        {
+          "from": "renderer-manager",
+          "to": "gpu-memory-pool",
+          "action": "releaseTexture(id)",
+          "data": "Decrement refCount, delete if zero"
+        },
+        {
+          "from": "gpu-memory-pool",
+          "to": "gpu-memory-pool",
+          "action": "cleanup()",
+          "data": "Periodic cleanup of idle unreferenced resources"
+        }
+      ]
+    },
+    {
+      "id": "apply-template",
+      "label": "Apply Project Template",
+      "category": "editing",
+      "description": "User selects a template to start a new project with pre-configured tracks and styles",
+      "steps": [
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Select template (YouTube, TikTok, Podcast)",
+          "data": "Template ID"
+        },
+        {
+          "from": "react-ui",
+          "to": "template-manager",
+          "action": "createFromTemplate(template)",
+          "data": "Clone template with new UUIDs for all elements"
+        },
+        {
+          "from": "template-manager",
+          "to": "scenes-manager",
+          "action": "Initialize scene with template tracks",
+          "data": "Pre-configured tracks (video, audio, text, graphics)"
+        },
+        {
+          "from": "scenes-manager",
+          "to": "timeline-manager",
+          "action": "Set canvas size, fps, audio settings",
+          "data": "Template settings applied to project"
+        },
+        {
+          "from": "timeline-manager",
+          "to": "react-ui",
+          "action": "Render timeline with template structure",
+          "data": "Tracks visible, ready for media import"
+        }
+      ]
+    },
+    {
+      "id": "generate-voiceover",
+      "label": "Generate AI Voiceover",
+      "category": "ai",
+      "description": "User generates AI voiceover from text with voice profile selection",
+      "steps": [
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Enter text, select voice profile",
+          "data": "{ text, voiceId, speed, pitch, volume }"
+        },
+        {
+          "from": "react-ui",
+          "to": "voiceover-service",
+          "action": "generateVoiceover(request)",
+          "data": "VoiceoverRequest with parameters"
+        },
+        {
+          "from": "voiceover-service",
+          "to": "voiceover-service",
+          "action": "synthesizeSpeech()",
+          "data": "Web Speech API or fallback synthesis"
+        },
+        {
+          "from": "voiceover-service",
+          "to": "voiceover-service",
+          "action": "computeWordTimings()",
+          "data": "Word-level timestamps for sync"
+        },
+        {
+          "from": "voiceover-service",
+          "to": "react-ui",
+          "action": "Return VoiceoverResult",
+          "data": "{ audioBuffer, duration, wordTimings }"
+        },
+        {
+          "from": "react-ui",
+          "to": "timeline-manager",
+          "action": "InsertElementCommand (audio)",
+          "data": "Voiceover added as audio track element"
+        }
+      ]
+    },
+    {
+      "id": "apply-caption-style",
+      "label": "Apply Caption Style",
+      "category": "ai",
+      "description": "User selects a caption style preset to format auto-generated captions",
+      "steps": [
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Select caption style preset",
+          "data": "Style ID (classic, minimal, karaoke, tiktok, elegant, bold-news)"
+        },
+        {
+          "from": "react-ui",
+          "to": "caption-style-manager",
+          "action": "setActiveStyle(id)",
+          "data": "Style becomes active"
+        },
+        {
+          "from": "caption-style-manager",
+          "to": "caption-style-manager",
+          "action": "applyStyleToCaptions()",
+          "data": "Apply style to all caption elements"
+        },
+        {
+          "from": "caption-style-manager",
+          "to": "renderer-manager",
+          "action": "Re-render preview",
+          "data": "Captions rendered with new style"
+        },
+        {
+          "from": "renderer-manager",
+          "to": "react-ui",
+          "action": "Preview updated",
+          "data": "Styled captions visible in preview"
+        }
+      ]
+    },
+    {
+      "id": "keyboard-navigation",
+      "label": "Keyboard Navigation",
+      "category": "editing",
+      "description": "User navigates and edits using keyboard shortcuts with accessibility support",
+      "steps": [
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Press keyboard shortcut",
+          "data": "Key + modifiers (e.g., Ctrl+Z, Space, B)"
+        },
+        {
+          "from": "react-ui",
+          "to": "accessibility",
+          "action": "useKeyboardShortcuts()",
+          "data": "Match against 20+ registered shortcuts"
+        },
+        {
+          "from": "accessibility",
+          "to": "command-manager",
+          "action": "Execute shortcut action",
+          "data": "Undo, redo, split, play/pause, etc."
+        },
+        {
+          "from": "accessibility",
+          "to": "accessibility",
+          "action": "useScreenReaderAnnouncement()",
+          "data": "Announce action to screen readers via aria-live"
+        },
+        {
+          "from": "accessibility",
+          "to": "react-ui",
+          "action": "UI updates",
+          "data": "Timeline, preview, panels reflect action"
+        }
       ]
     }
   ]
