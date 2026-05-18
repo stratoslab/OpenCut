@@ -15,6 +15,15 @@ import {
 } from "@/transcription/word-segments";
 import { useTranscriptionModelStore } from "@/transcription/transcription-model-store";
 
+export interface DiarizationResult {
+	speakers: Array<{ id: string; segments: TranscriptionSegment[] }>;
+	speakerCount: number;
+}
+
+export interface TranscriptionResultWithDiarization extends TranscriptionResult {
+	diarization?: DiarizationResult;
+}
+
 type ProgressCallback = (progress: TranscriptionProgress) => void;
 
 class TranscriptionService {
@@ -22,13 +31,15 @@ class TranscriptionService {
 		audioData,
 		language = "auto",
 		modelId = DEFAULT_TRANSCRIPTION_MODEL,
+		diarize = false,
 		onProgress,
 	}: {
 		audioData: Float32Array;
 		language?: TranscriptionLanguage;
 		modelId?: TranscriptionModelId;
+		diarize?: boolean;
 		onProgress?: ProgressCallback;
-	}): Promise<TranscriptionResult> {
+	}): Promise<TranscriptionResultWithDiarization> {
 		const { worker, isInitialized } = useTranscriptionModelStore.getState();
 
 		if (!worker || !isInitialized) {
@@ -44,17 +55,26 @@ class TranscriptionService {
 						onProgress?.({
 							status: "transcribing",
 							progress: response.progress,
-							message: "Transcribing audio...",
+							message: response.phase === "diarizing"
+								? "Identifying speakers..."
+								: "Transcribing audio...",
 						});
 						break;
 
 					case "transcribe-complete":
 						worker.removeEventListener("message", handleMessage);
-						resolve({
+						const result: TranscriptionResultWithDiarization = {
 							text: response.text,
 							segments: response.segments,
 							language,
-						});
+						};
+						if (response.speakers) {
+							result.diarization = {
+								speakers: response.speakers,
+								speakerCount: response.speakers.length,
+							};
+						}
+						resolve(result);
 						break;
 
 					case "transcribe-error":
@@ -75,6 +95,7 @@ class TranscriptionService {
 				type: "transcribe",
 				audio: audioData,
 				language,
+				diarize,
 			} satisfies WorkerMessage);
 		});
 	}
@@ -84,29 +105,36 @@ class TranscriptionService {
 		language = "auto",
 		modelId = DEFAULT_TRANSCRIPTION_MODEL,
 		videoDuration = 0,
+		diarize = false,
 		onProgress,
 	}: {
 		audioData: Float32Array;
 		language?: TranscriptionLanguage;
 		modelId?: TranscriptionModelId;
 		videoDuration?: number;
+		diarize?: boolean;
 		onProgress?: ProgressCallback;
-	}): Promise<WordTranscript> {
+	}): Promise<WordTranscript & { diarization?: DiarizationResult }> {
 		const result = await this.transcribe({
 			audioData,
 			language,
 			modelId,
+			diarize,
 			onProgress,
 		});
 
 		const words = segmentsToWordSegments(result.segments);
-
-		return buildWordTranscript(
+		const transcript = buildWordTranscript(
 			words,
 			result.text,
 			result.language,
 			videoDuration,
 		);
+
+		return {
+			...transcript,
+			diarization: result.diarization,
+		};
 	}
 
 	cancel() {

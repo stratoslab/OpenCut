@@ -6,18 +6,33 @@ export interface TranscriptionSegment {
 	text: string;
 	start: number;
 	end: number;
+	speaker?: string;
+}
+
+export interface SpeakerInfo {
+	id: string;
+	segments: TranscriptionSegment[];
+	totalDuration: number;
+	wordCount: number;
+}
+
+export interface DiarizationInfo {
+	speakers: SpeakerInfo[];
+	speakerCount: number;
 }
 
 export interface TranscriptionResult {
 	text: string;
 	segments: TranscriptionSegment[];
 	language: string;
+	diarization?: DiarizationInfo;
 }
 
 export type TranscriptionStatus =
 	| "idle"
 	| "loading-model"
 	| "transcribing"
+	| "diarizing"
 	| "complete"
 	| "error";
 
@@ -25,6 +40,7 @@ export interface TranscriptionProgress {
 	status: TranscriptionStatus;
 	progress: number;
 	message?: string;
+	phase?: "loading" | "transcribing" | "diarizing";
 }
 
 export type TranscriptionModelId =
@@ -44,6 +60,7 @@ export interface CaptionChunk {
 	text: string;
 	startTime: number;
 	duration: number;
+	speaker?: string;
 }
 
 export interface WordSegment {
@@ -51,6 +68,7 @@ export interface WordSegment {
 	start: number;
 	end: number;
 	wordIndex: number;
+	speaker?: string;
 }
 
 export interface WordTranscript {
@@ -58,4 +76,5 @@ export interface WordTranscript {
 	fullText: string;
 	language: string;
 	videoDuration: number;
+	diarization?: DiarizationInfo;
 }
