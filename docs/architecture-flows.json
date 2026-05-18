@@ -1,6 +1,6 @@
 {
-  "version": "6.0",
-  "description": "OpenCut architecture workflows — P0 GPU foundation + P1 AI Power + P2 Advanced (plugins, performance, templates, AI voiceover, accessibility)",
+  "version": "7.0",
+  "description": "OpenCut architecture workflows — P0-P2 complete: GPU foundation, AI Power, advanced features (3D, keyframes, audio engine, proxy, text animations, bundling, history, multi-output, SDK, performance)",
   "nodes": {
     "user": {
       "id": "user",
@@ -537,6 +537,86 @@
       "package": "opencut-desktop",
       "icon": "🖥️",
       "description": "GPUI native desktop app with local file system access and external drive backup"
+    },
+    "3d-layer-manager": {
+      "id": "3d-layer-manager",
+      "label": "3D Layer Manager",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "🎲",
+      "description": "Three.js integration with glTF/OBJ import, per-layer 3D transforms, composite into 2D timeline"
+    },
+    "keyframe-manager": {
+      "id": "keyframe-manager",
+      "label": "Keyframe Manager",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "📈",
+      "description": "13 easing modes, bezier curves, keyframe copy/paste, interpolation engine"
+    },
+    "audio-engine": {
+      "id": "audio-engine",
+      "label": "Audio Engine",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "🎚️",
+      "description": "10-band EQ, reverb, compressor, limiter, noise gate, beat detection, varispeed"
+    },
+    "proxy-manager": {
+      "id": "proxy-manager",
+      "label": "Proxy Manager",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "🖼️",
+      "description": "GPU-accelerated proxy generation for 4K editing with cache and eviction"
+    },
+    "text-animations": {
+      "id": "text-animations",
+      "label": "Text Animations",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "✨",
+      "description": "20+ preset text animations (fade, slide, zoom, bounce, typewriter, glitch, neon, etc.)"
+    },
+    "project-bundler": {
+      "id": "project-bundler",
+      "label": "Project Bundler",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "📦",
+      "description": "Export/import entire project as single .opencut file with media, checksums, validation"
+    },
+    "command-history": {
+      "id": "command-history",
+      "label": "Command History",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "📜",
+      "description": "Serializable commands, history panel, selective undo, localStorage persistence"
+    },
+    "multi-output": {
+      "id": "multi-output",
+      "label": "Multi-Output Router",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "📺",
+      "description": "Route compositions to multiple outputs (preview, external monitor, streaming, recording)"
+    },
+    "sdk-architecture": {
+      "id": "sdk-architecture",
+      "label": "SDK Architecture",
+      "type": "component",
+      "package": "@opencut/*",
+      "icon": "📚",
+      "description": "6 npm packages: timeline, renderer, effects, ai, audio, studio"
+    },
+    "bundle-optimizer": {
+      "id": "bundle-optimizer",
+      "label": "Bundle Optimizer",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "⚡",
+      "description": "Performance budgets, lazy loading, code splitting, Vite manual chunks"
     }
   },
   "flows": [
@@ -2265,6 +2345,196 @@
           "to": "mobile-app",
           "action": "Export to camera roll",
           "data": "MediaRecorder + file system write"
+        }
+      ]
+    },
+    {
+      "id": "3d-layer-compositing",
+      "label": "3D Layer Compositing",
+      "category": "editing",
+      "description": "User imports 3D model and composites it into the timeline",
+      "steps": [
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Import glTF/GLB/OBJ model",
+          "data": "3D file upload"
+        },
+        {
+          "from": "react-ui",
+          "to": "3d-layer-manager",
+          "action": "loadThree() + loadModel()",
+          "data": "Lazy-load Three.js from CDN, parse model"
+        },
+        {
+          "from": "3d-layer-manager",
+          "to": "web-gpu",
+          "action": "Render 3D scene to OffscreenCanvas",
+          "data": "WebGL renderer → texture"
+        },
+        {
+          "from": "3d-layer-manager",
+          "to": "wasm-compositor",
+          "action": "Composite 3D texture into frame",
+          "data": "3D layer blended with 2D layers"
+        },
+        {
+          "from": "wasm-compositor",
+          "to": "react-ui",
+          "action": "Preview updated",
+          "data": "3D model visible in preview panel"
+        }
+      ]
+    },
+    {
+      "id": "keyframe-animation",
+      "label": "Keyframe Animation",
+      "category": "editing",
+      "description": "User creates keyframe animations with bezier curves and easing",
+      "steps": [
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Add keyframe at playhead position",
+          "data": "{ property, time, value }"
+        },
+        {
+          "from": "react-ui",
+          "to": "keyframe-manager",
+          "action": "addKeyframe()",
+          "data": "Keyframe inserted, sorted by time"
+        },
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Set easing mode (13 options)",
+          "data": "linear, ease-in-out, bounce, elastic, etc."
+        },
+        {
+          "from": "keyframe-manager",
+          "to": "keyframe-manager",
+          "action": "getValueAtTime()",
+          "data": "Interpolate with easing function"
+        },
+        {
+          "from": "keyframe-manager",
+          "to": "renderer-manager",
+          "action": "Apply interpolated value to element",
+          "data": "Position, rotation, scale, opacity updates"
+        }
+      ]
+    },
+    {
+      "id": "audio-processing",
+      "label": "Audio Processing Pipeline",
+      "category": "editing",
+      "description": "User applies EQ, effects, and beat detection to audio tracks",
+      "steps": [
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Open audio panel, enable EQ",
+          "data": "10-band EQ with frequency/gain controls"
+        },
+        {
+          "from": "react-ui",
+          "to": "audio-engine",
+          "action": "createEffectChain(trackId)",
+          "data": "EQ + reverb + compressor + limiter + noise gate"
+        },
+        {
+          "from": "audio-engine",
+          "to": "web-audio",
+          "action": "Connect BiquadFilter nodes",
+          "data": "lowshelf → 8x peaking → highshelf"
+        },
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Run beat detection",
+          "data": "OfflineAudioContext + FFT energy analysis"
+        },
+        {
+          "from": "audio-engine",
+          "to": "react-ui",
+          "action": "Return BeatDetectionResult",
+          "data": "{ beats[], bpm, confidence }"
+        }
+      ]
+    },
+    {
+      "id": "proxy-generation",
+      "label": "Proxy Generation",
+      "category": "editing",
+      "description": "System generates low-res proxies for smooth 4K editing",
+      "steps": [
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Import 4K video",
+          "data": "Large media file"
+        },
+        {
+          "from": "react-ui",
+          "to": "proxy-manager",
+          "action": "generateProxy()",
+          "data": "Downscale to 960x540, encode as WebP"
+        },
+        {
+          "from": "proxy-manager",
+          "to": "proxy-manager",
+          "action": "Cache frames to OPFS",
+          "data": "ProxyEntry with checksum"
+        },
+        {
+          "from": "proxy-manager",
+          "to": "renderer-manager",
+          "action": "Use proxy during editing",
+          "data": "Low-res for smooth scrubbing"
+        },
+        {
+          "from": "renderer-manager",
+          "to": "export-engine",
+          "action": "Use full-res during export",
+          "data": "Original media for final output"
+        }
+      ]
+    },
+    {
+      "id": "project-bundle-export",
+      "label": "Project Bundle Export/Import",
+      "category": "editing",
+      "description": "User exports entire project as portable .opencut file",
+      "steps": [
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Click Export Bundle",
+          "data": "Project + media files"
+        },
+        {
+          "from": "react-ui",
+          "to": "project-bundler",
+          "action": "createBundle()",
+          "data": "Serialize project, attach media, compute checksums"
+        },
+        {
+          "from": "project-bundler",
+          "to": "project-bundler",
+          "action": "validateBundle()",
+          "data": "Check required fields, media integrity"
+        },
+        {
+          "from": "project-bundler",
+          "to": "user",
+          "action": "Download .opencut file",
+          "data": "Blob with type application/x-opencut"
+        },
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Import bundle on another machine",
+          "data": "File upload → importBundle() → validate"
         }
       ]
     }
