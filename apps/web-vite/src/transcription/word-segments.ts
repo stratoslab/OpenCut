@@ -4,6 +4,16 @@ import type {
 	WordTranscript,
 } from "./types";
 
+/**
+ * Split a transcription segment into individual words with improved timing.
+ *
+ * Instead of distributing time evenly across all words, this uses
+ * character-length weighting: longer words get proportionally more time.
+ * This produces more realistic word timings that better match actual speech.
+ *
+ * For example, in a 2-second segment with words ["hello", "world", "today"],
+ * each word gets time proportional to its character count rather than 0.67s each.
+ */
 export function splitSegmentIntoWords(
 	segment: TranscriptionSegment,
 	baseWordIndex: number,
@@ -15,18 +25,41 @@ export function splitSegmentIntoWords(
 	if (words.length === 0) return [];
 
 	const duration = segment.end - segment.start;
-	const avgDuration = duration / words.length;
 
-	return words.map((word, i) => {
-		const wordStart = segment.start + i * avgDuration;
-		const wordEnd = wordStart + avgDuration;
-		return {
-			text: cleanWord(word),
+	// Use character-length weighting for more accurate timing
+	const charLengths = words.map((w) => cleanWord(w).length || 1);
+	const totalChars = charLengths.reduce((sum, len) => sum + len, 0);
+
+	let currentTime = segment.start;
+	const result: WordSegment[] = [];
+
+	for (let i = 0; i < words.length; i++) {
+		const wordText = cleanWord(words[i]);
+		if (!wordText) continue;
+
+		// Proportion of duration based on character length
+		const proportion = charLengths[i] / totalChars;
+		const wordDuration = duration * proportion;
+
+		const wordStart = currentTime;
+		const wordEnd = wordStart + wordDuration;
+
+		result.push({
+			text: wordText,
 			start: Math.max(0, wordStart),
 			end: Math.min(segment.end, wordEnd),
-			wordIndex: baseWordIndex + i,
-		};
-	});
+			wordIndex: baseWordIndex + result.length,
+		});
+
+		currentTime = wordEnd;
+	}
+
+	// Fix floating-point drift: ensure last word ends exactly at segment end
+	if (result.length > 0) {
+		result[result.length - 1].end = segment.end;
+	}
+
+	return result;
 }
 
 function cleanWord(word: string): string {

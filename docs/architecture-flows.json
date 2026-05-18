@@ -1,6 +1,6 @@
 {
-  "version": "9.0",
-  "description": "OpenCut architecture workflows — REAL data flows from codebase analysis: media → transcription → AI → text-edit-engine → timeline execution. Fixed gaps: MediaTime conversion, double transcription, AI context precision, SRT import, edit execution path, word timing accuracy.",
+  "version": "10.0",
+  "description": "OpenCut architecture workflows — ALL critical gaps closed: single-pass transcription (no double inference), character-length weighted word timings, AI context with WordTranscript, SRT→WordTranscript conversion, edit suggestion execution path, MediaTime conversion.",
   "nodes": {
     "user": {
       "id": "user",

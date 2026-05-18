@@ -24,6 +24,7 @@ import { transcriptionService } from "@/services/transcription/service";
 import { decodeAudioToFloat32 } from "@/media/audio";
 import { mediaTimeToSeconds } from "@/wasm";
 import { buildCaptionChunks } from "@/transcription/caption";
+import { segmentsToWordSegments, buildWordTranscript } from "@/transcription/word-segments";
 import { insertCaptionChunksAsTextTrack } from "@/subtitles/insert";
 import { parseSubtitleFile } from "@/subtitles/parse";
 import { cuesToWordTranscript } from "@/subtitles/to-word-transcript";
@@ -165,6 +166,8 @@ export function Captions() {
 				sampleRate: DEFAULT_TRANSCRIPTION_SAMPLE_RATE,
 			});
 
+			// Single transcription call — use result for both captions and word transcript
+			dispatch({ type: "update_step", step: "Transcribing..." });
 			const result = await transcriptionService.transcribe({
 				audioData: samples,
 				language: selectedLanguage === "auto" ? undefined : selectedLanguage,
@@ -179,14 +182,16 @@ export function Captions() {
 				return;
 			}
 
-			dispatch({ type: "update_step", step: "Storing transcript..." });
-			const wordTranscript = await transcriptionService.transcribeToWords({
-				audioData: samples,
-				language: selectedLanguage === "auto" ? undefined : selectedLanguage,
-				videoDuration: mediaTimeToSeconds({
+			dispatch({ type: "update_step", step: "Building word transcript..." });
+			const wordSegments = segmentsToWordSegments(result.segments);
+			const wordTranscript = buildWordTranscript(
+				wordSegments,
+				result.text,
+				result.language,
+				mediaTimeToSeconds({
 					time: editor.timeline.getTotalDuration(),
 				}),
-			});
+			);
 
 			const activeScene = editor.scenes.getActiveScene();
 			editor.scenes.updateScene({

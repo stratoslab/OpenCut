@@ -6,8 +6,11 @@ import type { WordSegment, WordTranscript } from "@/transcription/types";
  *
  * SRT/ASS cues contain phrase-level text with start/end times but no
  * word-level timings. This function splits each cue's text into individual
- * words and distributes the cue's time range evenly across them — the same
- * approach used by `transcription/word-segments.ts` for Whisper segments.
+ * words and distributes the cue's time range using character-length
+ * weighting — longer words get proportionally more time.
+ *
+ * This matches the approach used by `transcription/word-segments.ts` for
+ * Whisper segments, ensuring consistent timing accuracy across sources.
  *
  * The resulting WordTranscript enables text-based editing for imported
  * subtitles, closing Gap 3 in the architecture.
@@ -31,22 +34,36 @@ export function cuesToWordTranscript({
 		const cueWords = trimmed.split(/\s+/).filter((w) => w.length > 0);
 		if (cueWords.length === 0) continue;
 
+		// Use character-length weighting for more accurate timing
+		const cleanedWords = cueWords.map(cleanWord).filter((w) => w.length > 0);
+		if (cleanedWords.length === 0) continue;
+
+		const charLengths = cleanedWords.map((w) => w.length || 1);
+		const totalChars = charLengths.reduce((sum, len) => sum + len, 0);
 		const duration = cue.duration;
-		const avgDuration = duration / cueWords.length;
 
-		for (let i = 0; i < cueWords.length; i++) {
-			const wordText = cleanWord(cueWords[i]);
-			if (!wordText) continue;
+		let currentTime = cue.startTime;
 
-			const start = cue.startTime + i * avgDuration;
-			const end = Math.min(cue.startTime + cue.duration, start + avgDuration);
+		for (let i = 0; i < cleanedWords.length; i++) {
+			const proportion = charLengths[i] / totalChars;
+			const wordDuration = duration * proportion;
+
+			const start = currentTime;
+			const end = Math.min(cue.startTime + cue.duration, start + wordDuration);
 
 			words.push({
-				text: wordText,
+				text: cleanedWords[i],
 				start: Math.max(0, start),
 				end: Math.max(0, end),
 				wordIndex: wordIndex++,
 			});
+
+			currentTime = end;
+		}
+
+		// Fix floating-point drift: ensure last word ends at cue end
+		if (words.length > 0) {
+			words[words.length - 1].end = cue.startTime + cue.duration;
 		}
 	}
 
