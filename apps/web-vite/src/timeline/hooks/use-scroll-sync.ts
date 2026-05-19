@@ -97,8 +97,11 @@ export function useScrollSync({
 			}
 		}
 
+		let handleTrackLabelsScroll: (() => void) | null = null;
+		let handleTracksVerticalScroll: (() => void) | null = null;
+
 		if (trackLabelsViewport) {
-			const handleTrackLabelsScroll = () => {
+			handleTrackLabelsScroll = () => {
 				const now = Date.now();
 				if (isUpdatingRef.current || now - lastVerticalSync.current < 16)
 					return;
@@ -108,7 +111,7 @@ export function useScrollSync({
 				isUpdatingRef.current = false;
 			};
 
-			const handleTracksVerticalScroll = () => {
+			handleTracksVerticalScroll = () => {
 				const now = Date.now();
 				if (isUpdatingRef.current || now - lastVerticalSync.current < 16)
 					return;
@@ -120,33 +123,6 @@ export function useScrollSync({
 
 			trackLabelsViewport.addEventListener("scroll", handleTrackLabelsScroll);
 			tracksViewport.addEventListener("scroll", handleTracksVerticalScroll);
-
-			return () => {
-				if (rulerViewport && rulerViewport !== tracksViewport) {
-					rulerViewport.removeEventListener("scroll", handleRulerScroll);
-				}
-				if (tracksViewport !== rulerViewport) {
-					tracksViewport.removeEventListener("scroll", handleTracksScroll);
-				}
-				if (
-					bookmarksViewport &&
-					bookmarksViewport !== tracksViewport &&
-					handleBookmarksScroll
-				) {
-					bookmarksViewport.removeEventListener(
-						"scroll",
-						handleBookmarksScroll,
-					);
-				}
-				trackLabelsViewport.removeEventListener(
-					"scroll",
-					handleTrackLabelsScroll,
-				);
-				tracksViewport.removeEventListener(
-					"scroll",
-					handleTracksVerticalScroll,
-				);
-			};
 		}
 
 		return () => {
@@ -162,6 +138,18 @@ export function useScrollSync({
 				handleBookmarksScroll
 			) {
 				bookmarksViewport.removeEventListener("scroll", handleBookmarksScroll);
+			}
+			if (trackLabelsViewport && handleTrackLabelsScroll) {
+				trackLabelsViewport.removeEventListener(
+					"scroll",
+					handleTrackLabelsScroll,
+				);
+			}
+			if (tracksViewport && handleTracksVerticalScroll) {
+				tracksViewport.removeEventListener(
+					"scroll",
+					handleTracksVerticalScroll,
+				);
 			}
 		};
 	}, [

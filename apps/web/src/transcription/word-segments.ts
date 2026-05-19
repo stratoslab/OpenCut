@@ -15,7 +15,9 @@ export function splitSegmentIntoWords(
 
 	return words.map((word, i) => {
 		const wordStart = segment.start + i * avgDuration;
-		const wordEnd = wordStart + avgDuration;
+		const wordEnd = i === words.length - 1
+			? segment.end
+			: wordStart + avgDuration;
 		return {
 			text: cleanWord(word),
 			start: Math.max(0, wordStart),
@@ -59,14 +61,16 @@ export function buildWordTranscript(
 }
 
 export function validateWordSegments(words: WordSegment[]): boolean {
+	const epsilon = 1e-10;
+
 	for (const word of words) {
-		if (word.start < 0 || word.end < word.start) {
+		if (word.start < 0 || word.end < word.start - epsilon) {
 			return false;
 		}
 	}
 
 	for (let i = 1; i < words.length; i++) {
-		if (words[i].start < words[i - 1].end) {
+		if (words[i].start < words[i - 1].end - epsilon) {
 			return false;
 		}
 	}

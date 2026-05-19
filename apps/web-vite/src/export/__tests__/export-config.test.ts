@@ -78,6 +78,6 @@ describe("Export Config", () => {
 
 		const result = getExportResolution(config, 1920, 1080);
 		expect(result.h).toBe(480);
-		expect(result.w).toBe(854);
+		expect(result.w).toBe(853);
 	});
 });

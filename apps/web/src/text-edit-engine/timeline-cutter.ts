@@ -83,34 +83,46 @@ export function applyRippleEdit(
 	clips: TimelineClip[],
 	deletedRanges: { start: number; end: number }[],
 ): TimelineClip[] {
-	let totalDeletedDuration = 0;
 	const sortedRanges = [...deletedRanges].sort((a, b) => a.start - b.start);
 
-	return clips
-		.map((clip) => {
-			const clipStart = clip.startTime;
-			const clipEnd = clip.startTime + clip.duration;
+	const filteredClips = clips.filter((clip) => {
+		const clipStart = clip.startTime;
+		const clipEnd = clipStart + clip.duration;
 
-			for (const range of sortedRanges) {
-				if (range.end <= clipStart) {
-					totalDeletedDuration += range.end - range.start;
-				}
+		for (const range of sortedRanges) {
+			if (clipStart >= range.start && clipEnd <= range.end) {
+				return false;
 			}
+		}
+		return true;
+	});
 
-			return {
-				...clip,
-				startTime: Math.max(0, clipStart - totalDeletedDuration),
-			};
-		})
-		.filter((clip) => {
-			const clipStart = clip.startTime;
-			const clipEnd = clipStart + clip.duration;
+	return filteredClips.map((clip) => {
+		const clipStart = clip.startTime;
 
-			for (const range of sortedRanges) {
-				if (clipStart >= range.start && clipEnd <= range.end) {
-					return false;
-				}
+		let cumulativeShift = 0;
+		for (const range of sortedRanges) {
+			if (range.end <= clipStart) {
+				cumulativeShift += range.end - range.start;
 			}
-			return true;
-		});
+		}
+
+		const adjustedStart = Math.max(0, clipStart - cumulativeShift);
+
+		let adjustedDuration = clip.duration;
+		for (const range of sortedRanges) {
+			const overlapStart = Math.max(clipStart, range.start);
+			const overlapEnd = Math.min(clipStart + clip.duration, range.end);
+
+			if (overlapStart < overlapEnd) {
+				adjustedDuration -= overlapEnd - overlapStart;
+			}
+		}
+
+		return {
+			...clip,
+			startTime: adjustedStart,
+			duration: Math.max(0, adjustedDuration),
+		};
+	});
 }

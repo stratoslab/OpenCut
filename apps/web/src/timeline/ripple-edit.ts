@@ -18,19 +18,14 @@ export function applyRippleEditToTimeline(
 		return true;
 	});
 
-	let cumulativeShift = 0;
-	let rangeIndex = 0;
-
 	return filteredClips.map((clip) => {
 		const clipStart = clip.startTime;
 
-		while (
-			rangeIndex < sortedRanges.length &&
-			sortedRanges[rangeIndex].end <= clipStart
-		) {
-			const range = sortedRanges[rangeIndex];
-			cumulativeShift += range.end - range.start;
-			rangeIndex++;
+		let cumulativeShift = 0;
+		for (const range of sortedRanges) {
+			if (range.end <= clipStart) {
+				cumulativeShift += range.end - range.start;
+			}
 		}
 
 		const adjustedStart = Math.max(0, clipStart - cumulativeShift);

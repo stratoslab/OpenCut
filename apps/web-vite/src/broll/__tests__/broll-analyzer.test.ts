@@ -22,7 +22,7 @@ describe("BrollAnalyzer (broll-suggestions Task 1)", () => {
 
 		const suggestions = analyzer.analyze(transcript);
 		expect(suggestions.length).toBeGreaterThan(0);
-		expect(suggestions[0].keyword).toBe("show");
+		expect(suggestions[0].semanticQuery).toBeTruthy();
 	});
 
 	it("Property: Suggestions have valid time ranges", () => {

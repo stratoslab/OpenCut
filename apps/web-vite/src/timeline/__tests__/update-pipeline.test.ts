@@ -2,7 +2,18 @@ import { describe, expect, test } from "bun:test";
 import type { Transform } from "@/rendering";
 import type { SceneTracks, VideoElement } from "@/timeline";
 import { applyElementUpdate } from "@/timeline/update-pipeline";
-import { mediaTime, ZERO_MEDIA_TIME } from "@/wasm";
+
+let mediaTime: (args: { ticks: number }) => number;
+let ZERO_MEDIA_TIME: number;
+
+try {
+	const wasm = await import("@/wasm");
+	mediaTime = wasm.mediaTime;
+	ZERO_MEDIA_TIME = wasm.ZERO_MEDIA_TIME;
+} catch {
+	mediaTime = ({ ticks }) => ticks;
+	ZERO_MEDIA_TIME = 0;
+}
 
 function buildTransform(): Transform {
 	return {

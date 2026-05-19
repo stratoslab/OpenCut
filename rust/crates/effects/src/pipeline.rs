@@ -103,7 +103,7 @@ impl EffectPipeline {
         let lut_size = 2u32;
         let lut_data: Vec<f32> = (0..lut_size).flat_map(|b| {
             (0..lut_size).flat_map(move |g| {
-                (0..lut_size).map(move |r| {
+                (0..lut_size).flat_map(move |r| {
                     // Identity LUT: output = input
                     [
                         r as f32 / (lut_size - 1) as f32,
@@ -112,7 +112,6 @@ impl EffectPipeline {
                         1.0,
                     ]
                 })
-                .flatten()
             })
             .collect::<Vec<f32>>()
         })

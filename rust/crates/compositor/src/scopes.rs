@@ -1,7 +1,6 @@
 use bytemuck::{Pod, Zeroable};
 use gpu::GpuContext;
 use gpu::wgpu;
-use wgpu::util::DeviceExt;
 
 const HISTOGRAM_COMPUTE_SOURCE: &str = include_str!("shaders/scopes/histogram_compute.wgsl");
 const HISTOGRAM_RENDER_SOURCE: &str = include_str!("shaders/scopes/histogram_render.wgsl");
@@ -91,7 +90,6 @@ pub enum ScopeMode {
 pub struct ScopeRenderer {
     device: wgpu::Device,
     queue: wgpu::Queue,
-    format: wgpu::TextureFormat,
 
     histogram_compute_pipeline: wgpu::ComputePipeline,
     histogram_render_pipeline: wgpu::RenderPipeline,
@@ -135,7 +133,6 @@ impl ScopeRenderer {
     pub fn new(context: &GpuContext) -> Self {
         let device = context.device();
         let queue = context.queue();
-        let format = context.texture_format();
 
         let hist_buf_size = (HIST_BIN_COUNT * 4) as u64;
         let wave_buf_size = (WAVEFORM_OUT_W * WAVEFORM_OUT_H * 4) as u64;
@@ -763,7 +760,6 @@ impl ScopeRenderer {
         Self {
             device: device.clone(),
             queue: queue.clone(),
-            format,
             histogram_compute_pipeline,
             histogram_render_pipeline,
             histogram_compute_bg_layout,
