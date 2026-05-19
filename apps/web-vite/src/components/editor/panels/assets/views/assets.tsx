@@ -48,6 +48,7 @@ import {
 import { MASKABLE_ELEMENT_TYPES } from "@/timeline";
 import type { MediaAsset } from "@/media/types";
 import { cn } from "@/utils/ui";
+import { proxyManager } from "@/media/proxy-manager";
 import {
 	CloudUploadIcon,
 	GridViewIcon,
@@ -87,7 +88,7 @@ export function MediaView() {
 		setIsProcessing(true);
 		setProgress(0);
 		try {
-			await showMediaUploadToast({
+			const processedAssets = await showMediaUploadToast({
 				filesCount: files.length,
 				promise: async () => {
 					const processedAssets = await processMediaAssets({
@@ -107,6 +108,17 @@ export function MediaView() {
 					};
 				},
 			});
+
+			const videoAssets = processedAssets.assetNames?.filter((_, i) => {
+				const file = files[i];
+				return file?.type.startsWith("video/");
+			}) ?? [];
+
+			if (videoAssets.length > 0) {
+				toast.info(`Generating proxies for ${videoAssets.length} video(s)...`, {
+					description: "Switch to the Proxy tab to see progress",
+				});
+			}
 		} catch (error) {
 			console.error("Error processing files:", error);
 		} finally {

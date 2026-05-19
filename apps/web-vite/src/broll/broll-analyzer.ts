@@ -1,4 +1,5 @@
 import type { WordTranscript } from "@/transcription/types";
+import { cosineSimilarity as clipCosineSimilarity, useClipModelStore } from "@/ai/clip-store";
 
 export interface BrollSuggestion {
 	id: string;
@@ -235,6 +236,55 @@ export class BrollAnalyzer {
 		const embedA = computeTextEmbedding(a);
 		const embedB = computeTextEmbedding(b);
 		return cosineSimilarity(embedA, embedB);
+	}
+
+	/**
+	 * Scores how well a video frame matches a b-roll semantic query using CLIP.
+	 * Returns a relevance score in [0, 1]. Returns 0.5 as a neutral fallback
+	 * when CLIP is not ready.
+	 */
+	async scoreFrameRelevance(frame: ImageData, query: string): Promise<number> {
+		const store = useClipModelStore.getState();
+		if (store.stage !== "ready") return 0.5;
+
+		try {
+			const [imgEmb, [textEmb]] = await Promise.all([
+				store.embedImage(frame),
+				store.embedTexts([query]),
+			]);
+			// Cosine similarity ∈ [-1, 1] → mapped to [0, 1]
+			const sim = clipCosineSimilarity(imgEmb, textEmb);
+			return (sim + 1) / 2;
+		} catch {
+			return 0.5;
+		}
+	}
+
+	/**
+	 * Enriches b-roll suggestions with visual confidence scores from CLIP.
+	 * For each suggestion, fetches the frame at startTime and averages the
+	 * keyword-derived confidence with the CLIP visual relevance score.
+	 */
+	async enrichWithVisualConfidence(
+		suggestions: BrollSuggestion[],
+		getFrame: (startTime: number) => Promise<ImageData | null>,
+	): Promise<BrollSuggestion[]> {
+		const enriched = suggestions.map(s => ({ ...s }));
+
+		for (const s of enriched) {
+			let frame: ImageData | null = null;
+			try {
+				frame = await getFrame(s.startTime);
+			} catch {
+				// getFrame rejected — leave confidence unchanged
+			}
+			if (frame === null) continue;
+
+			const visual = await this.scoreFrameRelevance(frame, s.semanticQuery);
+			s.confidence = (s.confidence + visual) / 2;
+		}
+
+		return enriched;
 	}
 }
 

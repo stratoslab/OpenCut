@@ -1,6 +1,6 @@
 {
-  "version": "10.0",
-  "description": "OpenCut architecture workflows — ALL critical gaps closed: single-pass transcription (no double inference), character-length weighted word timings, AI context with WordTranscript, SRT→WordTranscript conversion, edit suggestion execution path, MediaTime conversion.",
+  "version": "11.0",
+  "description": "OpenCut architecture workflows — v11: added CLIP visual scene classification, local background removal (RMBG-1.4), and local TTS/voice cloning (OuteTTS) specs.",
   "nodes": {
     "user": {
       "id": "user",
@@ -689,6 +689,86 @@
       "package": "@opencut/web-vite",
       "icon": "🔝",
       "description": "Top bar with project dropdown, bundle export/import buttons, feedback, export, theme toggle"
+    },
+    "clip-worker": {
+      "id": "clip-worker",
+      "label": "CLIP Worker",
+      "type": "runtime",
+      "package": "@opencut/web-vite",
+      "icon": "👷",
+      "description": "Dedicated Web Worker for CLIP vision-language model inference (Xenova/clip-vit-base-patch32). WebGPU-first, WASM fallback."
+    },
+    "clip-model-store": {
+      "id": "clip-model-store",
+      "label": "CLIP Model Store",
+      "type": "state",
+      "package": "@opencut/web-vite",
+      "icon": "📦",
+      "description": "Zustand store for CLIP model lifecycle (idle → downloading → ready → error). Exposes embedImage(), embedTexts(), classifyFrame() as Promise-based methods."
+    },
+    "scene-detect-panel": {
+      "id": "scene-detect-panel",
+      "label": "SceneDetectPanel",
+      "type": "component",
+      "package": "@opencut/web-vite",
+      "icon": "🔍",
+      "description": "React panel for scene detection with optional CLIP visual classification toggle. Decodes afterThumbnail data URLs to ImageData for CLIP inference."
+    },
+    "broll-analyzer": {
+      "id": "broll-analyzer",
+      "label": "BrollAnalyzer",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "🎬",
+      "description": "Transcript-based B-roll suggestion engine. Extended with scoreFrameRelevance() and enrichWithVisualConfidence() for CLIP-powered visual scoring."
+    },
+    "bg-removal-worker": {
+      "id": "bg-removal-worker",
+      "label": "BG Removal Worker",
+      "type": "runtime",
+      "package": "@opencut/web-vite",
+      "icon": "👷",
+      "description": "Web Worker running briaai/RMBG-1.4 via @huggingface/transformers. WebGPU-first, WASM fallback. Exponential-backoff retry on download failures."
+    },
+    "bg-removal-service": {
+      "id": "bg-removal-service",
+      "label": "BackgroundRemovalService",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "🖼️",
+      "description": "Main-thread singleton. Decodes files, downscales to ≤1024×1024, sends to worker, upscales alphaMask, composites RGBA, encodes PNG. Also handles frame batches with abort support."
+    },
+    "bg-removal-store": {
+      "id": "bg-removal-store",
+      "label": "BG Removal Store",
+      "type": "state",
+      "package": "@opencut/web-vite",
+      "icon": "📦",
+      "description": "Zustand store for background removal model lifecycle (idle → downloading → ready → error). Mirrors ai-model-store.ts pattern."
+    },
+    "tts-worker": {
+      "id": "tts-worker",
+      "label": "TTS Worker",
+      "type": "runtime",
+      "package": "@opencut/web-vite",
+      "icon": "👷",
+      "description": "Web Worker for OuteTTS on-device speech synthesis (onnx-community/OuteTTS-0.2-500M or OuteAI/Llama-OuteTTS-1.0-1B-ONNX). WebGPU-first, WASM fallback. Handles synthesize and encode_speaker messages."
+    },
+    "tts-model-store": {
+      "id": "tts-model-store",
+      "label": "TTS Model Store",
+      "type": "state",
+      "package": "@opencut/web-vite",
+      "icon": "📦",
+      "description": "Zustand store for TTS model lifecycle. Tracks stage, progress, ETA, device, selectedModel, downloadSizeBytes. Follows transcription-model-store.ts pattern."
+    },
+    "tts-idb": {
+      "id": "tts-idb",
+      "label": "TTS IndexedDB",
+      "type": "service",
+      "package": "@opencut/web-vite",
+      "icon": "🗄️",
+      "description": "IndexedDB helpers for ClonedVoice persistence. DB: opencut-tts. Stores: cloned-voices + speaker-descriptors. Atomic transactions for save/delete."
     }
   },
   "flows": [
@@ -3153,6 +3233,368 @@
           "to": "text-edit-engine",
           "action": "computeDiff() with wordSegments",
           "data": "GAP: Inaccurate timings cause misaligned cuts when deleting text"
+        }
+      ]
+    },
+    {
+      "id": "clip-visual-scene-classification",
+      "label": "CLIP Visual Scene Classification",
+      "category": "ai",
+      "description": "User loads the CLIP model and enables visual classification in SceneDetectPanel. After scene detection, each afterThumbnail is decoded to ImageData and classified via CLIP embeddings.",
+      "steps": [
+        {
+          "from": "user",
+          "to": "scene-detect-panel",
+          "action": "Click 'Load CLIP Model (~150 MB)'",
+          "data": "Load signal — model never auto-loads on mount"
+        },
+        {
+          "from": "scene-detect-panel",
+          "to": "clip-model-store",
+          "action": "loadModel()",
+          "data": "Sets stage = 'downloading', progress = 0"
+        },
+        {
+          "from": "clip-model-store",
+          "to": "clip-worker",
+          "action": "Post { type: 'load' }",
+          "data": "Worker created from clip-worker.ts (module type)"
+        },
+        {
+          "from": "clip-worker",
+          "to": "clip-worker",
+          "action": "Try device: 'webgpu', fallback to 'wasm'",
+          "data": "CLIPModel + CLIPProcessor from Xenova/clip-vit-base-patch32"
+        },
+        {
+          "from": "clip-worker",
+          "to": "clip-model-store",
+          "action": "Post { type: 'progress', progress: N }",
+          "data": "Per-file byte-weighted progress → UI progress bar"
+        },
+        {
+          "from": "clip-worker",
+          "to": "clip-model-store",
+          "action": "Post { type: 'ready' }",
+          "data": "stage = 'ready', progress = 100"
+        },
+        {
+          "from": "user",
+          "to": "scene-detect-panel",
+          "action": "Enable 'Visual Classification (CLIP)' toggle",
+          "data": "Toggle enabled only when clipStage === 'ready'"
+        },
+        {
+          "from": "user",
+          "to": "scene-detect-panel",
+          "action": "Click 'Detect Scenes'",
+          "data": "{ videoFile, intervalSec, threshold }"
+        },
+        {
+          "from": "scene-detect-panel",
+          "to": "scene-detector",
+          "action": "detectScenes(file, options)",
+          "data": "Returns SceneChange[] with afterThumbnail data URLs"
+        },
+        {
+          "from": "scene-detect-panel",
+          "to": "scene-detect-panel",
+          "action": "decodeDataUrl(afterThumbnail) for each scene",
+          "data": "Image + canvas → ImageData (runs on main thread)"
+        },
+        {
+          "from": "scene-detect-panel",
+          "to": "scene-detector",
+          "action": "new SceneClassifier().classifyWithVision(scenes, frames)",
+          "data": "Map<'scene-N', ImageData> passed alongside SceneChange[]"
+        },
+        {
+          "from": "scene-detector",
+          "to": "clip-model-store",
+          "action": "classifyFrame(imageData) per scene",
+          "data": "Promise.all([embedImage, embedTexts(LABEL_PROMPTS)])"
+        },
+        {
+          "from": "clip-model-store",
+          "to": "clip-worker",
+          "action": "Post { type: 'embedImage', id, imageData }",
+          "data": "UUID-keyed pending promise registered in module-level Map"
+        },
+        {
+          "from": "clip-worker",
+          "to": "clip-model-store",
+          "action": "Post { type: 'embedImageResult', id, embedding }",
+          "data": "number[512] L2-normalised image embedding"
+        },
+        {
+          "from": "clip-model-store",
+          "to": "clip-model-store",
+          "action": "cosineSimilarity + softmax + argmax",
+          "data": "9 LABEL_PROMPTS scores → { category: SceneCategory, confidence: number }"
+        },
+        {
+          "from": "scene-detect-panel",
+          "to": "scene-detect-panel",
+          "action": "Render per-scene category label + ★ highlight badge",
+          "data": "classifiedScenes[index].category + isHighlight"
+        }
+      ]
+    },
+    {
+      "id": "local-background-removal",
+      "label": "Local Background Removal (RMBG-1.4)",
+      "category": "ai",
+      "description": "User opens BackgroundRemovalDialog. Model loads on mount via initWorker(). User clicks 'Remove Background' — image is decoded, downscaled, sent to worker, alphaMask returned, composited, and encoded as transparent PNG.",
+      "steps": [
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Open BackgroundRemovalDialog",
+          "data": "imageFile: File"
+        },
+        {
+          "from": "react-ui",
+          "to": "bg-removal-store",
+          "action": "initWorker() on mount (if stage === 'idle')",
+          "data": "Creates Worker from worker.ts, posts { type: 'load' }"
+        },
+        {
+          "from": "bg-removal-store",
+          "to": "bg-removal-worker",
+          "action": "Post { type: 'load' }",
+          "data": "Worker starts model download"
+        },
+        {
+          "from": "bg-removal-worker",
+          "to": "bg-removal-worker",
+          "action": "Try device: 'webgpu', fallback to 'wasm'",
+          "data": "AutoModel + AutoProcessor from briaai/RMBG-1.4"
+        },
+        {
+          "from": "bg-removal-worker",
+          "to": "bg-removal-store",
+          "action": "Post { type: 'device-selected', device }",
+          "data": "'webgpu' or 'wasm'"
+        },
+        {
+          "from": "bg-removal-worker",
+          "to": "bg-removal-store",
+          "action": "Post { type: 'load-progress', progress: N }",
+          "data": "Byte-weighted aggregate across all model shards → progress bar"
+        },
+        {
+          "from": "bg-removal-worker",
+          "to": "bg-removal-store",
+          "action": "Post { type: 'ready' }",
+          "data": "stage = 'ready', progress = 100"
+        },
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Click 'Remove Background'",
+          "data": "imageFile: File"
+        },
+        {
+          "from": "react-ui",
+          "to": "bg-removal-service",
+          "action": "removeBackground(imageFile)",
+          "data": "File | ImageData"
+        },
+        {
+          "from": "bg-removal-service",
+          "to": "bg-removal-service",
+          "action": "decodeFile() → resizeImageData(1024)",
+          "data": "OffscreenCanvas decode + downscale preserving aspect ratio"
+        },
+        {
+          "from": "bg-removal-service",
+          "to": "bg-removal-worker",
+          "action": "Post { type: 'remove-background', id, imageData }",
+          "data": "nanoid request ID registered in pendingRequests Map"
+        },
+        {
+          "from": "bg-removal-worker",
+          "to": "bg-removal-worker",
+          "action": "RawImage → processor → model → output[0].data",
+          "data": "RMBG-1.4 inference → Float32Array alphaMask [H×W]"
+        },
+        {
+          "from": "bg-removal-worker",
+          "to": "bg-removal-service",
+          "action": "Post { type: 'result', id, alphaMask, width, height }",
+          "data": "Float32Array transferred back to main thread"
+        },
+        {
+          "from": "bg-removal-service",
+          "to": "bg-removal-service",
+          "action": "upscaleAlphaMask() → applyAlphaMask() → encodeAsPng()",
+          "data": "Nearest-neighbour upscale → RGB preserved, alpha = round(mask*255) → PNG Blob"
+        },
+        {
+          "from": "bg-removal-service",
+          "to": "react-ui",
+          "action": "Return Blob (image/png)",
+          "data": "Transparent-background PNG shown in before/after slider"
+        }
+      ]
+    },
+    {
+      "id": "local-tts-voice-cloning",
+      "label": "Local TTS & Voice Cloning (OuteTTS)",
+      "category": "ai",
+      "description": "User selects a TTS model, loads it, generates voiceover from text, and optionally clones a voice from reference audio. All inference runs on-device via OuteTTS Web Worker.",
+      "steps": [
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Select model (Small ~335 MB / Large ~630 MB), click 'Load'",
+          "data": "TTSModelId: 'oute-tts-small' | 'oute-tts-large'"
+        },
+        {
+          "from": "react-ui",
+          "to": "tts-model-store",
+          "action": "selectModel(id) then initWorker()",
+          "data": "Updates selectedModel + downloadSizeBytes, creates Worker"
+        },
+        {
+          "from": "tts-model-store",
+          "to": "tts-worker",
+          "action": "Post { type: 'check' }",
+          "data": "Worker probes navigator.gpu.requestAdapter()"
+        },
+        {
+          "from": "tts-worker",
+          "to": "tts-model-store",
+          "action": "Post { type: 'check', webgpuSupported }",
+          "data": "Store sets device = 'webgpu' | 'wasm'"
+        },
+        {
+          "from": "tts-model-store",
+          "to": "tts-worker",
+          "action": "Post { type: 'load', modelId, dtype }",
+          "data": "HuggingFace model ID + dtype (q4f16)"
+        },
+        {
+          "from": "tts-worker",
+          "to": "tts-worker",
+          "action": "InterfaceHF.from_pretrained() with progress_callback",
+          "data": "Exponential-backoff retry (MAX_RETRIES=5, BASE_DELAY=2000ms)"
+        },
+        {
+          "from": "tts-worker",
+          "to": "tts-model-store",
+          "action": "Post { type: 'load_progress', progress: N }",
+          "data": "Integer 0–100 → UI progress bar + ETA"
+        },
+        {
+          "from": "tts-worker",
+          "to": "tts-model-store",
+          "action": "Post { type: 'load_complete', device }",
+          "data": "stage = 'ready', isReady = true"
+        },
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Enter text, select voice, click Generate",
+          "data": "{ text, voiceId, speed, pitch, volume }"
+        },
+        {
+          "from": "react-ui",
+          "to": "voiceover-service",
+          "action": "generateVoiceover(request)",
+          "data": "Validates text (non-empty), voiceId (known), clamps speed/pitch to [0.5, 2.0]"
+        },
+        {
+          "from": "voiceover-service",
+          "to": "tts-worker",
+          "action": "Post { type: 'synthesize', requestId, text, speakerDescriptor, speed, pitch }",
+          "data": "UUID requestId registered in pendingSynthesize Map"
+        },
+        {
+          "from": "tts-worker",
+          "to": "tts-worker",
+          "action": "tts_interface.generate() → OfflineAudioContext speed/pitch",
+          "data": "playbackRate = speed, detune = 1200*log2(pitch/speed) cents"
+        },
+        {
+          "from": "tts-worker",
+          "to": "voiceover-service",
+          "action": "Post { type: 'synthesize_complete', requestId, audioData, sampleRate, tokenTimestamps }",
+          "data": "Float32Array audio + character-weighted word timings"
+        },
+        {
+          "from": "voiceover-service",
+          "to": "react-ui",
+          "action": "Return VoiceoverResult",
+          "data": "{ audioBuffer, duration, wordTimings }"
+        },
+        {
+          "from": "react-ui",
+          "to": "timeline-manager",
+          "action": "InsertElementCommand (audio)",
+          "data": "Voiceover added as audio track element"
+        }
+      ]
+    },
+    {
+      "id": "tts-voice-cloning",
+      "label": "TTS Voice Cloning",
+      "category": "ai",
+      "description": "User provides reference audio (5–30 s) to clone a voice. OuteTTS encodes it into a SpeakerDescriptor persisted in IndexedDB. The cloned voice can then be used for synthesis.",
+      "steps": [
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Upload reference audio (5–30 s), enter voice name",
+          "data": "AudioBuffer + name string"
+        },
+        {
+          "from": "react-ui",
+          "to": "voiceover-service",
+          "action": "cloneVoice(name, audioBuffer)",
+          "data": "Validates duration ≥ 5 s; trims to 30 s if longer"
+        },
+        {
+          "from": "voiceover-service",
+          "to": "tts-worker",
+          "action": "Post { type: 'encode_speaker', requestId, audioData, sampleRate }",
+          "data": "Float32Array audio data transferred to worker"
+        },
+        {
+          "from": "tts-worker",
+          "to": "tts-worker",
+          "action": "tts_interface.create_speaker(audioBuffer)",
+          "data": "OuteTTS encodes reference audio → SpeakerDescriptor (JSON-serializable)"
+        },
+        {
+          "from": "tts-worker",
+          "to": "voiceover-service",
+          "action": "Post { type: 'encode_speaker_complete', requestId, descriptor }",
+          "data": "SpeakerDescriptor object"
+        },
+        {
+          "from": "voiceover-service",
+          "to": "tts-idb",
+          "action": "saveClonedVoice(voice, descriptor)",
+          "data": "Atomic transaction: cloned-voices + speaker-descriptors stores"
+        },
+        {
+          "from": "tts-idb",
+          "to": "indexeddb",
+          "action": "Write to opencut-tts DB",
+          "data": "ClonedVoice profile + SpeakerDescriptor persisted"
+        },
+        {
+          "from": "voiceover-service",
+          "to": "react-ui",
+          "action": "Return ClonedVoice profile",
+          "data": "{ id, name, isCloned: true, createdAt, descriptorId }"
+        },
+        {
+          "from": "react-ui",
+          "to": "react-ui",
+          "action": "ClonedVoice appears in voice selector",
+          "data": "getAllVoices() now includes the new cloned voice"
         }
       ]
     }

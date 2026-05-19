@@ -9,11 +9,38 @@ import type { Bookmark } from "@/timeline";
 import { getFrameTime } from "@/timeline/bookmarks/index";
 import { roundMediaTime } from "@/wasm";
 import { cn } from "@/utils/ui";
+import { useClipModelStore } from "@/ai/clip-store";
+import { SceneClassifier, type ClassifiedScene } from "@/ai/scene-classifier";
+
+// ─── Helper: decode a data URL into an ImageData ─────────────────────────────
+
+async function decodeDataUrl(dataUrl: string): Promise<ImageData> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0);
+      resolve(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    };
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+}
 
 export function SceneDetectPanel() {
   const editor = useEditor();
   const mediaAssets = useEditor((e) => e.media.getAssets());
 
+  // ── CLIP store subscriptions ──────────────────────────────────────────────
+  const clipStage = useClipModelStore((s) => s.stage);
+  const clipProgress = useClipModelStore((s) => s.progress);
+  const clipError = useClipModelStore((s) => s.error);
+  const loadModel = useClipModelStore((s) => s.loadModel);
+
+  // ── Local state ───────────────────────────────────────────────────────────
   const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
   const [intervalSec, setIntervalSec] = useState(1);
   const [threshold, setThreshold] = useState(0.5);
@@ -21,6 +48,12 @@ export function SceneDetectPanel() {
   const [progress, setProgress] = useState(0);
   const [scenes, setScenes] = useState<SceneChange[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  // ── CLIP local state ──────────────────────────────────────────────────────
+  const [visionEnabled, setVisionEnabled] = useState(false);
+  const [classifiedScenes, setClassifiedScenes] = useState<ClassifiedScene[] | null>(null);
+  const [isClassifying, setIsClassifying] = useState(false);
+  const [classifyError, setClassifyError] = useState<string | null>(null);
 
   const videoAssets = mediaAssets.filter((a) => a.type === "video");
   const selectedAsset = videoAssets.find((a) => a.id === selectedMediaId);
@@ -40,6 +73,26 @@ export function SceneDetectPanel() {
         onProgress: (p) => setProgress(p),
       });
       setScenes(results);
+
+      // ── Post-detection CLIP classification ──────────────────────────────
+      if (visionEnabled && clipStage === "ready" && results.length > 0) {
+        setIsClassifying(true);
+        setClassifyError(null);
+        try {
+          const frames = new Map<string, ImageData>();
+          for (let i = 0; i < results.length; i++) {
+            const thumb = results[i].afterThumbnail;
+            if (thumb) frames.set(`scene-${i}`, await decodeDataUrl(thumb));
+          }
+          const classifier = new SceneClassifier();
+          const classified = await classifier.classifyWithVision(results, frames);
+          setClassifiedScenes(classified);
+        } catch (err) {
+          setClassifyError(err instanceof Error ? err.message : "Classification failed");
+        } finally {
+          setIsClassifying(false);
+        }
+      }
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
         setError("Detection cancelled");
@@ -49,7 +102,7 @@ export function SceneDetectPanel() {
     } finally {
       setIsDetecting(false);
     }
-  }, [selectedAsset, intervalSec, threshold]);
+  }, [selectedAsset, intervalSec, threshold, visionEnabled, clipStage]);
 
   const handleAddMarkers = useCallback(() => {
     if (scenes.length === 0) return;
@@ -152,15 +205,70 @@ export function SceneDetectPanel() {
           type="button"
           className={cn(
             "w-full py-2 px-3 text-xs font-medium rounded transition-colors",
-            !selectedAsset || isDetecting
+            !selectedAsset || isDetecting || isClassifying
               ? "bg-muted text-muted-foreground cursor-not-allowed"
               : "bg-primary text-primary-foreground hover:bg-primary/90",
           )}
           onClick={handleDetect}
-          disabled={!selectedAsset || isDetecting}
+          disabled={!selectedAsset || isDetecting || isClassifying}
         >
-          {isDetecting ? "Detecting..." : "Detect Scenes"}
+          {isDetecting ? "Detecting..." : isClassifying ? "Classifying..." : "Detect Scenes"}
         </button>
+
+        {/* ── CLIP model section ─────────────────────────────────────────── */}
+        <div className="space-y-2 border rounded p-2">
+          <p className="text-xs font-medium">Visual Classification (CLIP)</p>
+
+          {clipStage === "idle" && (
+            <button
+              type="button"
+              className="w-full py-1.5 px-3 text-xs font-medium rounded transition-colors bg-muted text-muted-foreground hover:bg-muted/80"
+              onClick={() => loadModel()}
+            >
+              Load CLIP Model (~150 MB)
+            </button>
+          )}
+
+          {(clipStage === "downloading" || clipStage === "loading") && (
+            <div className="space-y-1">
+              <div className="h-1 bg-muted rounded overflow-hidden">
+                <div
+                  className="h-full bg-primary transition-all duration-300"
+                  style={{ width: `${clipProgress}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground text-center">
+                {Math.round(clipProgress)}%
+              </p>
+            </div>
+          )}
+
+          {clipStage === "error" && (
+            <div className="space-y-1">
+              <p className="text-xs text-destructive bg-destructive/10 p-2 rounded">
+                {clipError}
+              </p>
+              <button
+                type="button"
+                className="w-full py-1.5 px-3 text-xs font-medium rounded transition-colors bg-muted text-muted-foreground hover:bg-muted/80"
+                onClick={() => loadModel()}
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          <label className="flex items-center gap-2 text-xs cursor-pointer">
+            <input
+              type="checkbox"
+              checked={visionEnabled}
+              onChange={(e) => setVisionEnabled(e.target.checked)}
+              disabled={clipStage !== "ready"}
+              className="rounded"
+            />
+            Visual Classification (CLIP)
+          </label>
+        </div>
 
         {isDetecting && (
           <div className="space-y-1">
@@ -179,6 +287,12 @@ export function SceneDetectPanel() {
         {error && (
           <p className="text-xs text-destructive bg-destructive/10 p-2 rounded">
             {error}
+          </p>
+        )}
+
+        {classifyError && (
+          <p className="text-xs text-destructive bg-destructive/10 p-2 rounded">
+            Classification error: {classifyError}
           </p>
         )}
 
@@ -224,6 +338,18 @@ export function SceneDetectPanel() {
                     <p className="text-[10px] text-muted-foreground">
                       {scene.type} · χ² = {scene.chiSquaredDistance.toFixed(2)}
                     </p>
+                    {classifiedScenes?.[index] && (
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className="text-[10px] text-primary">
+                          {classifiedScenes[index].category}
+                        </span>
+                        {classifiedScenes[index].isHighlight && (
+                          <span className="text-[10px] bg-yellow-500/20 text-yellow-600 px-1 rounded">
+                            ★ highlight
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

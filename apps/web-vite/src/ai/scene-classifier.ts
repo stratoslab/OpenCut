@@ -1,5 +1,6 @@
 import type { SceneChange } from "@/video/scene-detector";
 import type { WordTranscript } from "@/transcription/types";
+import { useClipModelStore } from "@/ai/clip-store";
 
 export interface ClassifiedScene {
 	id: string;
@@ -217,5 +218,73 @@ export class SceneClassifier {
 		if (category !== "unknown") confidence += 0.15;
 
 		return Math.min(confidence, 1.0);
+	}
+
+	/**
+	 * Classifies scenes using CLIP visual embeddings when available,
+	 * falling back to keyword-based classification for scenes without frames
+	 * or when CLIP is not ready.
+	 */
+	async classifyWithVision(
+		scenes: SceneChange[],
+		frames: Map<string, ImageData>,
+		transcript?: WordTranscript,
+		videoDuration?: number,
+	): Promise<ClassifiedScene[]> {
+		const store = useClipModelStore.getState();
+
+		// Fall back to keyword classification if CLIP not ready
+		if (store.stage !== "ready") {
+			return this.classify(scenes, transcript, videoDuration);
+		}
+
+		if (scenes.length === 0) return [];
+
+		const classified: ClassifiedScene[] = [];
+		const words = transcript?.words ?? [];
+
+		for (let i = 0; i < scenes.length; i++) {
+			const scene = scenes[i];
+			const nextScene = scenes[i + 1];
+			const startTime = scene.timestamp;
+			const endTime = nextScene?.timestamp ?? (videoDuration ?? startTime + 5);
+			const snippet = this.getTranscriptSnippet(words, startTime, endTime);
+			const sceneId = `scene-${i}`;
+
+			let category: SceneCategory;
+			let confidence: number;
+
+			const frame = frames.get(sceneId);
+			if (frame) {
+				try {
+					const result = await store.classifyFrame(frame);
+					category = result.category;
+					confidence = result.confidence;
+				} catch {
+					// CLIP failed for this frame — fall back to keyword
+					category = this.categorizeScene(scene, snippet, i, scenes.length, videoDuration);
+					confidence = this.computeConfidence(scene, snippet, category);
+				}
+			} else {
+				category = this.categorizeScene(scene, snippet, i, scenes.length, videoDuration);
+				confidence = this.computeConfidence(scene, snippet, category);
+			}
+
+			const { isHighlight, reason } = this.isHighlightCandidate(scene, snippet, category);
+
+			classified.push({
+				id: sceneId,
+				startTime,
+				endTime,
+				type: scene.type,
+				category,
+				confidence,
+				transcriptSnippet: snippet,
+				isHighlight,
+				highlightReason: reason,
+			});
+		}
+
+		return classified;
 	}
 }

@@ -13,6 +13,14 @@ import { EffectsView } from "@/effects/components/assets-view";
 import { TransitionsView } from "@/transitions/components/assets-view";
 import { SceneDetectPanel } from "@/scene-detection/components/SceneDetectPanel";
 import { AiAgentPanel } from "@/ai/components/AiAgentPanel";
+import { Layers3DView } from "./views/layers-3d";
+import { KeyframesView } from "./views/keyframes";
+import { AudioView } from "./views/audio";
+import { TextAnimationsView } from "./views/text-animations";
+import { ProxyView } from "./views/proxy";
+import { ProjectBundleView } from "./views/project-bundle";
+import { HistoryView } from "./views/history";
+import { MultiOutputView } from "./views/multi-output";
 
 export function AssetsPanel() {
 	const { activeTab } = useAssetsPanelStore();
@@ -32,6 +40,14 @@ export function AssetsPanel() {
 				Adjustment view coming soon...
 			</div>
 		),
+		"3d": <Layers3DView />,
+		keyframes: <KeyframesView />,
+		audio: <AudioView />,
+		"text-animations": <TextAnimationsView />,
+		proxy: <ProxyView />,
+		"project-bundle": <ProjectBundleView />,
+		history: <HistoryView />,
+		"multi-output": <MultiOutputView />,
 		settings: <SettingsView />,
 	};
 

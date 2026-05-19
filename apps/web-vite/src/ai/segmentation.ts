@@ -1,3 +1,5 @@
+import { backgroundRemovalService } from "@/background-removal/service";
+
 export interface SegmentationMask {
 	id: string;
 	width: number;
@@ -21,39 +23,45 @@ export interface SegmentationOptions {
 	signal?: AbortSignal;
 }
 
-const DEFAULT_OPTIONS: SegmentationOptions = {
-	numObjects: 3,
-	minObjectSize: 100,
-	threshold: 0.5,
-};
-
 export class SegmentationService {
 	async segmentFrame(
 		imageData: ImageData,
 		options: SegmentationOptions = {},
 	): Promise<SegmentationResult> {
-		const opts = { ...DEFAULT_OPTIONS, ...options };
 		const start = performance.now();
 
-		const { width, height, data } = imageData;
-		const masks: SegmentationMask[] = [];
+		// Delegate to BackgroundRemovalService
+		const blob = await backgroundRemovalService.removeBackground(imageData);
 
-		const colorClusters = this.kMeansColorClustering(data, width, height, opts.numObjects);
+		// Decode the returned PNG Blob back to ImageData
+		const bitmap = await createImageBitmap(blob);
+		const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+		const ctx = canvas.getContext("2d")!;
+		ctx.drawImage(bitmap, 0, 0);
+		const imgData = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
+		bitmap.close();
 
-		for (let i = 0; i < colorClusters.length; i++) {
-			if (opts.signal?.aborted) break;
-
-			const mask = this.createMaskFromCluster(colorClusters[i], width, height, opts);
-			if (mask && mask.confidence >= opts.threshold) {
-				masks.push(mask);
-			}
+		// Extract alpha channel as Uint8Array mask
+		const maskData = new Uint8Array(imgData.width * imgData.height);
+		for (let i = 0; i < maskData.length; i++) {
+			maskData[i] = imgData.data[i * 4 + 3]; // alpha channel
 		}
+
+		const mask: SegmentationMask = {
+			id: `mask-foreground-${crypto.randomUUID().slice(0, 8)}`,
+			width: imgData.width,
+			height: imgData.height,
+			data: maskData,
+			objectId: "foreground",
+			confidence: 1.0,
+			timestamp: performance.now(),
+		};
 
 		const processingTime = performance.now() - start;
 
 		return {
-			masks,
-			objectLabels: masks.map((_, i) => `Object ${i + 1}`),
+			masks: [mask],
+			objectLabels: ["foreground"],
 			processingTime,
 		};
 	}
@@ -65,6 +73,10 @@ export class SegmentationService {
 		onProgress?: (progress: number) => void,
 	): Promise<Map<number, SegmentationResult>> {
 		const results = new Map<number, SegmentationResult>();
+
+		if (times.length === 0) return results;
+
+		// Extract frames at each timestamp using canvas
 		const canvas = document.createElement("canvas");
 		const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
@@ -75,6 +87,8 @@ export class SegmentationService {
 		canvas.width = video.videoWidth;
 		canvas.height = video.videoHeight;
 
+		const frames: ImageData[] = [];
+
 		for (let i = 0; i < times.length; i++) {
 			if (options.signal?.aborted) break;
 
@@ -84,16 +98,47 @@ export class SegmentationService {
 			});
 
 			ctx.drawImage(video, 0, 0);
-			const frameData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+			frames.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+		}
 
-			const result = await this.segmentFrame(frameData, options);
-			results.set(i, result);
+		// Process all collected frames via BackgroundRemovalService
+		const blobs = await backgroundRemovalService.removeBackgroundFromFrames(frames, {
+			signal: options.signal,
+			onProgress,
+		});
 
-			onProgress?.(((i + 1) / times.length) * 100);
+		// Map each Blob result to a SegmentationResult
+		for (let i = 0; i < blobs.length; i++) {
+			const blob = blobs[i];
+			const start = performance.now();
 
-			if (i % 5 === 0) {
-				await new Promise((r) => setTimeout(r, 0));
+			const bitmap = await createImageBitmap(blob);
+			const offscreen = new OffscreenCanvas(bitmap.width, bitmap.height);
+			const offCtx = offscreen.getContext("2d")!;
+			offCtx.drawImage(bitmap, 0, 0);
+			const imgData = offCtx.getImageData(0, 0, bitmap.width, bitmap.height);
+			bitmap.close();
+
+			const maskData = new Uint8Array(imgData.width * imgData.height);
+			for (let j = 0; j < maskData.length; j++) {
+				maskData[j] = imgData.data[j * 4 + 3];
 			}
+
+			const mask: SegmentationMask = {
+				id: `mask-foreground-${crypto.randomUUID().slice(0, 8)}`,
+				width: imgData.width,
+				height: imgData.height,
+				data: maskData,
+				objectId: "foreground",
+				confidence: 1.0,
+				timestamp: performance.now(),
+			};
+
+			results.set(i, {
+				masks: [mask],
+				objectLabels: ["foreground"],
+				processingTime: performance.now() - start,
+			});
 		}
 
 		return results;
@@ -120,114 +165,6 @@ export class SegmentationService {
 		if (!ctx) return "";
 		ctx.putImageData(imageData, 0, 0);
 		return canvas.toDataURL("image/png");
-	}
-
-	private kMeansColorClustering(
-		data: Uint8ClampedArray,
-		width: number,
-		height: number,
-		k: number,
-		maxIterations = 10,
-	): Array<{ clusterId: number; pixels: number[]; center: number[] }> {
-		const pixelCount = width * height;
-		const assignments = new Int32Array(pixelCount);
-		const centers: number[][] = [];
-
-		for (let i = 0; i < k; i++) {
-			const idx = Math.floor(Math.random() * pixelCount) * 4;
-			centers.push([data[idx], data[idx + 1], data[idx + 2]]);
-		}
-
-		for (let iter = 0; iter < maxIterations; iter++) {
-			let changed = false;
-
-			for (let p = 0; p < pixelCount; p++) {
-				const idx = p * 4;
-				const r = data[idx], g = data[idx + 1], b = data[idx + 2];
-
-				let minDist = Infinity;
-				let closestCluster = 0;
-
-				for (let c = 0; c < k; c++) {
-					const dr = r - centers[c][0];
-					const dg = g - centers[c][1];
-					const db = b - centers[c][2];
-					const dist = dr * dr + dg * dg + db * db;
-
-					if (dist < minDist) {
-						minDist = dist;
-						closestCluster = c;
-					}
-				}
-
-				if (assignments[p] !== closestCluster) {
-					assignments[p] = closestCluster;
-					changed = true;
-				}
-			}
-
-			if (!changed) break;
-
-			const sums = Array.from({ length: k }, () => [0, 0, 0, 0]);
-			for (let p = 0; p < pixelCount; p++) {
-				const idx = p * 4;
-				const c = assignments[p];
-				sums[c][0] += data[idx];
-				sums[c][1] += data[idx + 1];
-				sums[c][2] += data[idx + 2];
-				sums[c][3] += 1;
-			}
-
-			for (let c = 0; c < k; c++) {
-				if (sums[c][3] > 0) {
-					centers[c] = [
-						sums[c][0] / sums[c][3],
-						sums[c][1] / sums[c][3],
-						sums[c][2] / sums[c][3],
-					];
-				}
-			}
-		}
-
-		const clusters = Array.from({ length: k }, (_, i) => ({
-			clusterId: i,
-			pixels: [] as number[],
-			center: centers[i],
-		}));
-
-		for (let p = 0; p < pixelCount; p++) {
-			clusters[assignments[p]].pixels.push(p);
-		}
-
-		return clusters;
-	}
-
-	private createMaskFromCluster(
-		cluster: { clusterId: number; pixels: number[]; center: number[] },
-		width: number,
-		height: number,
-		options: Required<SegmentationOptions>,
-	): SegmentationMask | null {
-		if (cluster.pixels.length < options.minObjectSize) {
-			return null;
-		}
-
-		const maskData = new Uint8Array(width * height);
-		for (const p of cluster.pixels) {
-			maskData[p] = 255;
-		}
-
-		const confidence = cluster.pixels.length / (width * height);
-
-		return {
-			id: `mask-${cluster.clusterId}-${crypto.randomUUID().slice(0, 8)}`,
-			width,
-			height,
-			data: maskData,
-			objectId: `object-${cluster.clusterId}`,
-			confidence,
-			timestamp: performance.now(),
-		};
 	}
 }
 
