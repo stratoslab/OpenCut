@@ -8,6 +8,13 @@ use wasm_bindgen::JsCast;
 
 use crate::{FULLSCREEN_SHADER_SOURCE, GpuError};
 
+/// Information about a device loss event, passed to the device lost callback.
+#[derive(Debug, Clone)]
+pub struct DeviceLostInfo {
+    pub reason: String,
+    pub message: String,
+}
+
 #[cfg(all(feature = "wasm", target_arch = "wasm32"))]
 #[derive(Debug)]
 struct WebDisplay;
@@ -186,6 +193,17 @@ impl GpuContext {
         })
     }
 
+    /// Sets a callback to be invoked when the GPU device is lost.
+    pub fn set_device_lost_callback(&self, callback: Box<dyn Fn(DeviceLostInfo) + Send + 'static>) {
+        let device = self.device.clone();
+        device.set_device_lost_callback(move |reason, message| {
+            callback(DeviceLostInfo {
+                reason: format!("{:?}", reason),
+                message,
+            });
+        });
+    }
+
     #[cfg(all(feature = "wasm", target_arch = "wasm32"))]
     async fn acquire_device() -> Result<
         (
@@ -298,6 +316,16 @@ impl GpuContext {
         height: u32,
         label: &'static str,
     ) -> wgpu::Texture {
+        self.create_render_texture_with_format(width, height, self.texture_format, label)
+    }
+
+    pub fn create_render_texture_with_format(
+        &self,
+        width: u32,
+        height: u32,
+        format: wgpu::TextureFormat,
+        label: &'static str,
+    ) -> wgpu::Texture {
         self.device.create_texture(&wgpu::TextureDescriptor {
             label: Some(label),
             size: wgpu::Extent3d {
@@ -308,7 +336,7 @@ impl GpuContext {
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
-            format: self.texture_format,
+            format,
             usage: wgpu::TextureUsages::TEXTURE_BINDING
                 | wgpu::TextureUsages::COPY_DST
                 | wgpu::TextureUsages::COPY_SRC

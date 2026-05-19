@@ -1,12 +1,16 @@
+mod backpressure;
 mod context;
 
 use thiserror::Error;
 
+pub use backpressure::GpuBackpressure;
+pub use context::DeviceLostInfo;
 pub use context::GpuContext;
 pub use wgpu;
 
 pub const GPU_TEXTURE_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Bgra8Unorm;
 pub const FULLSCREEN_SHADER_SOURCE: &str = include_str!("shaders/fullscreen.wgsl");
+pub const COMMON_WGSL: &str = include_str!("shaders/common.wgsl");
 
 #[derive(Debug, Error)]
 pub enum GpuError {

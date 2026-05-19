@@ -1,13 +1,15 @@
 #![cfg(target_arch = "wasm32")]
 
 use std::cell::RefCell;
+use std::sync::{Arc, Mutex};
 
 use effects::EffectPipeline;
-use gpu::{GpuContext, wgpu};
+use gpu::{DeviceLostInfo, GpuContext, wgpu};
 use js_sys::{Object, Reflect};
 use masks::MaskFeatherPipeline;
 use serde::Deserialize;
 use wasm_bindgen::{JsCast, JsValue, prelude::wasm_bindgen};
+use wasm_bindgen_futures::spawn_local;
 
 pub(crate) struct GpuRuntime {
     pub(crate) context: GpuContext,
@@ -48,6 +50,19 @@ pub async fn initialize_gpu() -> Result<(), JsValue> {
     let context = GpuContext::new()
         .await
         .map_err(|error| JsValue::from_str(&error.to_string()))?;
+
+    let device_lost_state = Arc::new(Mutex::new(None::<DeviceLostInfo>));
+    let state_for_callback = device_lost_state.clone();
+
+    context.set_device_lost_callback(Box::new(move |info| {
+        if let Ok(mut state) = state_for_callback.lock() {
+            *state = Some(info);
+        }
+        spawn_local(async move {
+            handle_device_lost(device_lost_state.clone()).await;
+        });
+    }));
+
     let effects = EffectPipeline::new(&context);
     let masks = MaskFeatherPipeline::new(&context);
 
@@ -60,6 +75,99 @@ pub async fn initialize_gpu() -> Result<(), JsValue> {
     });
 
     Ok(())
+}
+
+async fn handle_device_lost(device_lost_state: Arc<Mutex<Option<DeviceLostInfo>>>) {
+    let info = device_lost_state.lock().unwrap().take();
+    if let Some(info) = info {
+        let window = web_sys::window().unwrap();
+        let _ = Reflect::set(
+            &window,
+            &JsValue::from_str("__gpuDeviceLostReason"),
+            &JsValue::from_str(&info.reason),
+        );
+        let _ = Reflect::set(
+            &window,
+            &JsValue::from_str("__gpuDeviceLostMessage"),
+            &JsValue::from_str(&info.message),
+        );
+    }
+
+    recover_gpu().await;
+}
+
+async fn recover_gpu() {
+    for attempt in 0..3 {
+        GPU_RUNTIME.with(|runtime| {
+            runtime.borrow_mut().take();
+        });
+
+        match GpuContext::new().await {
+            Ok(context) => {
+                let device_lost_state = Arc::new(Mutex::new(None::<DeviceLostInfo>));
+                let state_for_callback = device_lost_state.clone();
+
+                context.set_device_lost_callback(Box::new(move |info| {
+                    if let Ok(mut state) = state_for_callback.lock() {
+                        *state = Some(info);
+                    }
+                    spawn_local(async move {
+                        handle_device_lost(device_lost_state.clone()).await;
+                    });
+                }));
+
+                let effects = EffectPipeline::new(&context);
+                let masks = MaskFeatherPipeline::new(&context);
+
+                GPU_RUNTIME.with(|runtime| {
+                    runtime.replace(Some(GpuRuntime {
+                        context,
+                        effects,
+                        masks,
+                    }));
+                });
+
+                let window = web_sys::window().unwrap();
+                let _ = Reflect::set(
+                    &window,
+                    &JsValue::from_str("__gpuDeviceRecovered"),
+                    &JsValue::from_bool(true),
+                );
+                return;
+            }
+            Err(_) => {
+                if attempt < 2 {
+                    delay_ms(100).await;
+                }
+            }
+        }
+    }
+
+    let window = web_sys::window().unwrap();
+    let _ = Reflect::set(
+        &window,
+        &JsValue::from_str("__gpuDeviceLostError"),
+        &JsValue::from_str("GPU device recovery failed after 3 attempts. Please reload the page."),
+    );
+}
+
+fn delay_ms(ms: u32) -> impl std::future::Future<Output = ()> {
+    let promise = js_sys::Promise::new(&mut |resolve, _| {
+        let resolve = Closure::once(move || {
+            resolve.call0(&JsValue::UNDEFINED).unwrap();
+        });
+        let _ = set_timeout(&resolve, ms);
+        resolve.forget();
+    });
+    wasm_bindgen_futures::JsFuture::from(promise).then(|_| async {})
+}
+
+use wasm_bindgen::closure::Closure;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = setTimeout, catch)]
+    fn set_timeout(closure: &Closure<dyn FnMut()>, ms: u32) -> Result<i32, JsValue>;
 }
 
 pub(crate) fn with_gpu_runtime<T>(

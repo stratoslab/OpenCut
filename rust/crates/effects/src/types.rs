@@ -9,5 +9,6 @@ pub struct EffectPass {
 #[derive(Clone, Debug)]
 pub enum UniformValue {
     Number(f32),
+    Int(i32),
     Vector(Vec<f32>),
 }
