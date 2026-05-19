@@ -46,6 +46,10 @@ export function Header() {
 			label: "Blog",
 			href: "/blog",
 		},
+		{
+			label: "Architecture",
+			href: "/architecture",
+		},
 	];
 
 	return (
