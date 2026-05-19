@@ -5,7 +5,7 @@ export function App() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.center}>
-        <Text style={styles.title}>OpenCut</Text>
+        <Text style={styles.title}>StratosCut</Text>
         <Text style={styles.subtitle}>Local-first mobile video editor</Text>
         <Text style={styles.status}>WebGPU compositor via expo-gl</Text>
       </View>

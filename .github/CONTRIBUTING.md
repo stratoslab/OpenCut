@@ -1,4 +1,4 @@
-# Contributing to OpenCut
+# Contributing to StratosCut
 
 ⚠️ We are currently NOT accepting feature PRs while we build out the core editor.
 
@@ -10,7 +10,7 @@ If you want to contribute:
 
 Critical bug fixes may be accepted on a case-by-case basis.
 
-Thank you for your interest in contributing to OpenCut! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to StratosCut! This document provides guidelines and instructions for contributing.
 
 ## Getting Started
 

@@ -150,17 +150,6 @@ function ProjectDropdown() {
 						Shortcuts
 					</DropdownMenuItem>
 
-					<DropdownMenuSeparator />
-
-					<DropdownMenuItem asChild icon={<FaDiscord className="size-4!" />}>
-						<a
-							href={SOCIAL_LINKS.discord}
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							Discord
-						</a>
-					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
 			<RenameProjectDialog
@@ -287,7 +276,7 @@ function ProjectBundleButtons() {
 			const metadata: Partial<BundleMetadata> = {
 				name: exportName || activeProject.metadata.name,
 				description: exportDescription,
-				author: exportAuthor || "OpenCut User",
+				author: exportAuthor || "StratosCut User",
 			};
 
 			const projectData = {

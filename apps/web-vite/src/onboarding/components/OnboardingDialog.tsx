@@ -26,7 +26,7 @@ export function OnboardingDialog({ onComplete }: OnboardingDialogProps) {
 
 	const steps = [
 		{
-			title: "Welcome to OpenCut",
+			title: "Welcome to StratosCut",
 			description: "A fully client-side video editor powered by AI. Everything runs in your browser — no uploads, no servers.",
 			icon: "🎬",
 		},

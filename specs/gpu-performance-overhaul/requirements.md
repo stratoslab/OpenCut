@@ -2,7 +2,7 @@
 
 ## Introduction
 
-OpenCut's Rust/WASM GPU compositor is functional but has performance gaps compared to leading browser-based video editors (MasterSelects, Tooscut, KubeezCut). This overhaul targets 18 improvements across compositing, effects, transitions, scopes, export, and architecture to achieve professional-grade real-time editing performance.
+StratosCut's Rust/WASM GPU compositor is functional but has performance gaps compared to leading browser-based video editors (MasterSelects, Tooscut, KubeezCut). This overhaul targets 18 improvements across compositing, effects, transitions, scopes, export, and architecture to achieve professional-grade real-time editing performance.
 
 ## Glossary
 

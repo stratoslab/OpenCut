@@ -1,16 +1,16 @@
 <table width="100%">
   <tr>
     <td align="left" width="120">
-      <img src="apps/web-vite/public/logos/opencut/icon.svg" alt="OpenCut Logo" width="100" />
+      <img src="apps/web-vite/public/logos/opencut/icon.svg" alt="StratosCut Logo" width="100" />
     </td>
     <td align="right">
-      <h1>OpenCut</h1>
+      <h1>StratosCut</h1>
       <h3 style="margin-top: -10px;">A free, open-source video editor for web, desktop, and mobile.</h3>
     </td>
   </tr>
 </table>
 
-> **This is the StratosLab fork of OpenCut.** We're building the video editor that CapCut should have been — fully local, fully private, and packed with AI features that run entirely in your browser via WebGPU. No subscriptions. No uploads. No cloud.
+> **This is the StratosLab fork of StratosCut.** We're building the video editor that CapCut should have been — fully local, fully private, and packed with AI features that run entirely in your browser via WebGPU. No subscriptions. No uploads. No cloud.
 
 ## Sponsors
 
@@ -26,9 +26,9 @@ Thanks to [Vercel](https://vercel.com?utm_source=github-opencut&utm_campaign=oss
 
 ---
 
-## Why OpenCut beats CapCut
+## Why StratosCut beats CapCut
 
-| | CapCut | OpenCut |
+| | CapCut | StratosCut |
 |---|---|---|
 | **Price** | Free tier gutted, AI features paywalled | 100% free, forever |
 | **Privacy** | Videos uploaded to ByteDance servers | Everything stays on your device |
@@ -226,7 +226,7 @@ bun install && bun dev:web
 
 ## Why Vite instead of Next.js
 
-The original OpenCut used Next.js with PostgreSQL, BetterAuth, and Redis. For a video editor that is 95% client-side, that's the wrong foundation.
+The original StratosCut used Next.js with PostgreSQL, BetterAuth, and Redis. For a video editor that is 95% client-side, that's the wrong foundation.
 
 | | Next.js | Vite + React SPA |
 |---|---|---|

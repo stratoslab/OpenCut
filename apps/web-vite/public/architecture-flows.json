@@ -1,6 +1,6 @@
 {
   "version": "11.0",
-  "description": "OpenCut architecture workflows — v11: added CLIP visual scene classification, local background removal (RMBG-1.4), and local TTS/voice cloning (OuteTTS) specs.",
+  "description": "StratosCut architecture workflows — v11: added CLIP visual scene classification, local background removal (RMBG-1.4), and local TTS/voice cloning (OuteTTS) specs.",
   "nodes": {
     "user": {
       "id": "user",
@@ -2300,7 +2300,7 @@
           "from": "react-ui",
           "to": "plugin-system",
           "action": "loadPlugin(manifest, module)",
-          "data": "Validate manifest, check minOpenCutVersion"
+          "data": "Validate manifest, check minStratosCutVersion"
         },
         {
           "from": "plugin-system",

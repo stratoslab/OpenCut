@@ -1,8 +1,8 @@
-# OpenCut Migration: Next.js → Vite + React + Cloudflare Pages
+# StratosCut Migration: Next.js → Vite + React + Cloudflare Pages
 
 ## Executive Summary
 
-OpenCut is 95% client-side (editor, WASM, WebGPU, timeline, preview). The Next.js server bundle (11.5 MB) is the reason Cloudflare Workers deployment fails. Migrating to Vite SPA + tiny Cloudflare Workers for APIs solves the problem completely.
+StratosCut is 95% client-side (editor, WASM, WebGPU, timeline, preview). The Next.js server bundle (11.5 MB) is the reason Cloudflare Workers deployment fails. Migrating to Vite SPA + tiny Cloudflare Workers for APIs solves the problem completely.
 
 **Before:** Next.js monolith → 11.5 MB Worker → ❌ exceeds 3 MB free tier
 **After:** Vite SPA (static) + 3 tiny Workers (<100 KB each) → ✅ well within free tier

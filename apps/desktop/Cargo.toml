@@ -2,7 +2,7 @@
 name = "opencut-desktop"
 version = "0.2.0"
 edition = "2021"
-description = "OpenCut Desktop — native video editor with WebGPU compositor"
+description = "StratosCut Desktop — native video editor with WebGPU compositor"
 
 [[bin]]
 name = "opencut"

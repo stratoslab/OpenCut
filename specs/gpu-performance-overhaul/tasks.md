@@ -2,7 +2,7 @@
 
 ## Overview
 
-18 improvements across 4 phases to bring OpenCut's GPU compositor to professional-grade performance. Ordered by dependency: core infrastructure first, then shaders, then export/audio, then advanced features.
+18 improvements across 4 phases to bring StratosCut's GPU compositor to professional-grade performance. Ordered by dependency: core infrastructure first, then shaders, then export/audio, then advanced features.
 
 ## Task Dependency Graph
 

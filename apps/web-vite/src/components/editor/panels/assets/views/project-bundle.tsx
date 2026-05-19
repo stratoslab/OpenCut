@@ -50,7 +50,7 @@ export function ProjectBundleView() {
 			const metadata: Partial<BundleMetadata> = {
 				name: exportName || activeProject.metadata.name,
 				description: exportDescription,
-				author: exportAuthor || "OpenCut User",
+				author: exportAuthor || "StratosCut User",
 			};
 
 			const projectData = {

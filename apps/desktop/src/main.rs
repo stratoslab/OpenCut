@@ -263,7 +263,7 @@ impl MainWindow {
 impl MainWindow {
     fn new() -> Self {
         Self {
-            title: "OpenCut".into(),
+            title: "StratosCut".into(),
             active_tab: 0,
         }
     }
@@ -271,7 +271,7 @@ impl MainWindow {
 
 fn init_native_file_system(_cx: &mut App) -> PathBuf {
     let documents = dirs::document_dir().unwrap_or_else(|| PathBuf::from("."));
-    let opencut_dir = documents.join("OpenCut");
+    let opencut_dir = documents.join("StratosCut");
     std::fs::create_dir_all(&opencut_dir).ok();
     opencut_dir
 }
@@ -348,7 +348,7 @@ async fn backup_to_external_drive(
     projects: &[ProjectMetadata],
     drive_path: &str,
 ) -> Result<(), String> {
-    let backup_dir = PathBuf::from(drive_path).join("OpenCut-Backup");
+    let backup_dir = PathBuf::from(drive_path).join("StratosCut-Backup");
     std::fs::create_dir_all(&backup_dir).map_err(|e| e.to_string())?;
 
     for project in projects {

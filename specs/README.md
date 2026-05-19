@@ -1,4 +1,4 @@
-# OpenCut Specs
+# StratosCut Specs
 
 Structured spec documents for planned features. Each feature follows the spec-workflow: requirements → design → tasks, with user approval gates between each phase.
 

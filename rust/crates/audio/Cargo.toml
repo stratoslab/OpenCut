@@ -1,0 +1,15 @@
+[package]
+name = "audio"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["rlib"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+
+[dev-dependencies]
+rand = "0.8"
+proptest = "1.6"

@@ -66,9 +66,9 @@ export function Onboarding() {
 					<div className="space-y-5">
 						<div className="space-y-3">
 							<Title title={getStepTitle()} />
-							<Description
-								description={`Join our [Discord](${SOCIAL_LINKS.discord}), chat with cool people and share feedback to help make StratosCut the best editor ever.`}
-							/>
+						<Description
+							description="Follow us on [X](https://x.com/dhonampemba/status/2056035975755919662?s=20) for updates and share feedback to help make StratosCut the best editor ever."
+						/>
 						</div>
 						<NextButton onClick={handleClose}>Finish</NextButton>
 					</div>

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This overhaul restructures OpenCut's Rust/WASM GPU compositor to match the architecture of leading browser-based video editors. The core changes are: (1) ping-pong compositing replacing per-layer texture allocation, (2) bind group caching to avoid per-frame GPU object creation, (3) texture pool compaction for bounded memory, (4) expanded effect/transition registries, (5) compute shader scopes, (6) WebCodecs export pipeline, and (7) professional color grading with 3D transforms.
+This overhaul restructures StratosCut's Rust/WASM GPU compositor to match the architecture of leading browser-based video editors. The core changes are: (1) ping-pong compositing replacing per-layer texture allocation, (2) bind group caching to avoid per-frame GPU object creation, (3) texture pool compaction for bounded memory, (4) expanded effect/transition registries, (5) compute shader scopes, (6) WebCodecs export pipeline, and (7) professional color grading with 3D transforms.
 
 ## Architecture
 

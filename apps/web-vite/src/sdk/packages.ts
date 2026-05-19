@@ -1,5 +1,5 @@
 /**
- * OpenCut SDK Architecture — Package Extraction Plan
+ * StratosCut SDK Architecture — Package Extraction Plan
  *
  * Current: Monolithic `apps/web-vite/` with shared Rust crates
  * Target: 6 npm packages with clear boundaries

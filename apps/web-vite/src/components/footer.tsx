@@ -68,14 +68,6 @@ export function Footer() {
 							>
 								<RiTwitterXLine className="size-5" />
 							</a>
-							<a
-								href={SOCIAL_LINKS.discord}
-								className="text-muted-foreground hover:text-foreground transition-colors"
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								<RiDiscordFill className="size-5" />
-							</a>
 						</div>
 					</div>
 

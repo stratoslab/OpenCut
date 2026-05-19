@@ -1,6 +1,6 @@
-# OpenCut Improvement Plan — Inspired by the WebGPU AI Video Ecosystem
+# StratosCut Improvement Plan — Inspired by the WebGPU AI Video Ecosystem
 
-> **Context:** OpenCut is a browser-native, local-first video editor with a Rust/WASM GPU pipeline, WebGPU rendering, in-browser AI (Whisper + Gemma LLM), multi-track timeline, keyframes, masks, and a command pattern. Currently has 1 effect (blur), 16 blend modes, 8 mask types, and stubbed AI agent execution.
+> **Context:** StratosCut is a browser-native, local-first video editor with a Rust/WASM GPU pipeline, WebGPU rendering, in-browser AI (Whisper + Gemma LLM), multi-track timeline, keyframes, masks, and a command pattern. Currently has 1 effect (blur), 16 blend modes, 8 mask types, and stubbed AI agent execution.
 
 > **Date:** 2026-05-18
 > **Source Projects:** OpenReel Video, MasterSelects, KubeezCut, Twick, VideoAgent, Director, WebSR, Video-Use, AI Video Editor Pipeline
