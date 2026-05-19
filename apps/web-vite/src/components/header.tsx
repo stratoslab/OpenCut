@@ -31,12 +31,24 @@ export function Header() {
 
 	const links = [
 		{
+			label: "Roadmap",
+			href: "/roadmap",
+		},
+		{
 			label: "Contributors",
 			href: "/contributors",
 		},
 		{
+			label: "Sponsors",
+			href: "/sponsors",
+		},
+		{
 			label: "Blog",
 			href: "/blog",
+		},
+		{
+			label: "Architecture",
+			href: "/architecture",
 		},
 	];
 

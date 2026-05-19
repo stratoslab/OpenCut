@@ -17,8 +17,10 @@ type CategoryLinks = Record<Category, FooterLink[]>;
 
 const links: CategoryLinks = {
 	resources: [
+		{ label: "Roadmap", href: "/roadmap" },
 		{ label: "Changelog", href: "/changelog" },
 		{ label: "Blog", href: "/blog" },
+		{ label: "Architecture", href: "/architecture" },
 		{ label: "Privacy", href: "/privacy" },
 		{ label: "Terms of use", href: "/terms" },
 	],
