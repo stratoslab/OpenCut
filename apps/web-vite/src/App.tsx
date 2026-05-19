@@ -17,6 +17,7 @@ import BrandPage from "./pages/BrandPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import ArchitecturePage from "./pages/ArchitecturePage";
 
 export default function App() {
 	return (
@@ -40,8 +41,9 @@ export default function App() {
 					<Route path="/sponsors" element={<SponsorsPage />} />
 					<Route path="/brand" element={<BrandPage />} />
 					<Route path="/privacy" element={<PrivacyPage />} />
-					<Route path="/terms" element={<TermsPage />} />
-					<Route path="*" element={<NotFoundPage />} />
+				<Route path="/terms" element={<TermsPage />} />
+				<Route path="/architecture" element={<ArchitecturePage />} />
+				<Route path="*" element={<NotFoundPage />} />
 				</Routes>
 			</TooltipProvider>
 		</div>
