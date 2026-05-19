@@ -27,6 +27,8 @@ export default function FlowViewer({ data }: FlowViewerProps) {
   const [pan, setPan] = useState<PanOffset>({ x: 0, y: 0 });
   const [announcement, setAnnouncement] = useState<string>("");
   const [isDesktop, setIsDesktop] = useState<boolean>(false);
+  const [showSidebar, setShowSidebar] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
 
   // Inline useIsDesktop — 900px breakpoint (distinct from useIsMobile at 768px)
   useEffect(() => {
@@ -37,6 +39,14 @@ export default function FlowViewer({ data }: FlowViewerProps) {
     return () => mq.removeEventListener("change", handler);
   }, []);
 
+  // Close overlays when switching to desktop
+  useEffect(() => {
+    if (isDesktop) {
+      setShowSidebar(false);
+      setShowDetail(false);
+    }
+  }, [isDesktop]);
+
   // aria-live announcement whenever selected flow changes
   useEffect(() => {
     setAnnouncement(selectedFlow ? `Selected flow: ${selectedFlow.label}` : "");
@@ -44,7 +54,8 @@ export default function FlowViewer({ data }: FlowViewerProps) {
 
   const handleSelectFlow = useCallback((flow: Flow) => {
     setSelectedFlow(flow);
-  }, []);
+    if (!isDesktop) setShowSidebar(false);
+  }, [isDesktop]);
 
   const handleToggleCategory = useCallback((category: string) => {
     setCollapsedCategories((prev) => {
@@ -87,6 +98,31 @@ export default function FlowViewer({ data }: FlowViewerProps) {
         {announcement}
       </div>
 
+      {/* Mobile header */}
+      {!isDesktop && (
+        <div className="flex items-center gap-2 border-b border-neutral-800 px-3 py-2">
+          <button
+            onClick={() => setShowSidebar(true)}
+            className="flex items-center gap-1.5 rounded border border-neutral-700 bg-neutral-900 px-2.5 py-1.5 text-xs text-neutral-200 hover:bg-neutral-800"
+          >
+            <span>☰</span> Flows
+          </button>
+          {selectedFlow && (
+            <button
+              onClick={() => setShowDetail(true)}
+              className="flex-1 truncate rounded border border-neutral-700 bg-neutral-900 px-2.5 py-1.5 text-left text-xs text-neutral-200 hover:bg-neutral-800"
+            >
+              {selectedFlow.label}
+            </button>
+          )}
+          {!selectedFlow && (
+            <span className="flex-1 truncate text-xs text-neutral-500">
+              No flow selected
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="flex flex-1 overflow-hidden">
         {isDesktop && (
           <div className="w-[280px] flex-shrink-0">
@@ -120,6 +156,62 @@ export default function FlowViewer({ data }: FlowViewerProps) {
           </div>
         )}
       </div>
+
+      {/* Mobile sidebar overlay */}
+      {!isDesktop && showSidebar && (
+        <div className="fixed inset-0 z-50 flex">
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setShowSidebar(false)}
+          />
+          <div className="relative w-[280px] max-w-[85vw]">
+            <div className="flex items-center justify-between border-b border-neutral-800 px-3 py-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+                Flows
+              </h2>
+              <button
+                onClick={() => setShowSidebar(false)}
+                className="rounded p-1 text-neutral-400 hover:text-neutral-200"
+              >
+                ✕
+              </button>
+            </div>
+            <FlowSidebar
+              flows={data.flows}
+              selectedFlowId={selectedFlow?.id ?? null}
+              collapsedCategories={collapsedCategories}
+              onSelectFlow={handleSelectFlow}
+              onToggleCategory={handleToggleCategory}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Mobile detail overlay */}
+      {!isDesktop && showDetail && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setShowDetail(false)}
+          />
+          <div className="relative w-full max-w-[90vw] border-l border-neutral-800 bg-neutral-950">
+            <div className="flex items-center justify-between border-b border-neutral-800 px-3 py-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+                Flow Details
+              </h2>
+              <button
+                onClick={() => setShowDetail(false)}
+                className="rounded p-1 text-neutral-400 hover:text-neutral-200"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="h-[calc(100vh-64px-40px)] overflow-y-auto">
+              <FlowDetail flow={selectedFlow} version={data.version} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

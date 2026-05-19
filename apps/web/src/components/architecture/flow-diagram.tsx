@@ -149,6 +149,24 @@ export function FlowDiagram({
     });
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      isDragging.current = true;
+      dragStart.current = {
+        x: e.touches[0].clientX - pan.x,
+        y: e.touches[0].clientY - pan.y,
+      };
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging.current || e.touches.length !== 1) return;
+    onPanChange({
+      x: e.touches[0].clientX - dragStart.current.x,
+      y: e.touches[0].clientY - dragStart.current.y,
+    });
+  };
+
   const stopDragging = () => {
     isDragging.current = false;
   };
@@ -159,8 +177,11 @@ export function FlowDiagram({
       <div
         ref={containerRef}
         data-testid="diagram-canvas"
-        className="relative w-full h-full overflow-hidden"
+        className="relative w-full h-full overflow-hidden touch-none"
         style={{ cursor: "grab" }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={stopDragging}
       >
         <div className="flex items-center justify-center w-full h-full">
           <p className="text-neutral-400 text-sm">
@@ -192,12 +213,15 @@ export function FlowDiagram({
     <div
       ref={containerRef}
       data-testid="diagram-canvas"
-      className="relative w-full h-full overflow-hidden"
+      className="relative w-full h-full overflow-hidden touch-none"
       style={{ cursor: isDragging.current ? "grabbing" : "grab" }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={stopDragging}
       onMouseLeave={stopDragging}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={stopDragging}
     >
       {/* Inner canvas with pan/zoom transform */}
       <div
