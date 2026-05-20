@@ -23,6 +23,8 @@ bun.lockb
 
 target/
 
+rust/wasm/pkg/
+
 .cargo-tools/
 
 rust-migration-notes.md
