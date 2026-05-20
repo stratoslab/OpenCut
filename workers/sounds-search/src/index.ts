@@ -1,21 +1,51 @@
 export interface Env {
 	FREESOUND_CLIENT_ID: string;
 	FREESOUND_API_KEY: string;
+	ALLOWED_ORIGIN: string;
+}
+
+function getCorsHeaders(request: Request, allowedOrigin: string) {
+	const origin = request.headers.get("Origin");
+	if (origin === allowedOrigin || allowedOrigin === "*") {
+		return {
+			"Access-Control-Allow-Origin": origin || allowedOrigin,
+			"Access-Control-Allow-Methods": "GET, OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type",
+		};
+	}
+	return {};
 }
 
 export default {
-	async fetch(request: Request, _env: Env, _ctx: ExecutionContext) {
+	async fetch(request: Request, env: Env, _ctx: ExecutionContext) {
 		const url = new URL(request.url);
+
+		if (request.method === "OPTIONS") {
+			return new Response(null, {
+				headers: getCorsHeaders(request, env.ALLOWED_ORIGIN),
+			});
+		}
 
 		if (url.pathname !== "/api/sounds/search") {
 			return new Response("Not found", { status: 404 });
+		}
+
+		const corsHeaders = getCorsHeaders(request, env.ALLOWED_ORIGIN);
+		if (!corsHeaders["Access-Control-Allow-Origin"]) {
+			return new Response(
+				JSON.stringify({ error: "Origin not allowed" }),
+				{
+					status: 403,
+					headers: { "Content-Type": "application/json" },
+				},
+			);
 		}
 
 		const query = url.searchParams.get("query");
 		if (!query) {
 			return new Response(JSON.stringify({ error: "Missing query parameter" }), {
 				status: 400,
-				headers: { "Content-Type": "application/json" },
+				headers: { "Content-Type": "application/json", ...corsHeaders },
 			});
 		}
 
@@ -31,7 +61,7 @@ export default {
 			`https://freesound.org/apiv2/search/text/?${params.toString()}`,
 			{
 				headers: {
-					Authorization: `Token ${_env.FREESOUND_API_KEY}`,
+					Authorization: `Token ${env.FREESOUND_API_KEY}`,
 				},
 			},
 		);
@@ -41,7 +71,7 @@ export default {
 				JSON.stringify({ error: "Freesound API error", status: response.status }),
 				{
 					status: response.status,
-					headers: { "Content-Type": "application/json" },
+					headers: { "Content-Type": "application/json", ...corsHeaders },
 				},
 			);
 		}
@@ -50,7 +80,7 @@ export default {
 		return new Response(JSON.stringify(data), {
 			headers: {
 				"Content-Type": "application/json",
-				"Access-Control-Allow-Origin": "*",
+				...corsHeaders,
 			},
 		});
 	},

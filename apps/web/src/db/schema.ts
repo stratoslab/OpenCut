@@ -54,7 +54,7 @@ export const feedback = pgTable("feedback", {
 	createdAt: timestamp("created_at")
 		.$defaultFn(() => new Date())
 		.notNull(),
-});
+}).enableRLS();
 
 export const verifications = pgTable("verifications", {
 	id: text("id").primaryKey(),

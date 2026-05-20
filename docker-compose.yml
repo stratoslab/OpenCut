@@ -3,8 +3,9 @@ services:
     image: postgres:17
     restart: unless-stopped
     environment:
-      POSTGRES_USER: opencut
-      POSTGRES_PASSWORD: opencut
+      # SECURITY WARNING: Change these for production. Do NOT use defaults in production.
+      POSTGRES_USER: ${POSTGRES_USER:-opencut}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-opencut_dev_only}
       POSTGRES_DB: opencut
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -35,7 +36,7 @@ services:
       - "8079:80"
     environment:
       SRH_MODE: env
-      SRH_TOKEN: example_token
+      SRH_TOKEN: ${REDIS_TOKEN:-dev_token_do_not_use_in_production}
       SRH_CONNECTION_STRING: "redis://redis:6379"
     depends_on:
       redis:
@@ -61,10 +62,12 @@ services:
       - "3100:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://opencut:opencut@db:5432/opencut
-      - BETTER_AUTH_SECRET=your-production-secret-key-here
+      # SECURITY WARNING: Set DATABASE_URL via .env file. Default credentials are for dev only.
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-opencut}:${POSTGRES_PASSWORD:-opencut_dev_only}@db:5432/opencut
+      # SECURITY WARNING: Generate a strong secret: openssl rand -base64 32
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-CHANGE_ME_generate_with_openssl_rand_base64_32}
       - UPSTASH_REDIS_REST_URL=http://serverless-redis-http:80
-      - UPSTASH_REDIS_REST_TOKEN=example_token
+      - UPSTASH_REDIS_REST_TOKEN=${REDIS_TOKEN:-dev_token_do_not_use_in_production}
       - NEXT_PUBLIC_SITE_URL=http://localhost:3100
       - NEXT_PUBLIC_MARBLE_API_URL=https://api.marblecms.com
       - MARBLE_WORKSPACE_KEY=${MARBLE_WORKSPACE_KEY:-placeholder}
