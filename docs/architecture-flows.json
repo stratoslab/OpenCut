@@ -1,6 +1,6 @@
 {
-  "version": "11.0",
-  "description": "StratosCut architecture workflows — v11: added CLIP visual scene classification, local background removal (RMBG-1.4), and local TTS/voice cloning (OuteTTS) specs.",
+  "version": "12.0",
+  "description": "OpenCut architecture workflows — v12: comprehensive audit fixes — Next.js middleware route protection, export engine chunk accumulation, feedback table migration, RLS removed from all tables, rate limiting + prompt injection filtering on /api/gemma, CI lint/typecheck steps, CSP/HSTS security headers, health endpoint error suppression, orphaned media cleanup, audio event listener leak fixes, BETTER_AUTH_SECRET enforcement, unused deps removed.",
   "nodes": {
     "user": {
       "id": "user",
@@ -20,15 +20,15 @@
       "id": "react-ui",
       "label": "React UI",
       "type": "component",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "⚛️",
-      "description": "React components: panels, timeline, preview, editor (Vite SPA)"
+      "description": "React components: panels, timeline, preview, editor (Next.js app with SSR/SSG)"
     },
     "action-registry": {
       "id": "action-registry",
       "label": "Action Registry",
       "type": "component",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "⌨️",
       "description": "Keyboard shortcuts → action invocation (22+ actions)"
     },
@@ -36,7 +36,7 @@
       "id": "editor-core",
       "label": "EditorCore",
       "type": "singleton",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🎯",
       "description": "Central orchestrator — all managers instantiated here"
     },
@@ -44,7 +44,7 @@
       "id": "command-manager",
       "label": "CommandManager",
       "type": "manager",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "📋",
       "description": "Undo/redo history, command execution, ripple adjustments"
     },
@@ -52,7 +52,7 @@
       "id": "timeline-manager",
       "label": "TimelineManager",
       "type": "manager",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🎬",
       "description": "Track/element CRUD, keyframes, effects, masks, transitions"
     },
@@ -60,7 +60,7 @@
       "id": "playback-manager",
       "label": "PlaybackManager",
       "type": "manager",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "▶️",
       "description": "Play/pause/seek, rAF loop, time updates"
     },
@@ -68,7 +68,7 @@
       "id": "audio-manager",
       "label": "AudioManager",
       "type": "manager",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🔊",
       "description": "Web Audio API playback, clip scheduling, retime"
     },
@@ -76,7 +76,7 @@
       "id": "renderer-manager",
       "label": "RendererManager",
       "type": "manager",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🖼️",
       "description": "Canvas rendering, snapshots, export pipeline"
     },
@@ -84,7 +84,7 @@
       "id": "save-manager",
       "label": "SaveManager",
       "type": "manager",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "💾",
       "description": "Debounced auto-save (800ms)"
     },
@@ -92,7 +92,7 @@
       "id": "media-manager",
       "label": "MediaManager",
       "type": "manager",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "📁",
       "description": "Media asset add/remove, cache management"
     },
@@ -100,7 +100,7 @@
       "id": "scenes-manager",
       "label": "ScenesManager",
       "type": "manager",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🎞️",
       "description": "Scene CRUD, bookmarks, track updates, transcript storage"
     },
@@ -108,7 +108,7 @@
       "id": "selection-manager",
       "label": "SelectionManager",
       "type": "manager",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🖱️",
       "description": "Element/keyframe/mask-point selection state"
     },
@@ -116,7 +116,7 @@
       "id": "clipboard-manager",
       "label": "ClipboardManager",
       "type": "manager",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "📎",
       "description": "Copy/paste timeline elements"
     },
@@ -148,7 +148,7 @@
       "id": "transitions-pipeline",
       "label": "Transitions Pipeline",
       "type": "component",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🔄",
       "description": "GPU transitions (crossfade, slide, wipe, zoom, dissolve, push)"
     },
@@ -164,7 +164,7 @@
       "id": "frame-cache",
       "label": "Frame Cache",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🗃️",
       "description": "3-tier LRU frame cache with SHA-256 effects hash invalidation"
     },
@@ -172,23 +172,23 @@
       "id": "export-engine",
       "label": "Export Engine",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "📤",
-      "description": "Zero-copy export via transferToImageBitmap(), progress tracking, resume support"
+      "description": "Zero-copy export via transferToImageBitmap(), VideoEncoder chunk accumulation for progressive encoding, progress tracking, resume support"
     },
     "storage-service": {
       "id": "storage-service",
       "label": "StorageService",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🗄️",
-      "description": "IndexedDB (metadata) + OPFS (media binaries)"
+      "description": "IndexedDB (metadata, feedback table via CREATE migration) + OPFS (media binaries). clearAllData cleans orphaned media from OPFS."
     },
     "transcription-service": {
       "id": "transcription-service",
       "label": "TranscriptionService",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🎙️",
       "description": "Whisper ONNX transcription via Web Worker"
     },
@@ -196,7 +196,7 @@
       "id": "transcript-editor",
       "label": "TranscriptEditor",
       "type": "component",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "📝",
       "description": "Word-level transcript UI with timeline sync"
     },
@@ -204,7 +204,7 @@
       "id": "text-edit-engine",
       "label": "TextEditEngine",
       "type": "engine",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "✂️",
       "description": "Deterministic text → timestamp → timeline cuts"
     },
@@ -212,15 +212,15 @@
       "id": "gemma-chat",
       "label": "Gemma Chat",
       "type": "component",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🤖",
-      "description": "Local Gemma LLM conversational assistant (WebGPU)"
+      "description": "Local Gemma LLM conversational assistant (WebGPU). /api/gemma route protected with rate limiting and prompt injection filtering."
     },
     "scene-graph": {
       "id": "scene-graph",
       "label": "Scene Graph",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🌳",
       "description": "RootNode → VideoNode/TextNode/ImageNode tree"
     },
@@ -251,7 +251,7 @@
       "label": "GitHub Actions",
       "type": "deploy",
       "icon": "🔄",
-      "description": "CI: WASM build → Bun install → Vite build"
+      "description": "CI: WASM build → Bun install → lint → type-check → Next.js build (apps/web)"
     },
     "todesktop": {
       "id": "todesktop",
@@ -313,7 +313,7 @@
       "id": "ai-agent",
       "label": "AI Agent",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🤖",
       "description": "AI Co-Pilot — plan generation, validation, sequential step execution (19 action types mapped to CommandManager)"
     },
@@ -328,7 +328,7 @@
       "id": "ai-model-store",
       "label": "AI Model Store",
       "type": "state",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "📦",
       "description": "Zustand store for AI model lifecycle state (checking, downloading, ready, error)"
     },
@@ -336,7 +336,7 @@
       "id": "scene-detector",
       "label": "Scene Detector",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🔍",
       "description": "Histogram-based scene boundary detection with chi-squared distance"
     },
@@ -344,7 +344,7 @@
       "id": "frame-extractor",
       "label": "Frame Extractor",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🖼️",
       "description": "Shared video frame extraction service with pooled HTMLVideoElement"
     },
@@ -352,7 +352,7 @@
       "id": "histogram-calculator",
       "label": "Histogram Calculator",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "📊",
       "description": "24-bin RGB color histogram computation for scene analysis"
     },
@@ -360,7 +360,7 @@
       "id": "chapter-exporter",
       "label": "Chapter Exporter",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "📑",
       "description": "YouTube chapter formatting and description generation"
     },
@@ -368,7 +368,7 @@
       "id": "transcription-model-store",
       "label": "Transcription Model Store",
       "type": "state",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "📦",
       "description": "Zustand store for Whisper model lifecycle (idle, downloading, ready, error)"
     },
@@ -376,7 +376,7 @@
       "id": "command-palette",
       "label": "Command Palette",
       "type": "component",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🔎",
       "description": "Cmd+Shift+P fuzzy-searchable command palette"
     },
@@ -384,7 +384,7 @@
       "id": "smart-cut",
       "label": "Smart Cut",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "✂️",
       "description": "One-click filler word + silence removal with sensitivity control"
     },
@@ -392,7 +392,7 @@
       "id": "subtitle-style-editor",
       "label": "Subtitle Style Editor",
       "type": "component",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🎨",
       "description": "Live preview style editor with presets, custom controls, animations"
     },
@@ -400,7 +400,7 @@
       "id": "quick-actions-bar",
       "label": "Quick Actions Bar",
       "type": "component",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "⚡",
       "description": "Post-transcription floating bar: Smart Cut, filler removal, silence removal"
     },
@@ -408,7 +408,7 @@
       "id": "smart-suggestions",
       "label": "Smart Suggestions",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "💡",
       "description": "Floating AI suggestion cards with Apply/Dismiss"
     },
@@ -416,7 +416,7 @@
       "id": "version-control",
       "label": "Version Control",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🔀",
       "description": "Git-like version control: commits, branches, tags, diff view"
     },
@@ -424,7 +424,7 @@
       "id": "background-removal",
       "label": "Background Removal",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🖼️",
       "description": "Client-side WASM background removal via @imgly/background-removal"
     },
@@ -432,7 +432,7 @@
       "id": "broll-suggestions",
       "label": "B-Roll Suggestions",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🎬",
       "description": "Transcript-based B-roll suggestions with Pexels API"
     },
@@ -440,7 +440,7 @@
       "id": "onboarding-flow",
       "label": "Onboarding Flow",
       "type": "component",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "👋",
       "description": "3-step first-run dialog: welcome, AI model status, guided tour"
     },
@@ -448,7 +448,7 @@
       "id": "audio-analysis",
       "label": "Audio Analysis",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "📊",
       "description": "Beat detection (FFT), auto-ducking, LUFS loudness normalization"
     },
@@ -463,7 +463,7 @@
       "id": "plugin-system",
       "label": "Plugin System",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🧩",
       "description": "Third-party effects, transitions, export formats via plugin manifest API"
     },
@@ -471,7 +471,7 @@
       "id": "gpu-memory-pool",
       "label": "GPU Memory Pool",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🗃️",
       "description": "Reference-counted GPU texture/buffer pooling with LRU eviction"
     },
@@ -486,7 +486,7 @@
       "id": "template-manager",
       "label": "Template Manager",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "📋",
       "description": "Project templates (YouTube, TikTok, Podcast) with presets and import/export"
     },
@@ -494,7 +494,7 @@
       "id": "caption-style-manager",
       "label": "Caption Style Manager",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🎨",
       "description": "6 preset caption styles (Classic, Minimal, Karaoke, TikTok, Elegant, Bold News)"
     },
@@ -502,7 +502,7 @@
       "id": "voiceover-service",
       "label": "Voiceover Service",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🎙️",
       "description": "AI voiceover generation with 4 voice profiles and Web Speech API integration"
     },
@@ -510,7 +510,7 @@
       "id": "accessibility",
       "label": "Accessibility",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "♿",
       "description": "Keyboard shortcuts (20+), screen reader announcements, reduced motion/high contrast detection"
     },
@@ -518,7 +518,7 @@
       "id": "local-backup",
       "label": "Local Backup",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "💾",
       "description": "External drive + network share backup with rotation and auto-backup scheduling"
     },
@@ -542,15 +542,15 @@
       "id": "3d-layer-manager",
       "label": "3D Layer Manager",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🎲",
-      "description": "Three.js integration with glTF/OBJ import, per-layer 3D transforms, composite into 2D timeline"
+      "description": "Three.js integration with fixed GLTFLoader for glTF/OBJ import, per-layer 3D transforms, composite into 2D timeline"
     },
     "keyframe-manager": {
       "id": "keyframe-manager",
       "label": "Keyframe Manager",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "📈",
       "description": "13 easing modes, bezier curves, keyframe copy/paste, interpolation engine"
     },
@@ -558,7 +558,7 @@
       "id": "audio-engine",
       "label": "Audio Engine",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🎚️",
       "description": "10-band EQ, reverb, compressor, limiter, noise gate, beat detection, varispeed"
     },
@@ -566,7 +566,7 @@
       "id": "proxy-manager",
       "label": "Proxy Manager",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🖼️",
       "description": "GPU-accelerated proxy generation for 4K editing with cache and eviction"
     },
@@ -574,7 +574,7 @@
       "id": "text-animations",
       "label": "Text Animations",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "✨",
       "description": "20+ preset text animations (fade, slide, zoom, bounce, typewriter, glitch, neon, etc.)"
     },
@@ -582,7 +582,7 @@
       "id": "project-bundler",
       "label": "Project Bundler",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "📦",
       "description": "Export/import entire project as single .opencut file with media, checksums, validation"
     },
@@ -590,7 +590,7 @@
       "id": "command-history",
       "label": "Command History",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "📜",
       "description": "Serializable commands, history panel, selective undo, localStorage persistence"
     },
@@ -598,7 +598,7 @@
       "id": "multi-output",
       "label": "Multi-Output Router",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "📺",
       "description": "Route compositions to multiple outputs (preview, external monitor, streaming, recording)"
     },
@@ -614,7 +614,7 @@
       "id": "bundle-optimizer",
       "label": "Bundle Optimizer",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "⚡",
       "description": "Performance budgets, lazy loading, code splitting, Vite manual chunks"
     },
@@ -622,7 +622,7 @@
       "id": "layers-3d-panel",
       "label": "3D Layers Panel",
       "type": "component",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🎲",
       "description": "React UI panel for 3D layer management — import modal, layer list, transform controls, material editor, animation config"
     },
@@ -630,7 +630,7 @@
       "id": "keyframes-panel",
       "label": "Keyframes Panel",
       "type": "component",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "📈",
       "description": "React UI panel for keyframe management — channel list, 13 easing modes, curve preview, copy/paste/export/import"
     },
@@ -638,7 +638,7 @@
       "id": "audio-panel",
       "label": "Audio Panel",
       "type": "component",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🎚️",
       "description": "React UI panel with 4 tabs: 10-band EQ, effects (reverb/compressor/limiter/noise gate), BPM detection, varispeed"
     },
@@ -646,7 +646,7 @@
       "id": "text-animations-panel",
       "label": "Text Animations Panel",
       "type": "component",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "✨",
       "description": "React UI panel with 20+ presets filtered by category (entrance/exit/emphasis/special), duration/delay controls"
     },
@@ -654,7 +654,7 @@
       "id": "proxy-panel",
       "label": "Proxy Panel",
       "type": "component",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🖼️",
       "description": "React UI panel with 3 tabs: generation status/progress, config (resolution/quality/format/cache), cache management"
     },
@@ -662,7 +662,7 @@
       "id": "project-bundle-panel",
       "label": "Project Bundle Panel",
       "type": "component",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "📦",
       "description": "React UI panel for .opencut export/import — metadata form, drag-drop import, validation display, bundle info"
     },
@@ -670,7 +670,7 @@
       "id": "history-panel",
       "label": "History Panel",
       "type": "component",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "📜",
       "description": "React UI panel for command history — undo/redo buttons, filter (all/undoable/redone), jump to index, persistent storage"
     },
@@ -678,7 +678,7 @@
       "id": "multi-output-panel",
       "label": "Multi-Output Panel",
       "type": "component",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "📺",
       "description": "React UI panel for output routing — add/remove outputs, type/resolution config, enable/disable toggles, active selection"
     },
@@ -686,7 +686,7 @@
       "id": "editor-header",
       "label": "Editor Header",
       "type": "component",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🔝",
       "description": "Top bar with project dropdown, bundle export/import buttons, feedback, export, theme toggle"
     },
@@ -694,7 +694,7 @@
       "id": "clip-worker",
       "label": "CLIP Worker",
       "type": "runtime",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "👷",
       "description": "Dedicated Web Worker for CLIP vision-language model inference (Xenova/clip-vit-base-patch32). WebGPU-first, WASM fallback."
     },
@@ -702,7 +702,7 @@
       "id": "clip-model-store",
       "label": "CLIP Model Store",
       "type": "state",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "📦",
       "description": "Zustand store for CLIP model lifecycle (idle → downloading → ready → error). Exposes embedImage(), embedTexts(), classifyFrame() as Promise-based methods."
     },
@@ -710,7 +710,7 @@
       "id": "scene-detect-panel",
       "label": "SceneDetectPanel",
       "type": "component",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🔍",
       "description": "React panel for scene detection with optional CLIP visual classification toggle. Decodes afterThumbnail data URLs to ImageData for CLIP inference."
     },
@@ -718,7 +718,7 @@
       "id": "broll-analyzer",
       "label": "BrollAnalyzer",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🎬",
       "description": "Transcript-based B-roll suggestion engine. Extended with scoreFrameRelevance() and enrichWithVisualConfidence() for CLIP-powered visual scoring."
     },
@@ -726,7 +726,7 @@
       "id": "bg-removal-worker",
       "label": "BG Removal Worker",
       "type": "runtime",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "👷",
       "description": "Web Worker running briaai/RMBG-1.4 via @huggingface/transformers. WebGPU-first, WASM fallback. Exponential-backoff retry on download failures."
     },
@@ -734,7 +734,7 @@
       "id": "bg-removal-service",
       "label": "BackgroundRemovalService",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🖼️",
       "description": "Main-thread singleton. Decodes files, downscales to ≤1024×1024, sends to worker, upscales alphaMask, composites RGBA, encodes PNG. Also handles frame batches with abort support."
     },
@@ -742,7 +742,7 @@
       "id": "bg-removal-store",
       "label": "BG Removal Store",
       "type": "state",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "📦",
       "description": "Zustand store for background removal model lifecycle (idle → downloading → ready → error). Mirrors ai-model-store.ts pattern."
     },
@@ -750,7 +750,7 @@
       "id": "tts-worker",
       "label": "TTS Worker",
       "type": "runtime",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "👷",
       "description": "Web Worker for OuteTTS on-device speech synthesis (onnx-community/OuteTTS-0.2-500M or OuteAI/Llama-OuteTTS-1.0-1B-ONNX). WebGPU-first, WASM fallback. Handles synthesize and encode_speaker messages."
     },
@@ -758,7 +758,7 @@
       "id": "tts-model-store",
       "label": "TTS Model Store",
       "type": "state",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "📦",
       "description": "Zustand store for TTS model lifecycle. Tracks stage, progress, ETA, device, selectedModel, downloadSizeBytes. Follows transcription-model-store.ts pattern."
     },
@@ -766,9 +766,25 @@
       "id": "tts-idb",
       "label": "TTS IndexedDB",
       "type": "service",
-      "package": "@opencut/web-vite",
+      "package": "@opencut/web",
       "icon": "🗄️",
       "description": "IndexedDB helpers for ClonedVoice persistence. DB: opencut-tts. Stores: cloned-voices + speaker-descriptors. Atomic transactions for save/delete."
+    },
+    "nextjs-middleware": {
+      "id": "nextjs-middleware",
+      "label": "Next.js Middleware",
+      "type": "server",
+      "package": "@opencut/web",
+      "icon": "🔐",
+      "description": "Route protection middleware — intercepts requests to protected routes, validates session via Better Auth, redirects unauthenticated users to sign-in"
+    },
+    "security-headers": {
+      "id": "security-headers",
+      "label": "Security Headers",
+      "type": "server",
+      "package": "@opencut/web",
+      "icon": "🛡️",
+      "description": "CSP (Content-Security-Policy), HSTS (Strict-Transport-Security), X-Content-Type-Options, X-Frame-Options, Referrer-Policy applied via Next.js headers config"
     }
   },
   "flows": [
@@ -1116,7 +1132,7 @@
       "id": "user-chats-with-gemma",
       "label": "AI Chat — Ask Gemma",
       "category": "ai",
-      "description": "User asks Gemma LLM about video content or requests edit suggestions",
+      "description": "User asks Gemma LLM about video content or requests edit suggestions — /api/gemma protected with rate limiting and prompt injection filtering",
       "steps": [
         {
           "from": "user",
@@ -1133,8 +1149,26 @@
         {
           "from": "gemma-chat",
           "to": "browser",
-          "action": "Send to local Gemma model (WebGPU)",
+          "action": "POST /api/gemma with prompt",
           "data": "Prompt: system + transcript context + user query"
+        },
+        {
+          "from": "browser",
+          "to": "nextjs-middleware",
+          "action": "Route intercepted — rate limit check",
+          "data": "Token bucket: max 10 req/min per session IP"
+        },
+        {
+          "from": "nextjs-middleware",
+          "to": "nextjs-middleware",
+          "action": "Prompt injection filter",
+          "data": "Scan for system prompt override attempts, jailbreak patterns, malicious payloads"
+        },
+        {
+          "from": "nextjs-middleware",
+          "to": "browser",
+          "action": "Send to local Gemma model (WebGPU)",
+          "data": "Filtered prompt passed to model"
         },
         {
           "from": "browser",
@@ -1166,7 +1200,7 @@
       "id": "user-exports-video",
       "label": "Export Video",
       "category": "editing",
-      "description": "User exports the edited video as MP4/WebM",
+      "description": "User exports the edited video as MP4/WebM with VideoEncoder chunk accumulation",
       "steps": [
         {
           "from": "user",
@@ -1212,9 +1246,15 @@
         },
         {
           "from": "export-engine",
+          "to": "export-engine",
+          "action": "VideoEncoder.encode() — accumulate chunks",
+          "data": "Each frame encoded → VideoEncoder chunk accumulated in array for progressive output"
+        },
+        {
+          "from": "export-engine",
           "to": "media-recorder",
-          "action": "MediaRecorder.encode()",
-          "data": "VP9 (WebM) or H.264 (MP4) + Opus/AAC audio"
+          "action": "Assemble accumulated chunks into final blob",
+          "data": "VP9 (WebM) or H.264 (MP4) + Opus/AAC audio from accumulated encoder output"
         },
         {
           "from": "export-engine",
@@ -1334,7 +1374,7 @@
       "id": "ci-build",
       "label": "CI Build (GitHub Actions)",
       "category": "deployment",
-      "description": "Automated build on push/PR to main",
+      "description": "Automated build on push/PR to main with lint and type-check steps",
       "steps": [
         {
           "from": "user",
@@ -1369,8 +1409,20 @@
         {
           "from": "github-actions",
           "to": "github-actions",
-          "action": "cd apps/web-vite && bun run build",
-          "data": "Vite build → dist/ (static files)"
+          "action": "bun run lint",
+          "data": "ESLint check across apps/web"
+        },
+        {
+          "from": "github-actions",
+          "to": "github-actions",
+          "action": "bun run typecheck",
+          "data": "TypeScript type checking across apps/web"
+        },
+        {
+          "from": "github-actions",
+          "to": "github-actions",
+          "action": "cd apps/web && bun run build",
+          "data": "Next.js build → .next/ (SSR/SSG output)"
         },
         {
           "from": "github-actions",
@@ -1384,7 +1436,7 @@
       "id": "deploy-cloudflare",
       "label": "Deploy to Cloudflare Pages",
       "category": "deployment",
-      "description": "Deploy Vite SPA to Cloudflare Pages (static files)",
+      "description": "Deploy Next.js app to Cloudflare Pages (apps/web output)",
       "steps": [
         {
           "from": "user",
@@ -1395,20 +1447,158 @@
         {
           "from": "github-actions",
           "to": "github-actions",
-          "action": "Build WASM + Vite SPA",
-          "data": "Full build pipeline → apps/web-vite/dist/"
+          "action": "Build WASM + Next.js app",
+          "data": "Full build pipeline → apps/web/.next/"
         },
         {
           "from": "github-actions",
           "to": "cloudflare-pages",
-          "action": "Deploy static files",
-          "data": "dist/ → Cloudflare Pages CDN"
+          "action": "Deploy static + server output",
+          "data": ".next/ → Cloudflare Pages with SSR support"
         },
         {
           "from": "cloudflare-pages",
           "to": "cloudflare-pages",
           "action": "Serve via global CDN",
-          "data": "index.html + JS/CSS chunks + WASM binaries"
+          "data": "index.html + JS/CSS chunks + WASM binaries + server functions"
+        }
+      ]
+    },
+    {
+      "id": "user-authentication",
+      "label": "User Authentication",
+      "category": "auth",
+      "description": "Sign-in/sign-up flow protected by Next.js middleware — Better Auth session validation on protected routes",
+      "steps": [
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Navigate to protected route (e.g., /editor)",
+          "data": "URL request"
+        },
+        {
+          "from": "react-ui",
+          "to": "nextjs-middleware",
+          "action": "middleware() intercepts request",
+          "data": "Request headers, cookies, path"
+        },
+        {
+          "from": "nextjs-middleware",
+          "to": "nextjs-middleware",
+          "action": "getSession() — validate Better Auth token",
+          "data": "Cookie-based session token verification"
+        },
+        {
+          "from": "nextjs-middleware",
+          "to": "nextjs-middleware",
+          "action": "No valid session → redirect to /sign-in",
+          "data": "NextResponse.redirect('/sign-in')"
+        },
+        {
+          "from": "user",
+          "to": "react-ui",
+          "action": "Enter credentials on sign-in page",
+          "data": "Email + password or OAuth provider"
+        },
+        {
+          "from": "react-ui",
+          "to": "nextjs-middleware",
+          "action": "POST /api/auth/sign-in",
+          "data": "Credentials or OAuth callback"
+        },
+        {
+          "from": "nextjs-middleware",
+          "to": "nextjs-middleware",
+          "action": "Create session, set secure cookie",
+          "data": "HttpOnly, Secure, SameSite=Strict cookie with session token"
+        },
+        {
+          "from": "nextjs-middleware",
+          "to": "react-ui",
+          "action": "Redirect to originally requested route",
+          "data": "NextResponse.redirect(originalUrl)"
+        },
+        {
+          "from": "react-ui",
+          "to": "react-ui",
+          "action": "Protected route renders with authenticated session",
+          "data": "Editor UI loaded with user context"
+        }
+      ]
+    },
+    {
+      "id": "ci-lint-typecheck",
+      "label": "CI Lint & Type Check",
+      "category": "deployment",
+      "description": "CI pipeline lint and type-check steps — catches issues before build",
+      "steps": [
+        {
+          "from": "github-actions",
+          "to": "github-actions",
+          "action": "bun install (dependencies cached)",
+          "data": "Workspace deps resolved from cache"
+        },
+        {
+          "from": "github-actions",
+          "to": "github-actions",
+          "action": "bun run lint",
+          "data": "ESLint across apps/web — catches unused vars, import errors, React rules"
+        },
+        {
+          "from": "github-actions",
+          "to": "github-actions",
+          "action": "bun run typecheck",
+          "data": "tsc --noEmit across apps/web — catches type mismatches, missing properties"
+        },
+        {
+          "from": "github-actions",
+          "to": "github-actions",
+          "action": "Fail fast on lint or type errors",
+          "data": "CI fails before expensive WASM build + Next.js build"
+        },
+        {
+          "from": "github-actions",
+          "to": "github-actions",
+          "action": "Proceed to WASM build + Next.js build",
+          "data": "Only if lint + typecheck pass"
+        }
+      ]
+    },
+    {
+      "id": "security-headers",
+      "label": "Security Headers",
+      "category": "deployment",
+      "description": "CSP, HSTS, and other security headers applied via Next.js headers configuration",
+      "steps": [
+        {
+          "from": "react-ui",
+          "to": "security-headers",
+          "action": "Next.js request hits headers() config",
+          "data": "Incoming HTTP request"
+        },
+        {
+          "from": "security-headers",
+          "to": "security-headers",
+          "action": "Apply Content-Security-Policy",
+          "data": "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob:; connect-src 'self' blob:; worker-src 'self' blob:; frame-ancestors 'none'"
+        },
+        {
+          "from": "security-headers",
+          "to": "security-headers",
+          "action": "Apply Strict-Transport-Security",
+          "data": "max-age=31536000; includeSubDomains"
+        },
+        {
+          "from": "security-headers",
+          "to": "security-headers",
+          "action": "Apply X-Content-Type-Options, X-Frame-Options, Referrer-Policy",
+          "data": "nosniff, DENY, strict-origin-when-cross-origin"
+        },
+        {
+          "from": "security-headers",
+          "to": "react-ui",
+          "action": "Response with security headers applied",
+          "data": "All security headers present on every response"
         }
       ]
     },
