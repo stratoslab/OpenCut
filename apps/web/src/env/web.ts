@@ -17,7 +17,10 @@ const webEnvSchema = z.object({
 		"DATABASE_URL must be a postgres:// or postgresql:// URL",
 	).default("postgresql://opencut:opencut@localhost:5432/opencut"),
 
-	BETTER_AUTH_SECRET: z.string().default("dev-secret-change-me"),
+	BETTER_AUTH_SECRET: z.string({
+		required_error:
+			"BETTER_AUTH_SECRET must be set in production. Generate one with: openssl rand -base64 32",
+	}),
 	UPSTASH_REDIS_REST_URL: z.url().default("http://localhost:8079"),
 	UPSTASH_REDIS_REST_TOKEN: z.string().default("example_token"),
 	MARBLE_WORKSPACE_KEY: z.string().default("dev-key"),
