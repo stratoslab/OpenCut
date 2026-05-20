@@ -77,7 +77,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { uppercase } from "@/utils/string";
-import { useMemo, type ComponentProps, type ReactNode } from "react";
+import { useMemo, memo, type ComponentProps, type ReactNode } from "react";
 import type { SelectedKeyframeRef, ElementKeyframe } from "@/animation/types";
 import { cn } from "@/utils/ui";
 import { usePropertiesStore } from "@/components/editor/panels/properties/stores/properties-store";
@@ -218,6 +218,23 @@ interface TimelineElementProps {
 	dragView: ElementDragView;
 	isDropTarget?: boolean;
 }
+
+function areTimelineElementPropsEqual(
+	prev: TimelineElementProps,
+	next: TimelineElementProps,
+): boolean {
+	return (
+		prev.element.id === next.element.id &&
+		prev.element.type === next.element.type &&
+		prev.track.id === next.track.id &&
+		prev.zoomLevel === next.zoomLevel &&
+		prev.isSelected === next.isSelected &&
+		prev.isDropTarget === next.isDropTarget &&
+		prev.dragView === next.dragView
+	);
+}
+
+export const MemoizedTimelineElement = memo(TimelineElement, areTimelineElementPropsEqual);
 
 export function TimelineElement({
 	element,

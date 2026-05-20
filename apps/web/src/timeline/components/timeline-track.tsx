@@ -1,7 +1,7 @@
 "use client";
 
 import { useElementSelection } from "@/timeline/hooks/element/use-element-selection";
-import { TimelineElement } from "./timeline-element";
+import { MemoizedTimelineElement } from "./timeline-element";
 import type { TimelineTrack } from "@/timeline";
 import type { TimelineElement as TimelineElementType } from "@/timeline";
 import { TIMELINE_LAYERS } from "./layers";
@@ -87,7 +87,7 @@ export function TimelineTrackContent({
 						});
 
 						return (
-							<TimelineElement
+							<MemoizedTimelineElement
 								key={element.id}
 								element={element}
 								track={track}

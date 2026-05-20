@@ -75,6 +75,40 @@ jobs:
         working-directory: apps/web
         run: bun run build
 
+      - name: Check performance budget
+        working-directory: apps/web
+        run: |
+          echo "=== Performance Budget Check ==="
+          FAIL=0
+
+          # Check .next/static size (JS + CSS bundles)
+          if [ -d ".next/static" ]; then
+            STATIC_SIZE=$(du -sk .next/static | cut -f1)
+            echo "Static bundle: ${STATIC_SIZE}KB (budget: 1500KB)"
+            if [ "$STATIC_SIZE" -gt 1500 ]; then
+              echo "FAIL: Static bundle exceeds 1500KB budget"
+              FAIL=1
+            fi
+          fi
+
+          # Check standalone server size
+          if [ -d ".next/standalone" ]; then
+            STANDALONE_SIZE=$(du -sk .next/standalone | cut -f1)
+            echo "Standalone server: ${STANDALONE_SIZE}KB (budget: 5000KB)"
+            if [ "$STANDALONE_SIZE" -gt 5000 ]; then
+              echo "FAIL: Standalone server exceeds 5000KB budget"
+              FAIL=1
+            fi
+          fi
+
+          if [ "$FAIL" -eq 1 ]; then
+            echo ""
+            echo "Performance budget exceeded. To override, add a comment explaining why."
+            exit 1
+          fi
+
+          echo "All checks passed."
+
       - name: Run tests
         working-directory: apps/web
         run: echo "No tests implemented yet"
