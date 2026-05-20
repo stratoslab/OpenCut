@@ -15,7 +15,12 @@ export const baseRateLimit = new Ratelimit({
 });
 
 export async function checkRateLimit({ request }: { request: Request }) {
-	const ip = request.headers.get("x-forwarded-for") ?? "anonymous";
+	// When behind Cloudflare, cf-connecting-ip is the trusted source of truth.
+	// Fall back to x-forwarded-for only if cf-connecting-ip is absent.
+	const ip =
+		request.headers.get("cf-connecting-ip") ??
+		request.headers.get("x-forwarded-for") ??
+		"anonymous";
 	const { success } = await baseRateLimit.limit(ip);
 	return { success, limited: !success };
 }

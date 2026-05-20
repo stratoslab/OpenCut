@@ -31,7 +31,8 @@ export const auth = betterAuth({
 				return value as RateLimit | undefined;
 			},
 			set: async (key, value) => {
-				await redis.set(key, value);
+				// Expire after 24 hours to prevent unbounded memory growth
+				await redis.set(key, value, { ex: 86400 });
 			},
 		},
 	},

@@ -15,7 +15,7 @@ import rehypeSanitize from "rehype-sanitize";
 
 const url =
 	process.env.NEXT_PUBLIC_MARBLE_API_URL ?? "https://api.marblecms.com";
-const key = process.env.MARBLE_WORKSPACE_KEY ?? "cmd4iw9mm0006l804kwqv0k46";
+const key = process.env.MARBLE_WORKSPACE_KEY;
 
 const EMPTY_PAGINATION: Pagination = {
 	limit: 0,
