@@ -32,6 +32,7 @@ const webEnvSchema = z.object({
 	MARBLE_WORKSPACE_KEY: z.string().default("dev-key"),
 	FREESOUND_CLIENT_ID: z.string().default("dev-client-id"),
 	FREESOUND_API_KEY: z.string().default("dev-api-key"),
+	DATABUDDY_CLIENT_ID: z.string().default(""),
 });
 
 export type WebEnv = z.infer<typeof webEnvSchema>;

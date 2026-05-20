@@ -22,7 +22,8 @@ export abstract class Command {
 	abstract execute(): CommandResult | undefined;
 
 	undo(): void {
-		throw new Error("Undo not implemented for this command");
+		// Subclass should override. Graceful no-op instead of throwing
+		// to prevent undo stack crashes for commands without undo support.
 	}
 
 	redo(): CommandResult | undefined {

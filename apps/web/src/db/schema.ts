@@ -2,9 +2,6 @@ import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
 	id: text("id").primaryKey(),
-
-	// todo: implement fully anonymous sign-in for privacy
-	// we don't have any auth flows currently so this is fine for now
 	name: text("name").notNull(),
 	email: text("email").notNull().unique(),
 	emailVerified: boolean("email_verified").default(false).notNull(),
@@ -15,7 +12,7 @@ export const users = pgTable("users", {
 	updatedAt: timestamp("updated_at")
 		.$defaultFn(() => /* @__PURE__ */ new Date())
 		.notNull(),
-}).enableRLS();
+});
 
 export const sessions = pgTable("sessions", {
 	id: text("id").primaryKey(),
@@ -28,7 +25,7 @@ export const sessions = pgTable("sessions", {
 	userId: text("user_id")
 		.notNull()
 		.references(() => users.id, { onDelete: "cascade" }),
-}).enableRLS();
+});
 
 export const accounts = pgTable("accounts", {
 	id: text("id").primaryKey(),
@@ -46,7 +43,7 @@ export const accounts = pgTable("accounts", {
 	password: text("password"),
 	createdAt: timestamp("created_at").notNull(),
 	updatedAt: timestamp("updated_at").notNull(),
-}).enableRLS();
+});
 
 export const feedback = pgTable("feedback", {
 	id: text("id").primaryKey(),
@@ -54,7 +51,7 @@ export const feedback = pgTable("feedback", {
 	createdAt: timestamp("created_at")
 		.$defaultFn(() => new Date())
 		.notNull(),
-}).enableRLS();
+});
 
 export const verifications = pgTable("verifications", {
 	id: text("id").primaryKey(),
@@ -67,4 +64,4 @@ export const verifications = pgTable("verifications", {
 	updatedAt: timestamp("updated_at").$defaultFn(
 		() => /* @__PURE__ */ new Date(),
 	),
-}).enableRLS();
+});
