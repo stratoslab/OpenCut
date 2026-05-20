@@ -23,14 +23,14 @@ jobs:
 
     env:
       DATABASE_URL: "postgresql://opencut:opencut@localhost:5432/opencut"
-      BETTER_AUTH_SECRET: "supersecret"
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'ci-placeholder' }}
       NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
-      UPSTASH_REDIS_REST_URL: "https://your-upstash-redis-url"
-      UPSTASH_REDIS_REST_TOKEN: "your-upstash-redis-token"
+      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL || 'https://placeholder.example.com' }}
+      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN || 'placeholder' }}
       NEXT_PUBLIC_MARBLE_API_URL: "https://placeholder.example.com"
-      MARBLE_WORKSPACE_KEY: "placeholder"
-      FREESOUND_CLIENT_ID: "placeholder"
-      FREESOUND_API_KEY: "placeholder"
+      MARBLE_WORKSPACE_KEY: ${{ secrets.MARBLE_WORKSPACE_KEY || 'placeholder' }}
+      FREESOUND_CLIENT_ID: ${{ secrets.FREESOUND_CLIENT_ID || 'placeholder' }}
+      FREESOUND_API_KEY: ${{ secrets.FREESOUND_API_KEY || 'placeholder' }}
     
     steps:
       - name: Checkout repository
