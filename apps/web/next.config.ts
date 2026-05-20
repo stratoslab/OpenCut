@@ -53,6 +53,10 @@ const nextConfig: any = {
 				source: "/:path*",
 				headers: [
 					{
+						key: "Strict-Transport-Security",
+						value: "max-age=63072000; includeSubDomains; preload",
+					},
+					{
 						key: "X-Content-Type-Options",
 						value: "nosniff",
 					},
@@ -68,6 +72,21 @@ const nextConfig: any = {
 						key: "Permissions-Policy",
 						value:
 							"camera=(), microphone=(), geolocation=(), interest-cohort=()",
+					},
+					{
+						key: "Content-Security-Policy",
+						value: [
+							"default-src 'self'",
+							"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.databuddy.cc https://cdn.botid.cc",
+							"style-src 'self' 'unsafe-inline'",
+							"img-src 'self' data: blob: https://plus.unsplash.com https://images.unsplash.com https://images.marblecms.com https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://api.iconify.design https://api.simplesvg.com https://api.unisvg.com https://cdn.brandfetch.io",
+							"font-src 'self' data:",
+							"connect-src 'self' https://api.marblecms.com https://freesound.org https://cdn.databuddy.cc https://cdn.botid.cc",
+							"media-src 'self' blob: data:",
+							"frame-ancestors 'none'",
+							"base-uri 'self'",
+							"form-action 'self'",
+						].join("; "),
 					},
 				],
 			},

@@ -434,8 +434,19 @@ class StorageService {
 	}
 
 	async clearAllData(): Promise<void> {
+		const projectIds = await this.projectsAdapter.list();
+
+		for (const projectId of projectIds) {
+			const { mediaMetadataAdapter, mediaAssetsAdapter } =
+				this.getProjectMediaAdapters({ projectId });
+			await Promise.all([
+				mediaMetadataAdapter.clear(),
+				mediaAssetsAdapter.clear(),
+			]);
+		}
+
 		await this.projectsAdapter.clear();
-		// project-specific media and timelines cleaned up when projects are deleted
+		await this.savedSoundsAdapter.clear();
 	}
 
 	async getStorageInfo(): Promise<{

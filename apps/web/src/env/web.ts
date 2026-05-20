@@ -23,7 +23,10 @@ const webEnvSchema = z.object({
 	BETTER_AUTH_SECRET: z.string({
 		required_error:
 			"BETTER_AUTH_SECRET must be set in production. Generate one with: openssl rand -base64 32",
-	}),
+	}).refine(
+		(secret) => secret.length >= 32,
+		"BETTER_AUTH_SECRET must be at least 32 characters. Generate one with: openssl rand -base64 32",
+	),
 	UPSTASH_REDIS_REST_URL: z.url().default("http://localhost:8079"),
 	UPSTASH_REDIS_REST_TOKEN: z.string({
 		required_error:

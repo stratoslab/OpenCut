@@ -63,11 +63,13 @@ export class ExportEngine {
 
 		const startTime = performance.now();
 
+		// Accumulate encoded chunks
+		const encodedChunks: EncodedVideoChunk[] = [];
+
 		// Initialize VideoEncoder
 		const videoEncoder = new VideoEncoder({
 			output: (chunk, metadata) => {
-				// Handle encoded chunk
-				_ = chunk;
+				encodedChunks.push(chunk);
 				_ = metadata;
 			},
 			error: (e) => {
@@ -150,8 +152,12 @@ export class ExportEngine {
 		// Clear resume state
 		await this.resumeManager?.clearState();
 
+		// Assemble encoded chunks into a Blob
+		const mimeType = config.format === "webm" ? "video/webm" : "video/mp4";
+		const file = new Blob(encodedChunks, { type: mimeType });
+
 		return {
-			file: new Blob([], { type: config.format === "webm" ? "video/webm" : "video/mp4" }),
+			file,
 			duration,
 			totalFrames,
 		};

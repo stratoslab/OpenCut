@@ -42,7 +42,9 @@ export function TextAnimationsView() {
 			delay: customDelay,
 		};
 
-		console.log("Applying animation:", animation);
+		// TODO: Wire to editor text element system
+		// This requires integration with the timeline and text element rendering pipeline
+		console.log("Text animation apply (not yet integrated):", animation);
 	};
 
 	return (

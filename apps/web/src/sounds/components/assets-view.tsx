@@ -203,16 +203,18 @@ function SoundEffectsView() {
 			return;
 		}
 
-		audioElement?.pause();
+		if (audioElement) {
+			audioElement.pause();
+			audioElement.src = "";
+		}
 
 		if (sound.previewUrl) {
 			const audio = new Audio(sound.previewUrl);
-			audio.addEventListener("ended", () => {
-				setPlayingId(null);
-			});
-			audio.addEventListener("error", () => {
-				setPlayingId(null);
-			});
+			const handleEnded = () => setPlayingId(null);
+			const handleError = () => setPlayingId(null);
+
+			audio.addEventListener("ended", handleEnded);
+			audio.addEventListener("error", handleError);
 			audio.play().catch((error) => {
 				console.error("Failed to play sound preview:", error);
 				setPlayingId(null);
@@ -330,16 +332,18 @@ function SavedSoundsView() {
 			return;
 		}
 
-		audioElement?.pause();
+		if (audioElement) {
+			audioElement.pause();
+			audioElement.src = "";
+		}
 
 		if (sound.previewUrl) {
 			const audio = new Audio(sound.previewUrl);
-			audio.addEventListener("ended", () => {
-				setPlayingId(null);
-			});
-			audio.addEventListener("error", () => {
-				setPlayingId(null);
-			});
+			const handleEnded = () => setPlayingId(null);
+			const handleError = () => setPlayingId(null);
+
+			audio.addEventListener("ended", handleEnded);
+			audio.addEventListener("error", handleError);
 			audio.play().catch((error) => {
 				console.error("Failed to play sound preview:", error);
 				setPlayingId(null);

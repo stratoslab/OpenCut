@@ -111,6 +111,14 @@ export class ThreeLayerManager {
 		if (!scene) throw new Error(`Scene ${sceneId} not found`);
 
 		const THREE = (window as any).THREE;
+		if (!THREE?.GLTFLoader) {
+			throw new Error(
+				"3D model loading requires GLTFLoader addon. " +
+				"This feature is not yet fully integrated. " +
+				"Please install @three/addons and import GLTFLoader separately."
+			);
+		}
+
 		const loader = new THREE.GLTFLoader();
 
 		await new Promise<void>((resolve, reject) => {

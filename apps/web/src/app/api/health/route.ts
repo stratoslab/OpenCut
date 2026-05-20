@@ -2,19 +2,16 @@ import { NextResponse } from "next/server";
 import { webEnv } from "@/env/web";
 
 export async function GET() {
-	const checks: Record<string, { status: "ok" | "error"; message?: string }> =
-		{};
+	const checks: Record<string, { status: "ok" | "error" }> = {};
+	const isProd = webEnv.NODE_ENV === "production";
 
 	// Check database connectivity
 	try {
 		const { db } = await import("@/db");
 		await db.execute("SELECT 1");
 		checks.database = { status: "ok" };
-	} catch (error) {
-		checks.database = {
-			status: "error",
-			message: error instanceof Error ? error.message : "Unknown error",
-		};
+	} catch {
+		checks.database = { status: "error" };
 	}
 
 	// Check Redis connectivity
@@ -26,22 +23,21 @@ export async function GET() {
 		});
 		await redis.ping();
 		checks.redis = { status: "ok" };
-	} catch (error) {
-		checks.redis = {
-			status: "error",
-			message: error instanceof Error ? error.message : "Unknown error",
-		};
+	} catch {
+		checks.redis = { status: "error" };
 	}
 
 	const hasErrors = Object.values(checks).some((c) => c.status === "error");
 	const overallStatus = hasErrors ? "degraded" : "healthy";
 
-	return NextResponse.json(
-		{
-			status: overallStatus,
-			timestamp: new Date().toISOString(),
-			checks,
-		},
-		{ status: hasErrors ? 503 : 200 },
-	);
+	const response: Record<string, unknown> = {
+		status: overallStatus,
+		timestamp: new Date().toISOString(),
+	};
+
+	if (!isProd) {
+		response.checks = checks;
+	}
+
+	return NextResponse.json(response, { status: hasErrors ? 503 : 200 });
 }
